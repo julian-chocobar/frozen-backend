@@ -1,4 +1,4 @@
-package com.enigcode.frozen_backend.mapper;
+package com.enigcode.frozen_backend.common.mapper;
 
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.MapperConfig;

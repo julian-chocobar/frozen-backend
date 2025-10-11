@@ -1,6 +1,6 @@
 package com.enigcode.frozen_backend.materials.mapper;
 
-import com.enigcode.frozen_backend.mapper.GlobalMapperConfig;
+import com.enigcode.frozen_backend.common.mapper.GlobalMapperConfig;
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.model.Material;
 import org.mapstruct.Mapper;
