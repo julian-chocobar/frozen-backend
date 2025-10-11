@@ -21,6 +21,10 @@ public class Material {
     @SequenceGenerator(name = "materials_seq", sequenceName = "materials_seq", allocationSize = 1)
     private Long id;
 
+    @Column(unique = true)
+    @NotNull
+    private String code;
+
     @NotNull
     private String name;
 
@@ -32,6 +36,7 @@ public class Material {
     private Double value;
 
     @NotNull
+    @ColumnDefault("0.0")
     private Double stock;
 
     @Enumerated(EnumType.STRING)
