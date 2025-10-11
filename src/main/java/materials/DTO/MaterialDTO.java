@@ -18,6 +18,4 @@ public class MaterialDTO {
     private Double stock;
     private MeasurementUnit unitMeasurement;
     private Double threshold;
-    private Boolean isActive;
-    private OffsetDateTime creationDate;
 }
