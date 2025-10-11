@@ -1,8 +1,8 @@
-package movements.DTO;
+package com.enigcode.frozen_backend.movements.DTO;
 
 import java.time.OffsetDateTime;
 import lombok.*;
-import movements.model.MovementType;
+import com.enigcode.frozen_backend.movements.model.MovementType;
 
 @Getter
 @Setter

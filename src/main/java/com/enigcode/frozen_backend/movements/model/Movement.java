@@ -1,4 +1,4 @@
-package movements.model;
+package com.enigcode.frozen_backend.movements.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -17,8 +17,8 @@ import java.time.OffsetDateTime;
 public class Movement {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "materials_seq")
-    @SequenceGenerator(name = "materials_seq", sequenceName = "materials_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "movements_seq")
+    @SequenceGenerator(name = "movements_seq", sequenceName = "movements_seq", allocationSize = 1)
     private Long id;
 
     @Column(name = "id_material")

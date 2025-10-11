@@ -1,6 +1,5 @@
-package materials.repository;
-
-import materials.model.Material;
+package com.enigcode.frozen_backend.materials.repository;
+import com.enigcode.frozen_backend.materials.model.Material;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -9,10 +8,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MaterialRepository extends JpaRepository<Material, Long>, JpaSpecificationExecutor<Material> {
     
-    /**
-     * Busca todos los materiales con paginación y filtros.
-     * 
-     * @param spec   Especificación de filtros
+    /*
+      Busca todos los materiales con paginación y filtros.
+
+      @param spec   Especificación de filtros
      * @param pageable Información de paginación
      * @return Página de materiales
      * 

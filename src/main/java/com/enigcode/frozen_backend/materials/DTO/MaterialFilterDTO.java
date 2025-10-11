@@ -1,4 +1,4 @@
-package materials.DTO;
+package com.enigcode.frozen_backend.materials.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

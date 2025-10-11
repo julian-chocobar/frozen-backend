@@ -1,7 +1,7 @@
-package materials.specification;
+package com.enigcode.frozen_backend.materials.specification;
 
-import materials.model.Material;
-import materials.DTO.MaterialFilterDTO;
+import com.enigcode.frozen_backend.materials.model.Material;
+import com.enigcode.frozen_backend.materials.DTO.MaterialFilterDTO;
 import org.springframework.data.jpa.domain.Specification;
 import java.util.ArrayList;
 import java.util.List;

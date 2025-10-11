@@ -1,4 +1,4 @@
-package common.mapper;
+package com.enigcode.frozen_backend.mapper;
 
 import org.springframework.stereotype.Component;
 
