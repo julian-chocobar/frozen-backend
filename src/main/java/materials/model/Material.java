@@ -33,15 +33,16 @@ public class Material {
     private Double stock;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "unit", nullable = false)
+    @Column(name = "unit_measurement")
     @NotNull
-    private MeasurementUnit unit;
+    private MeasurementUnit unitMeasurement;
 
     @NotNull
     private Double threshold;
 
     @Column(name = "is_active")
     @NotNull
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "creation_date")
