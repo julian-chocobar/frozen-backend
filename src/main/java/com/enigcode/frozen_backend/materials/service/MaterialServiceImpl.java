@@ -27,6 +27,6 @@ public class MaterialServiceImpl implements MaterialService{
                 pageable.getSort());
         Page<Material> materials = materialRepository.findAll(
                 MaterialSpecification.createFilter(filterDTO), pageRequest);
-        return materials.map(materialMapper::toDto);
+        return materials.map(materialMapper::toResponseDto);
     }
 }
