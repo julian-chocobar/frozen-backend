@@ -16,7 +16,7 @@ public class MaterialSpecification {
      * 
      */
     public static Specification<Material> createFilter(MaterialFilterDTO filterDTO) {
-        return (root, query, criteriaBuilder) -> { 
+        return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (filterDTO.getName() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("name"), filterDTO.getName()));
@@ -24,10 +24,7 @@ public class MaterialSpecification {
             if (filterDTO.getSupplier() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("supplier"), filterDTO.getSupplier()));
             }
-            if (filterDTO.getUnitMeasurement() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("unitMeasurement"), filterDTO.getUnitMeasurement()));
-            }
-           return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
 

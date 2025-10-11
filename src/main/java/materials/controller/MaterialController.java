@@ -1,6 +1,5 @@
 package materials.controller;
 
-
 import lombok.RequiredArgsConstructor;
 import materials.service.MaterialService;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +11,7 @@ import materials.DTO.MaterialFilterDTO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,17 +32,18 @@ public class MaterialController {
      *                 - size: tamaño de página
      *                 - sort: ordenamiento (ej: creationDate,desc)
      * @return Página de materiales y metadata
-    */
+     */
     @GetMapping
+    @Operation(summary = "Obtener materiales", description = "Obtiene todos los materiales con paginación y filtros")
     public ResponseEntity<Map<String, Object>> getMaterials(
-            MaterialFilterDTO filterDTO, 
+            MaterialFilterDTO filterDTO,
             @PageableDefault(size = 10, sort = "creationDate,desc") Pageable pageable) {
 
         Page<MaterialDTO> pageResponse = materialService.findAll(filterDTO, pageable);
 
         /**
          * Metadata de la página para el frontend
-        */
+         */
         Map<String, Object> response = new HashMap<>();
         response.put("content", pageResponse.getContent());
         response.put("currentPage", pageResponse.getNumber());
@@ -53,8 +54,7 @@ public class MaterialController {
         response.put("hasPrevious", pageResponse.hasPrevious());
         response.put("isFirst", pageResponse.isFirst());
         response.put("isLast", pageResponse.isLast());
-        return ResponseEntity.ok(response);     
+        return ResponseEntity.ok(response);
     }
-
 
 }
