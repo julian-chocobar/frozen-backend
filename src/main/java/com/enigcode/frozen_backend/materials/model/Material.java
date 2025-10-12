@@ -17,8 +17,8 @@ import java.time.OffsetDateTime;
 public class Material {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "materials_seq")
-    @SequenceGenerator(name = "materials_seq", sequenceName = "materials_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "materials_gen")
+    @SequenceGenerator(name = "materials_gen", sequenceName = "materials_seq", allocationSize = 1)
     private Long id;
 
     @Column(unique = true)
