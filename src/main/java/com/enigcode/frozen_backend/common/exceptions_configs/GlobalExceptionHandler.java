@@ -1,5 +1,6 @@
 package com.enigcode.frozen_backend.common.exceptions_configs;
 
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,20 @@ public class GlobalExceptionHandler {
         body.put("message", message);
         return body;
     }
+
+    /**
+     * Maneja las excepciones de tipo BadRequestException (errores de negocio).
+     * Devuelve HTTP 400 Bad Request.
+     */
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<Object> handleBadRequestException(BadRequestException ex) {
+
+        Map<String, Object> response = createErrorResponse(
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);}
 
     /**
      * Maneja las fallas de @Valid y devuelve HTTP 400 Bad Request.

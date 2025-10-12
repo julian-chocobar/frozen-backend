@@ -10,6 +10,7 @@ import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 @AllArgsConstructor
 @Builder
 public class MaterialResponseDTO {
+    private String id;
     private String code;
     private String name;
     private MaterialType type;

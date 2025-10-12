@@ -1,6 +1,7 @@
 package com.enigcode.frozen_backend.materials.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
@@ -60,5 +61,13 @@ public class Material {
 
     public void toggleActive(){
         this.isActive = !this.isActive;
+    }
+
+    public void reduceStock(Double stock) {
+        this.stock -= stock;
+    }
+
+    public void increaseStock(Double stock) {
+        this.stock += stock;
     }
 }

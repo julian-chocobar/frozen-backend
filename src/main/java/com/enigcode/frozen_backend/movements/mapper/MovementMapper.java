@@ -7,5 +7,6 @@ import org.mapstruct.*;
 
 @Mapper(config = GlobalMapperConfig.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface MovementMapper {
-    MovementResponseDTO toDto(Movement movement);
+    @Mapping(source = "material.type", target = "materialType")
+    MovementResponseDTO toResponseDto(Movement movement);
 }

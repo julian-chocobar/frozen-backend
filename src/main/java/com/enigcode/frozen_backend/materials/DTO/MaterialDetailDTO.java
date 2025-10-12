@@ -12,6 +12,7 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @Builder
 public class MaterialDetailDTO {
+    private String id;
     private String code;
     private String name;
     private MaterialType type;

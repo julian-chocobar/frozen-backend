@@ -16,7 +16,7 @@ public class MovementCreateDTO {
     private MovementType type;
 
     @NotNull(message = "El movimiento debe haber involucrado cierta cantidad de stock")
-    @DecimalMin(value = "0.0", message = "El stock no puede ser menor a 0")
+    @DecimalMin(value = "0.0", inclusive = false, message = "El stock no puede ser menor a 0")
     private Double stock;
 
     @NotNull(message = "El movimiento debe estar asociado a un material")
