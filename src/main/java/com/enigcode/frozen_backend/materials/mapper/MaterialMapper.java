@@ -2,7 +2,6 @@ package com.enigcode.frozen_backend.materials.mapper;
 
 import com.enigcode.frozen_backend.common.mapper.GlobalMapperConfig;
 import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
-import com.enigcode.frozen_backend.materials.DTO.MaterialFilterDTO;
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.DTO.MaterialUpdateDTO;
 import com.enigcode.frozen_backend.materials.model.Material;

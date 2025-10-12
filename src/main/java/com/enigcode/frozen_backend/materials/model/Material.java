@@ -22,7 +22,6 @@ public class Material {
     private Long id;
 
     @Column(unique = true)
-    @NotNull
     private String code;
 
     @NotNull

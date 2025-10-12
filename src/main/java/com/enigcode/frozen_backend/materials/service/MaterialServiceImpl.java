@@ -1,15 +1,24 @@
 package com.enigcode.frozen_backend.materials.service;
 
+
 import lombok.RequiredArgsConstructor;
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.mapper.MaterialMapper;
 import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
+
+import java.time.OffsetDateTime;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.enigcode.frozen_backend.materials.specification.MaterialSpecification;
+
+import jakarta.transaction.Transactional;
+
 import com.enigcode.frozen_backend.materials.model.Material;
+import com.enigcode.frozen_backend.materials.model.MaterialType;
+import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
 import com.enigcode.frozen_backend.materials.DTO.MaterialFilterDTO;
 
 @Service
@@ -29,4 +38,47 @@ public class MaterialServiceImpl implements MaterialService{
                 MaterialSpecification.createFilter(filterDTO), pageRequest);
         return materials.map(materialMapper::toResponseDto);
     }
+
+
+    /**
+     * Le asigna un codigo segun el tipo de material y la fecha de creacion
+     * para guardarlo e la base de datos 
+     * 
+     * @param materialCreateDTO 
+     * @return el material guardado en base de datos
+     * 
+     */
+
+    @Override
+    @Transactional
+    public MaterialResponseDTO saveMaterial(MaterialCreateDTO materialCreateDTO) {
+        Material material = materialMapper.toEntity(materialCreateDTO);
+        material.setCreationDate(OffsetDateTime.now());
+        
+        Material savedMaterial = materialRepository.save(material);
+        String code = this.generateCode(savedMaterial.getType(), savedMaterial.getId());
+        savedMaterial.setCode(code);
+        
+        Material finalMaterial = materialRepository.save(savedMaterial);
+
+        return materialMapper.toResponseDto(finalMaterial);
+    }
+
+    /**
+     * Funcion que genera codigo de materiales
+     * @param type
+     * @param id
+     * @return devuelve el codigo generado
+     */
+
+    private String generateCode(MaterialType type, Long id) {
+        String prefix = type.name().substring(0, 3).toUpperCase();
+        String code = prefix + "-" + id;
+        
+        return code;
+    }
+
+    
+
+
 }
