@@ -5,12 +5,14 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.Resource
 import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 import com.enigcode.frozen_backend.movements.DTO.MovementCreateDTO;
+import com.enigcode.frozen_backend.movements.DTO.MovementDetailDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementResponseDTO;
 import com.enigcode.frozen_backend.movements.mapper.MovementMapper;
 import com.enigcode.frozen_backend.movements.model.Movement;
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import com.enigcode.frozen_backend.movements.repository.MovementRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,9 +27,16 @@ public class MovementServiceImpl implements MovementService{
     final MaterialRepository materialRepository;
     final MovementMapper movementMapper;
 
+    /**
+     * Funcion que genera un movimiento nuevo y cambia el stock del material según el mismo
+     * Genera Error en caso de que el stock no sea suficiente para abastecer el movimiento o si el material
+     * no existe
+     * @param movementCreateDTO
+     * @return movementResponseDTO
+     */
     @Override
     @Transactional
-    public MovementResponseDTO createMovement(MovementCreateDTO movementCreateDTO) {
+    public MovementResponseDTO createMovement(@Valid MovementCreateDTO movementCreateDTO) {
         Material material = materialRepository.findById(movementCreateDTO.getMaterialID())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Material no encontrado con ID: " + movementCreateDTO.getMaterialID()));
@@ -52,4 +61,21 @@ public class MovementServiceImpl implements MovementService{
 
         return movementMapper.toResponseDto(savedMovement);
     }
+
+    /**
+     * Funcion que devuelve un movimiento con detalles especificos
+     * @param id
+     * @return MovementDetailDTO
+     */
+    @Override
+    @Transactional
+    public MovementDetailDTO getMovement(Long id) {
+       Movement movement = movementRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Movimiento no encontrado con ID: " + id));
+
+        return movementMapper.toDetailDTO(movement);
+    }
+
+
 }
