@@ -11,5 +11,5 @@ public interface MaterialService {
 
     Page<MaterialResponseDTO> findAll(MaterialFilterDTO filterDTO, Pageable pageable);
 
-    MaterialResponseDTO saveMaterial(MaterialCreateDTO materialCreateDTO)
+    MaterialResponseDTO saveMaterial(MaterialCreateDTO materialCreateDTO);
 }

@@ -1,19 +1,23 @@
 package com.enigcode.frozen_backend.materials.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.service.MaterialService;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
 import com.enigcode.frozen_backend.materials.DTO.MaterialFilterDTO;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import jakarta.validation.Valid;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +28,15 @@ import java.util.Map;
 public class MaterialController {
 
     final MaterialService materialService;
+
+    @Operation(summary="Registrar un nuevo material en la base de datos")
+    @PostMapping
+    public ResponseEntity<MaterialResponseDTO> createMaterial(
+            @Valid @RequestBody MaterialCreateDTO materialCreateDTO
+    ){
+        MaterialResponseDTO materialResponseDTO = materialService.saveMaterial(materialCreateDTO);
+        return new ResponseEntity<>(materialResponseDTO,HttpStatus.CREATED);
+    }
 
     /**
      * Busca materiales con paginación y filtros.
