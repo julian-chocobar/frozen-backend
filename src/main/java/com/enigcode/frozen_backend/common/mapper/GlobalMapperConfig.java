@@ -10,7 +10,6 @@ import org.mapstruct.ReportingPolicy;
         injectionStrategy = InjectionStrategy.CONSTRUCTOR,
         unmappedTargetPolicy = ReportingPolicy.WARN,
         uses = {
-                DateMapperUtil.class,
         }
 )
 public class GlobalMapperConfig {

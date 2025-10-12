@@ -1,8 +1,7 @@
 package com.enigcode.frozen_backend.materials.controller;
 
-import com.enigcode.frozen_backend.materials.DTO.MaterialUpdateDTO;
+import com.enigcode.frozen_backend.materials.DTO.*;
 import lombok.RequiredArgsConstructor;
-import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.service.MaterialService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,8 +9,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
-import com.enigcode.frozen_backend.materials.DTO.MaterialFilterDTO;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -83,4 +80,14 @@ public class MaterialController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "Obtiene detalle material",
+            description = "Obtiene una respuesta mas detallada sobre la informacion de un material en especifico"
+    )
+    @GetMapping("/{id}")
+    public ResponseEntity<MaterialDetailDTO> getMaterials(@PathVariable Long id){
+        MaterialDetailDTO materialDetailDTO = materialService.getMaterials(id);
+
+        return new ResponseEntity<>(materialDetailDTO, HttpStatus.OK);
+    }
 }

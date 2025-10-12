@@ -1,9 +1,8 @@
 package com.enigcode.frozen_backend.materials.service;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
-import com.enigcode.frozen_backend.materials.DTO.MaterialUpdateDTO;
+import com.enigcode.frozen_backend.materials.DTO.*;
 import lombok.RequiredArgsConstructor;
-import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.mapper.MaterialMapper;
 import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 
@@ -20,8 +19,6 @@ import jakarta.transaction.Transactional;
 
 import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.materials.model.MaterialType;
-import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
-import com.enigcode.frozen_backend.materials.DTO.MaterialFilterDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -120,6 +117,19 @@ public class MaterialServiceImpl implements MaterialService{
         Page<Material> materials = materialRepository.findAll(
                 MaterialSpecification.createFilter(filterDTO), pageRequest);
         return materials.map(materialMapper::toResponseDto);
+    }
+
+    /**
+     * Funcion para mostrar un material especifico segun id
+     * @param id
+     * @return Vista detallada de los elementos del material
+     */
+    @Override
+    public MaterialDetailDTO getMaterials(Long id) {
+        Material material = materialRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
+
+        return materialMapper.toDetailDto(material);
     }
 
 }
