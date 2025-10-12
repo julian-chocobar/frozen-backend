@@ -78,6 +78,7 @@ public class MaterialServiceImpl implements MaterialService{
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
 
         Material updatedMaterial = materialMapper.partialUpdate(materialUpdateDTO,originalMaterial);
+        updatedMaterial.setLastUpdateDate(OffsetDateTime.now(ZoneOffset.UTC));
         Material savedUpdatedMaterial = materialRepository.save(updatedMaterial);
 
         return materialMapper.toResponseDto(savedUpdatedMaterial );

@@ -50,6 +50,9 @@ public class Material {
     @NotNull
     private Boolean isActive = true;
 
+    @Column(name = "last_update_date")
+    private OffsetDateTime lastUpdateDate;
+
     @Column(name = "creation_date")
     @NotNull
     private OffsetDateTime creationDate;
