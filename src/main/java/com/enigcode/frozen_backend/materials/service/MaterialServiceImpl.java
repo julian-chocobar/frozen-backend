@@ -125,7 +125,7 @@ public class MaterialServiceImpl implements MaterialService{
      * @return Vista detallada de los elementos del material
      */
     @Override
-    public MaterialDetailDTO getMaterials(Long id) {
+    public MaterialDetailDTO getMaterial(Long id) {
         Material material = materialRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
 

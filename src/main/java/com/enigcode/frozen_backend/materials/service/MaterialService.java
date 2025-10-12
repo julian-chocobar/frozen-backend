@@ -9,5 +9,5 @@ public interface MaterialService {
     MaterialResponseDTO updateMaterial(Long id, MaterialUpdateDTO materialUpdateDTO);
     MaterialResponseDTO toggleActive(Long id);
     Page<MaterialResponseDTO> findAll(MaterialFilterDTO filterDTO, Pageable pageable);
-    MaterialDetailDTO getMaterials(Long id);
+    MaterialDetailDTO getMaterial(Long id);
 }

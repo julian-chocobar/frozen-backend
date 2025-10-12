@@ -48,6 +48,7 @@ public class Material {
 
     @Column(name = "is_active")
     @NotNull
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "last_update_date")

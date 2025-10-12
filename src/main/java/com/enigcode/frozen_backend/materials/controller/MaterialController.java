@@ -85,8 +85,8 @@ public class MaterialController {
             description = "Obtiene una respuesta mas detallada sobre la informacion de un material en especifico"
     )
     @GetMapping("/{id}")
-    public ResponseEntity<MaterialDetailDTO> getMaterials(@PathVariable Long id){
-        MaterialDetailDTO materialDetailDTO = materialService.getMaterials(id);
+    public ResponseEntity<MaterialDetailDTO> getMaterial(@PathVariable Long id){
+        MaterialDetailDTO materialDetailDTO = materialService.getMaterial(id);
 
         return new ResponseEntity<>(materialDetailDTO, HttpStatus.OK);
     }
