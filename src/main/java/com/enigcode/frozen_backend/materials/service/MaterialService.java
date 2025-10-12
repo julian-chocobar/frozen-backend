@@ -8,8 +8,7 @@ import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
 import com.enigcode.frozen_backend.materials.DTO.MaterialFilterDTO;
 
 public interface MaterialService {
-
-    Page<MaterialResponseDTO> findAll(MaterialFilterDTO filterDTO, Pageable pageable);
-
     MaterialResponseDTO saveMaterial(MaterialCreateDTO materialCreateDTO);
+    MaterialResponseDTO toggleActive(Long id);
+    Page<MaterialResponseDTO> findAll(MaterialFilterDTO filterDTO, Pageable pageable);
 }

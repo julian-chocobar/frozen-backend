@@ -3,15 +3,12 @@ package com.enigcode.frozen_backend.materials.controller;
 import lombok.RequiredArgsConstructor;
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.service.MaterialService;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
 import com.enigcode.frozen_backend.materials.DTO.MaterialFilterDTO;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +34,16 @@ public class MaterialController {
             @Valid @RequestBody MaterialCreateDTO materialCreateDTO){
         MaterialResponseDTO materialResponseDTO = materialService.saveMaterial(materialCreateDTO);
         return new ResponseEntity<>(materialResponseDTO,HttpStatus.CREATED);
+    }
+
+    @Operation(
+            summary = "Cambiar estado material",
+            description = "Cambia el estado del material al contrario (activo, inactivo)")
+    @PatchMapping("/{id}/toggle-active")
+    public ResponseEntity<MaterialResponseDTO> toggleActive(@PathVariable Long id){
+        MaterialResponseDTO materialResponseDTO = materialService.toggleActive(id);
+
+        return new ResponseEntity<>(materialResponseDTO, HttpStatus.OK);
     }
 
     @Operation(

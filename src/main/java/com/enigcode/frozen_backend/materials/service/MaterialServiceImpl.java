@@ -29,44 +29,23 @@ public class MaterialServiceImpl implements MaterialService{
     final MaterialMapper materialMapper;
 
     /**
-     * Busca materiales con paginación y filtros.
-     *
-     * @param filterDTO  Criterios de filtrado (opcional)
-     * @param pageable Información de paginación:
-     *                 - page: número de página (0-based)
-     *                 - size: tamaño de página
-     *                 - sort: ordenamiento (ej: creationDate,desc)
-     * @return Página de materiales y metadata
-     */
-    @Override
-    public Page<MaterialResponseDTO> findAll(MaterialFilterDTO filterDTO, Pageable pageable) {
-        Pageable pageRequest = PageRequest.of(
-                pageable.getPageNumber(), 
-                pageable.getPageSize(),
-                pageable.getSort());
-        Page<Material> materials = materialRepository.findAll(
-                MaterialSpecification.createFilter(filterDTO), pageRequest);
-        return materials.map(materialMapper::toResponseDto);
-    }
-
-    /**
      * Le asigna un codigo segun el tipo de material y la fecha de creacion
      * para guardarlo en la base de datos
-     * 
-     * @param materialCreateDTO 
+     *
+     * @param materialCreateDTO
      * @return el material guardado en base de datos
-     * 
+     *
      */
     @Override
     @Transactional
     public MaterialResponseDTO saveMaterial(MaterialCreateDTO materialCreateDTO) {
         Material material = materialMapper.toEntity(materialCreateDTO);
         material.setCreationDate(OffsetDateTime.now());
-        
+
         Material savedMaterial = materialRepository.save(material);
         String code = this.generateCode(savedMaterial.getType(), savedMaterial.getId());
         savedMaterial.setCode(code);
-        
+
         Material finalMaterial = materialRepository.save(savedMaterial);
 
         return materialMapper.toResponseDto(finalMaterial);
@@ -81,6 +60,35 @@ public class MaterialServiceImpl implements MaterialService{
     private String generateCode(MaterialType type, Long id) {
         String prefix = type.name().substring(0, 3).toUpperCase();
         return prefix + "-" + id;
+    }
+
+    @Override
+    @Transactional
+    public MaterialResponseDTO toggleActive(Long id) {
+        Material material = materialRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
+        return null;
+    }
+
+    /**
+     * Busca materiales con paginación y filtros.
+     *
+     * @param filterDTO  Criterios de filtrado (opcional)
+     * @param pageable Información de paginación:
+     *                 - page: número de página (0-based)
+     *                 - size: tamaño de página
+     *                 - sort: ordenamiento (ej: creationDate,desc)
+     * @return Página de materiales y metadata
+     */
+    @Override
+    public Page<MaterialResponseDTO> findAll(MaterialFilterDTO filterDTO, Pageable pageable) {
+        Pageable pageRequest = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort());
+        Page<Material> materials = materialRepository.findAll(
+                MaterialSpecification.createFilter(filterDTO), pageRequest);
+        return materials.map(materialMapper::toResponseDto);
     }
 
 }
