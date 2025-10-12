@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.service.MaterialService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
 import com.enigcode.frozen_backend.materials.DTO.MaterialFilterDTO;
@@ -13,7 +15,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 
 import java.util.HashMap;
@@ -52,7 +53,7 @@ public class MaterialController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getMaterials(
             MaterialFilterDTO filterDTO,
-            @PageableDefault(size = 10, sort = "creationDate,desc") Pageable pageable) {
+            @PageableDefault(size = 10, sort = "creationDate", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<MaterialResponseDTO> pageResponse = materialService.findAll(filterDTO, pageable);
 
         // Metadata de la página para el frontend
