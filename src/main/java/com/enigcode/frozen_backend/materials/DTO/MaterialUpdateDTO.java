@@ -3,8 +3,13 @@ package com.enigcode.frozen_backend.materials.DTO;
 import com.enigcode.frozen_backend.materials.model.MaterialType;
 import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class MaterialUpdateDTO {
     private String name;
     private MaterialType type;

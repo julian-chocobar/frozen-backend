@@ -1,6 +1,7 @@
 package com.enigcode.frozen_backend.materials.service;
 
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
+import com.enigcode.frozen_backend.materials.DTO.MaterialUpdateDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -9,6 +10,7 @@ import com.enigcode.frozen_backend.materials.DTO.MaterialFilterDTO;
 
 public interface MaterialService {
     MaterialResponseDTO saveMaterial(MaterialCreateDTO materialCreateDTO);
+    MaterialResponseDTO updateMaterial(Long id, MaterialUpdateDTO materialUpdateDTO);
     MaterialResponseDTO toggleActive(Long id);
     Page<MaterialResponseDTO> findAll(MaterialFilterDTO filterDTO, Pageable pageable);
 }

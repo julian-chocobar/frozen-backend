@@ -1,5 +1,6 @@
 package com.enigcode.frozen_backend.materials.controller;
 
+import com.enigcode.frozen_backend.materials.DTO.MaterialUpdateDTO;
 import lombok.RequiredArgsConstructor;
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.service.MaterialService;
@@ -35,6 +36,18 @@ public class MaterialController {
             @Valid @RequestBody MaterialCreateDTO materialCreateDTO){
         MaterialResponseDTO materialResponseDTO = materialService.saveMaterial(materialCreateDTO);
         return new ResponseEntity<>(materialResponseDTO,HttpStatus.CREATED);
+    }
+
+    @Operation(
+            summary = "Modificación de material",
+            description = "Permite modificar ciertos campos de un material registrado"
+    )
+    @PatchMapping("/{id}")
+    public ResponseEntity<MaterialResponseDTO> updateMaterial(@PathVariable Long id,
+                                                              @Valid @RequestBody MaterialUpdateDTO materialUpdateDTO){
+        MaterialResponseDTO materialResponseDTO = materialService.updateMaterial(id,materialUpdateDTO);
+
+        return new ResponseEntity<>(materialResponseDTO,HttpStatus.OK);
     }
 
     @Operation(

@@ -1,7 +1,7 @@
 package com.enigcode.frozen_backend.materials.service;
 
-
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+import com.enigcode.frozen_backend.materials.DTO.MaterialUpdateDTO;
 import lombok.RequiredArgsConstructor;
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.mapper.MaterialMapper;
@@ -66,6 +66,24 @@ public class MaterialServiceImpl implements MaterialService{
     }
 
     /**
+     * Funcion que cambia ciertos parametros de un material preexistente
+     * @param id
+     * @param materialUpdateDTO
+     * @return MaterialResponseDTO
+     */
+    @Override
+    @Transactional
+    public MaterialResponseDTO updateMaterial(Long id, MaterialUpdateDTO materialUpdateDTO) {
+        Material originalMaterial = materialRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
+
+        Material updatedMaterial = materialMapper.partialUpdate(materialUpdateDTO,originalMaterial);
+        Material savedUpdatedMaterial = materialRepository.save(updatedMaterial);
+
+        return materialMapper.toResponseDto(savedUpdatedMaterial );
+    }
+
+    /**
      * Funcion que cambia el estado de un material,
      * @param id
      * @return materialResponseDTO
@@ -77,9 +95,9 @@ public class MaterialServiceImpl implements MaterialService{
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
         material.toggleActive();
 
-        material = materialRepository.save(material);
+        Material savedMaterial = materialRepository.save(material);
 
-        return materialMapper.toResponseDto(material);
+        return materialMapper.toResponseDto(savedMaterial);
     }
 
     /**

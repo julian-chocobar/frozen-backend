@@ -10,15 +10,10 @@ import org.mapstruct.*;
 @Mapper(config = GlobalMapperConfig.class, componentModel = "spring")
 public interface MaterialMapper {
 
-    Material toEntity(MaterialResponseDTO materialResponseDTO);
     MaterialResponseDTO toResponseDto(Material material);
 
     Material toEntity(MaterialCreateDTO materialCreateDTO);
-    MaterialCreateDTO toCreateDto(Material material);
-
-    Material toEntity(MaterialUpdateDTO materialUpdateDTO);
-    MaterialUpdateDTO toUpdateDto(Material material);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    Material partialUpdate(MaterialResponseDTO materialResponseDTO, @MappingTarget Material material);
+    Material partialUpdate(MaterialUpdateDTO materialupdateDTO, @MappingTarget Material material);
 }

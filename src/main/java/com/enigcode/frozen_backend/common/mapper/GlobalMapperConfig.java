@@ -10,8 +10,7 @@ import org.mapstruct.ReportingPolicy;
         injectionStrategy = InjectionStrategy.CONSTRUCTOR,
         unmappedTargetPolicy = ReportingPolicy.WARN,
         uses = {
-                DateMapperUtil.class, // <-- Ejemplo de un Bean de Spring que ayuda a mapear
-                // OtraClaseDeAyuda.class
+                DateMapperUtil.class,
         }
 )
 public class GlobalMapperConfig {
