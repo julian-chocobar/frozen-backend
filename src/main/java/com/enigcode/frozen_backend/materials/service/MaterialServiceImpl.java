@@ -1,6 +1,7 @@
 package com.enigcode.frozen_backend.materials.service;
 
 
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
 import com.enigcode.frozen_backend.materials.mapper.MaterialMapper;

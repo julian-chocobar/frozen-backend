@@ -1,5 +1,6 @@
 package com.enigcode.frozen_backend.common.exceptions_configs;
 
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
