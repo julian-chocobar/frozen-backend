@@ -47,7 +47,6 @@ public class Material {
     private Double threshold;
 
     @Column(name = "is_active")
-    @NotNull
     @ColumnDefault("true")
     private Boolean isActive;
 

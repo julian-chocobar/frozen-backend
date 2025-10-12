@@ -47,7 +47,7 @@ public class MaterialServiceImpl implements MaterialService{
         String code = this.generateCode(savedMaterial.getType(), savedMaterial.getId());
         savedMaterial.setCode(code);
 
-        Material finalMaterial = materialRepository.save(savedMaterial);
+        Material finalMaterial = materialRepository.saveAndFlush(savedMaterial);
 
         return materialMapper.toResponseDto(finalMaterial);
     }
@@ -68,6 +68,7 @@ public class MaterialServiceImpl implements MaterialService{
     public MaterialResponseDTO toggleActive(Long id) {
         Material material = materialRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
+
         return null;
     }
 
