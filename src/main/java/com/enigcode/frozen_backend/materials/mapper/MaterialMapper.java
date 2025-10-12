@@ -7,7 +7,7 @@ import com.enigcode.frozen_backend.materials.DTO.MaterialUpdateDTO;
 import com.enigcode.frozen_backend.materials.model.Material;
 import org.mapstruct.*;
 
-@Mapper(config = GlobalMapperConfig.class, componentModel = "spring")
+@Mapper(config = GlobalMapperConfig.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface MaterialMapper {
     @Mapping( target = "is_below_threshold",
         expression = "java(material.getStock() != null && material.getThreshold() != null " +

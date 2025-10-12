@@ -18,7 +18,7 @@ public class MovementResponseDTO {
     
     private Double stock;
     
-    private String codeMaterial;
+    private String materialType;
 
     private String reason;
 }

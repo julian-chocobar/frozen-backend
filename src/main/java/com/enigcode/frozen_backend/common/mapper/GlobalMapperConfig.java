@@ -8,7 +8,7 @@ import org.mapstruct.ReportingPolicy;
 @MapperConfig(
         componentModel = MappingConstants.ComponentModel.SPRING,
         injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-        unmappedTargetPolicy = ReportingPolicy.WARN,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
         uses = {
         }
 )

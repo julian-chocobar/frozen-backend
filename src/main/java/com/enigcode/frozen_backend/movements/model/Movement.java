@@ -1,5 +1,6 @@
 package com.enigcode.frozen_backend.movements.model;
 
+import com.enigcode.frozen_backend.materials.model.Material;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -21,11 +22,13 @@ public class Movement {
     @SequenceGenerator(name = "movements_gen", sequenceName = "movements_seq", allocationSize = 1)
     private Long id;
 
-    @Column(name = "id_material")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_material")
     @NotNull
-    private Long idMaterial;
+    private Material material;
 
-    //private Long idUser;
+    @Column(name = "id_usuario")
+    private Long idUser;
 
     @Enumerated(EnumType.STRING)
     @NotNull
