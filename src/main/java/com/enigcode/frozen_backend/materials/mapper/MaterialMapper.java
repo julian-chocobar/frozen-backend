@@ -18,20 +18,9 @@ public interface MaterialMapper {
             expression = "java(material.getStock() != null && material.getThreshold() != null " +
                     "&& material.getStock() <= material.getThreshold())" )
     MaterialResponseDTO toResponseDto(Material material); 
-    
-    @Mapping(target = "id", ignore = true)  
-    @Mapping(target = "code", ignore = true)  
-    @Mapping(target = "creationDate", ignore = true)  
-    @Mapping(target = "isActive", ignore = true)  
-    @Mapping(target = "lastUpdateDate", ignore = true)  
+     
     Material toEntity(MaterialCreateDTO materialCreateDTO);
 
-    @Mapping(target = "id", ignore = true)  
-    @Mapping(target = "code", ignore = true)  
-    @Mapping(target = "creationDate", ignore = true)  
-    @Mapping(target = "isActive", ignore = true)  
-    @Mapping(target = "lastUpdateDate", ignore = true)  
-    @Mapping(target = "stock", ignore = true)  
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Material partialUpdate(MaterialUpdateDTO materialupdateDTO, @MappingTarget Material material);
 }

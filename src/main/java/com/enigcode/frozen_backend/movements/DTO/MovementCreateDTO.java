@@ -2,12 +2,9 @@ package com.enigcode.frozen_backend.movements.DTO;
 
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-
-import java.time.OffsetDateTime;
 
 @Getter
 @Setter
