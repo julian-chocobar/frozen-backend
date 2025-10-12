@@ -10,6 +10,11 @@ import org.mapstruct.*;
 @Mapper(config = GlobalMapperConfig.class, componentModel = "spring")
 public interface MaterialMapper {
 
+    @Mapping(
+            target = "is_below_threshold",
+            expression = "java(material.getStock() != null && material.getThreshold() != null " +
+                    "&& material.getStock() <= material.getThreshold())"
+    )
     MaterialResponseDTO toResponseDto(Material material);
 
     Material toEntity(MaterialCreateDTO materialCreateDTO);
