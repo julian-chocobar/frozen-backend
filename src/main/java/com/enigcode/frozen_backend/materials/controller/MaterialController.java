@@ -29,33 +29,24 @@ public class MaterialController {
 
     final MaterialService materialService;
 
-    @Operation(summary="Registrar un nuevo material en la base de datos")
+    @Operation(
+            summary="Registrar  material",
+            description = "Registra un nuevo material en base de datos asignandole un codigo unico")
     @PostMapping
     public ResponseEntity<MaterialResponseDTO> createMaterial(
-            @Valid @RequestBody MaterialCreateDTO materialCreateDTO
-    ){
+            @Valid @RequestBody MaterialCreateDTO materialCreateDTO){
         MaterialResponseDTO materialResponseDTO = materialService.saveMaterial(materialCreateDTO);
         return new ResponseEntity<>(materialResponseDTO,HttpStatus.CREATED);
     }
 
-    /**
-     * Busca materiales con paginación y filtros.
-     * 
-     * @param filterDTO  Criterios de filtrado (opcional)
-     * @param pageable Información de paginación:
-     *                 - page: número de página (0-based)
-     *                 - size: tamaño de página
-     *                 - sort: ordenamiento (ej: creationDate,desc)
-     * @return Página de materiales y metadata
-     */
+    @Operation(
+            summary = "Obtener materiales",
+            description = "Obtiene todos los materiales con paginación y filtros")
     @GetMapping
-    @Operation(summary = "Obtener materiales", description = "Obtiene todos los materiales con paginación y filtros")
     public ResponseEntity<Map<String, Object>> getMaterials(
             MaterialFilterDTO filterDTO,
             @PageableDefault(size = 10, sort = "creationDate,desc") Pageable pageable) {
-
         Page<MaterialResponseDTO> pageResponse = materialService.findAll(filterDTO, pageable);
-
 
         // Metadata de la página para el frontend
         Map<String, Object> response = new HashMap<>();

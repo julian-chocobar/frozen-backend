@@ -28,6 +28,16 @@ public class MaterialServiceImpl implements MaterialService{
     final MaterialRepository materialRepository;
     final MaterialMapper materialMapper;
 
+    /**
+     * Busca materiales con paginación y filtros.
+     *
+     * @param filterDTO  Criterios de filtrado (opcional)
+     * @param pageable Información de paginación:
+     *                 - page: número de página (0-based)
+     *                 - size: tamaño de página
+     *                 - sort: ordenamiento (ej: creationDate,desc)
+     * @return Página de materiales y metadata
+     */
     @Override
     public Page<MaterialResponseDTO> findAll(MaterialFilterDTO filterDTO, Pageable pageable) {
         Pageable pageRequest = PageRequest.of(
@@ -39,16 +49,14 @@ public class MaterialServiceImpl implements MaterialService{
         return materials.map(materialMapper::toResponseDto);
     }
 
-
     /**
      * Le asigna un codigo segun el tipo de material y la fecha de creacion
-     * para guardarlo e la base de datos 
+     * para guardarlo en la base de datos
      * 
      * @param materialCreateDTO 
      * @return el material guardado en base de datos
      * 
      */
-
     @Override
     @Transactional
     public MaterialResponseDTO saveMaterial(MaterialCreateDTO materialCreateDTO) {
@@ -70,15 +78,9 @@ public class MaterialServiceImpl implements MaterialService{
      * @param id
      * @return devuelve el codigo generado
      */
-
     private String generateCode(MaterialType type, Long id) {
         String prefix = type.name().substring(0, 3).toUpperCase();
-        String code = prefix + "-" + id;
-        
-        return code;
+        return prefix + "-" + id;
     }
-
-    
-
 
 }
