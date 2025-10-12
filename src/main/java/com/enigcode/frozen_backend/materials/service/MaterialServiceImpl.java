@@ -8,6 +8,7 @@ import com.enigcode.frozen_backend.materials.mapper.MaterialMapper;
 import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -41,7 +42,8 @@ public class MaterialServiceImpl implements MaterialService{
     @Transactional
     public MaterialResponseDTO saveMaterial(MaterialCreateDTO materialCreateDTO) {
         Material material = materialMapper.toEntity(materialCreateDTO);
-        material.setCreationDate(OffsetDateTime.now());
+        material.setCreationDate(OffsetDateTime.now(ZoneOffset.UTC));
+        material.setIsActive(Boolean.TRUE);
 
         Material savedMaterial = materialRepository.save(material);
         String code = this.generateCode(savedMaterial.getType(), savedMaterial.getId());
@@ -63,13 +65,21 @@ public class MaterialServiceImpl implements MaterialService{
         return prefix + "-" + id;
     }
 
+    /**
+     * Funcion que cambia el estado de un material,
+     * @param id
+     * @return materialResponseDTO
+     */
     @Override
     @Transactional
     public MaterialResponseDTO toggleActive(Long id) {
         Material material = materialRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
+        material.toggleActive();
 
-        return null;
+        material = materialRepository.save(material);
+
+        return materialMapper.toResponseDto(material);
     }
 
     /**

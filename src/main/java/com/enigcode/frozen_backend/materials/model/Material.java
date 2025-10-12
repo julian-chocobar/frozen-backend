@@ -47,10 +47,14 @@ public class Material {
     private Double threshold;
 
     @Column(name = "is_active")
-    @ColumnDefault("true")
-    private Boolean isActive;
+    @NotNull
+    private Boolean isActive = true;
 
     @Column(name = "creation_date")
     @NotNull
     private OffsetDateTime creationDate;
+
+    public void toggleActive(){
+        this.isActive = !this.isActive;
+    }
 }
