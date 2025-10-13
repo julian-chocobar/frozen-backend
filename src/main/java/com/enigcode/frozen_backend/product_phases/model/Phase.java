@@ -2,7 +2,7 @@ package com.enigcode.frozen_backend.product_phases.model;
 
 public enum Phase {
     MOLIENDA,
-    MACERACIONES,
+    MACERACION,
     FILTRACION,
     COCCION,
     FERMENTACION,

@@ -1,10 +1,14 @@
 package com.enigcode.frozen_backend.products.model;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 
+import com.enigcode.frozen_backend.product_phases.model.Phase;
+import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -31,15 +35,24 @@ public class Product {
     @NotNull
     private Packaging packaging;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "unit_measurement")
-    @NotNull
-    private MeasurementUnit measurementUnit;
+    @OneToMany(
+            mappedBy = "product",
+            cascade = CascadeType.ALL,
+            orphanRemoval = false,
+            fetch = FetchType.LAZY
+    )
+    @OrderBy("id ASC")
+    private List<ProductPhase> phases = new ArrayList<>();
 
     @Column(name = "is_active")
     @NotNull
     @Builder.Default
     private Boolean isActive = true;
+
+    @Column(name = "is_ready")
+    @NotNull
+    @Builder.Default
+    private Boolean isReady= false;
 
     @Column(name = "is_alcoholic")
     @NotNull
@@ -54,4 +67,21 @@ public class Product {
         this.isActive = !this.isActive;
     }
 
+    public List<Phase> getApplicablePhases() {
+        List<Phase> phases = new ArrayList<>(List.of(
+                Phase.MOLIENDA,
+                Phase.MACERACION,
+                Phase.FILTRACION,
+                Phase.COCCION,
+                Phase.FERMENTACION,
+                Phase.MADURACION,
+                Phase.GASIFICACION,
+                Phase.ENVASADO
+        ));
+
+        if (!this.isAlcoholic) {
+            phases.add(7, Phase.DESALCOHOLIZACION);
+        }
+        return phases;
+    }
 }

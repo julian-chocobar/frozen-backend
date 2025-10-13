@@ -3,6 +3,7 @@ package com.enigcode.frozen_backend.product_phases.model;
 import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import com.enigcode.frozen_backend.products.model.Product;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -31,16 +32,22 @@ public class ProductPhase {
     @NotNull
     private Phase phase;
 
-    @NotNull
+    @DecimalMin(value = "0.0")
+    private Double input;
+
+    @DecimalMin(value = "0.0")
     private Double output;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "output_unit")
-    @NotNull
     private MeasurementUnit outputUnit;
 
     @Column(name = "estimated_hours")
     private Double estimatedHours;
+
+    @Column(name = "is_ready")
+    @NotNull
+    private Boolean isReady;
 
     @Column(name = "creation_date")
     @NotNull

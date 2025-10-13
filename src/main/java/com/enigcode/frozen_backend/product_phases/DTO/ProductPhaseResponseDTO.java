@@ -15,6 +15,7 @@ public class ProductPhaseResponseDTO {
     private Long id;
     private Phase phase;
     private Double inputMaterials;
+    private Double input;
     private Double output;
     private MeasurementUnit outputUnit;
     private Double estimatedTime;

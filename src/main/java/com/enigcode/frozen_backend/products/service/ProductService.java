@@ -9,7 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductService {
-    ProductResponseDTO saveProduct(ProductCreateDTO productCreateDTO);
+    ProductResponseDTO createProduct(ProductCreateDTO productCreateDTO);
     ProductResponseDTO updateProduct(Long id, ProductUpdateDTO productUpdateDTO);
     ProductResponseDTO toggleActive(Long id);
     Page<ProductResponseDTO> findAll(ProductFilterDTO filterDTO, Pageable pageable);

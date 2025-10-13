@@ -16,8 +16,10 @@ public class ProductPhaseCreateDTO {
     @NotNull(message = "Se requiere un id de producto")
     private Long productId;
 
-    @NotNull(message = "Se requiere asignar una fase")
-    private Phase phase;
+    @NotNull(message = "Se requiere asignar una cantidad de output esperado")
+    @DecimalMin(value = "0.0")
+    private Double input;
+
 
     @NotNull(message = "Se requiere asignar una cantidad de output esperado")
     @DecimalMin(value = "0.0")

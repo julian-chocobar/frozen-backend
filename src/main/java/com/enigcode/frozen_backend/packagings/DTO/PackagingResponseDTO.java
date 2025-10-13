@@ -1,5 +1,6 @@
 package com.enigcode.frozen_backend.packagings.DTO;
 
+import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import lombok.*;
 
 @Getter
@@ -10,6 +11,7 @@ import lombok.*;
 public class PackagingResponseDTO {
     private Long id;
     private String name;
+    private MeasurementUnit measurementUnit;
     private Double quantity;
     private Boolean isActive;
 }

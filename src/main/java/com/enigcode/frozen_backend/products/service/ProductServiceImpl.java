@@ -1,5 +1,9 @@
 package com.enigcode.frozen_backend.products.service;
 
+import com.enigcode.frozen_backend.packagings.model.Packaging;
+import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
+import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -7,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
 import com.enigcode.frozen_backend.products.specification.ProductSpecification;
@@ -23,19 +28,41 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.Resource
 public class ProductServiceImpl implements ProductService {
 
     final ProductRepository productRepository;
+    final PackagingRepository packagingRepository;
     final ProductMapper productMapper;
 
     @Override
-    public ProductResponseDTO saveProduct(ProductCreateDTO productCreateDTO) {
-        Product product = productMapper.toEntity(productCreateDTO);
-        product.setCreationDate(OffsetDateTime.now(ZoneOffset.UTC));
-        product.setIsActive(Boolean.TRUE);
+    @Transactional
+    public ProductResponseDTO createProduct(ProductCreateDTO productCreateDTO) {
+        Packaging packaging = packagingRepository.findById(productCreateDTO.getPackagingStandardID())
+                .orElseThrow(() -> new ResourceNotFoundException("Packaging no encontrado con ID: "
+                        + productCreateDTO.getPackagingStandardID()));
 
-        Product savedProduct = productRepository.save(product);
+        OffsetDateTime dateNow = OffsetDateTime.now();
+        Product product = Product.builder()
+                .name(productCreateDTO.getName())
+                .packaging(packaging)
+                .isActive(Boolean.TRUE)
+                .isReady(Boolean.FALSE)
+                .isAlcoholic(productCreateDTO.getIsAlcoholic())
+                .creationDate(dateNow)
+                .build();
 
-        Product finalProduct = productRepository.saveAndFlush(savedProduct);
+        // Se le asigna una ProductPhase incompleto a cada producto
+        List<ProductPhase> phases = product.getApplicablePhases()
+                .stream()
+                .map(phase -> ProductPhase.builder()
+                        .product(product)
+                        .phase(phase)
+                        .isReady(Boolean.FALSE)
+                        .creationDate(dateNow)
+                        .build())
+                .toList();
+        product.setPhases(phases);
 
-        return productMapper.toResponseDto(finalProduct);
+        Product savedProduct = productRepository.saveAndFlush(product);
+
+        return productMapper.toResponseDto(savedProduct);
     }
 
     @Override

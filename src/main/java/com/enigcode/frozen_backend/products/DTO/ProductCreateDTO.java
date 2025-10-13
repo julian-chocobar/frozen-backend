@@ -17,9 +17,6 @@ public class ProductCreateDTO {
     @NotNull(message =  "Se debe asignar un nombre al producto")
     private String name;
 
-    @NotNull(message =  "Se debe asignar una unidad de medida al producto")
-    private MeasurementUnit measurementUnit;
-
     @NotNull(message =  "Se debe asignar un alcoholismo al producto")
     private Boolean isAlcoholic;
 
