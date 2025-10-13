@@ -1,0 +1,29 @@
+package com.enigcode.frozen_backend.products.specification;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.enigcode.frozen_backend.products.model.Product;
+import com.enigcode.frozen_backend.products.DTO.ProductFilterDTO;
+
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
+
+public class ProductSpecification {
+    public static Specification<Product> createFilter(ProductFilterDTO filterDTO) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (filterDTO.getName() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("name"), filterDTO.getName()));
+            }
+            if (filterDTO.getIsActive() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isActive"), filterDTO.getIsActive()));
+            }
+            if (filterDTO.getIsAlcoholic() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isAlcoholic"), filterDTO.getIsAlcoholic()));
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+}
