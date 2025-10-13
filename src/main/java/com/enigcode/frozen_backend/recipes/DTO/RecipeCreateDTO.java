@@ -11,13 +11,13 @@ import lombok.*;
 @Builder
 public class RecipeCreateDTO {
 
-    @NotNull
+    @NotNull(message = "Se requiere un id de product phase")
     private Long productPhaseId;
 
-    @NotNull
+    @NotNull(message = "Se requiere un id de material")
     private Long materialID;
 
-    @NotNull
+    @NotNull(message = "Se requiere asignar una cantidad de material")
     @DecimalMin(value = "0.0")
     private Double quantity;
 }
