@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingCreateDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingResponseDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO;
+import com.enigcode.frozen_backend.packagings.DTO.PackagingUpdateDTO;
 
 public interface PackagingService {
     PackagingResponseDTO createPackaging(PackagingCreateDTO packagingCreateDTO);
@@ -15,4 +16,5 @@ public interface PackagingService {
     Page<PackagingResponseDTO> findAll(Pageable pageable);
     PackagingResponseDTO getPackaging(Long id);
     List<PackagingSimpleResponseDTO> getActivePackagingList();
+    PackagingResponseDTO updatePackaging(Long id, PackagingUpdateDTO packagingUpdateDTO);
 }

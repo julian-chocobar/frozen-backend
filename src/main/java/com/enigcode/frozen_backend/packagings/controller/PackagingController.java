@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingCreateDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingResponseDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO;
+import com.enigcode.frozen_backend.packagings.DTO.PackagingUpdateDTO;
 import com.enigcode.frozen_backend.packagings.service.PackagingService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -79,7 +80,16 @@ public class PackagingController {
     }
 
 
-
+    @Operation(
+        summary = "Modificar packaging",
+        description = "Modifica un packaging en especifico segun el id "
+    )
+    @PatchMapping("/{id}")
+    public ResponseEntity<PackagingResponseDTO> updatePackaging(@PathVariable Long id,
+         @Valid @RequestBody PackagingUpdateDTO packagingUpdateDTO) {
+        PackagingResponseDTO packagingResponseDTO = packagingService.updatePackaging(id, packagingUpdateDTO);
+        return new ResponseEntity<>(packagingResponseDTO, HttpStatus.OK);
+    }
 
 
 

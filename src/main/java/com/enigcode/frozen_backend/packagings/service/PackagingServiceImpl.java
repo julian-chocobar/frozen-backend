@@ -1,8 +1,10 @@
 package com.enigcode.frozen_backend.packagings.service;
 
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingCreateDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingResponseDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO;
+import com.enigcode.frozen_backend.packagings.DTO.PackagingUpdateDTO;
 import com.enigcode.frozen_backend.packagings.mapper.PackagingMapper;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
@@ -56,5 +58,18 @@ public class PackagingServiceImpl implements PackagingService{
     @Override
     public List<PackagingSimpleResponseDTO> getActivePackagingList() {
         return List.of();
+    }
+
+    @Override
+    public PackagingResponseDTO updatePackaging(Long id,@Valid PackagingUpdateDTO packagingUpdateDTO) {
+        Packaging originalPackaging = packagingRepository.findById(id)
+                        .orElseThrow(()-> new ResourceNotFoundException("No se encontro packaging con id "+ id));
+
+        Packaging updatedPackaging = packagingMapper.partialUpdate(packagingUpdateDTO, originalPackaging);
+       
+        Packaging savedPackaging = packagingRepository.save(updatedPackaging);
+
+
+        return packagingMapper.toResponseDto(savedPackaging);
     }
 }
