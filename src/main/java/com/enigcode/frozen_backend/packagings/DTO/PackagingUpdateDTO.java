@@ -2,7 +2,6 @@ package com.enigcode.frozen_backend.packagings.DTO;
 
 import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Getter

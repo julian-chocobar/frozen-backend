@@ -43,4 +43,8 @@ public class Packaging {
     @NotNull
     private OffsetDateTime creationDate;
 
+     public void toggleActive(){
+        this.isActive = !this.isActive;
+    }
+
 }

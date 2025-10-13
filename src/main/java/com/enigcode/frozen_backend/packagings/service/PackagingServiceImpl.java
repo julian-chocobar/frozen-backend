@@ -42,7 +42,14 @@ public class PackagingServiceImpl implements PackagingService{
 
     @Override
     public PackagingResponseDTO toggleActive(Long id) {
-        return null;
+        Packaging packaging = packagingRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Packaging no encontrado con ID: " + id));
+        
+        packaging.toggleActive();
+
+        Packaging savedPackaging = packagingRepository.save(packaging);
+
+        return packagingMapper.toResponseDto(savedPackaging);
     }
 
     @Override
