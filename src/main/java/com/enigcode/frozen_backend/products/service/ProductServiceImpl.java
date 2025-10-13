@@ -71,6 +71,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public ProductResponseDTO markAsReady(Long id) {
+        return null;
+    }
+
+    @Override
     public ProductResponseDTO updateProduct(Long id, ProductUpdateDTO productUpdateDTO) {
         Product originalProduct = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product no encontrado con ID: " + id));

@@ -8,10 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/products")
@@ -30,4 +27,16 @@ public class ProductController {
 
         return new ResponseEntity<>(productResponseDTO, HttpStatus.OK);
     }
+
+    @Operation(
+            summary = "Marcar producto como Listo",
+            description = "Cambia el estado del producto como ready haciendo que este disponible para produccion"
+    )
+    @PatchMapping("/{id}")
+    public ResponseEntity<ProductResponseDTO> markAsReady(@PathVariable Long id){
+        ProductResponseDTO productResponseDTO = productService.markAsReady(id);
+
+        return new ResponseEntity<>(productResponseDTO, HttpStatus.OK);
+    }
+
 }
