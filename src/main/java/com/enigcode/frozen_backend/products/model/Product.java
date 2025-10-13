@@ -42,7 +42,7 @@ public class Product {
             fetch = FetchType.LAZY
     )
     @OrderBy("id ASC")
-    private List<ProductPhase> phases = new ArrayList<>();
+    private List<ProductPhase> phases;
 
     @Column(name = "is_active")
     @NotNull

@@ -30,7 +30,7 @@ public class Packaging {
     private Double quantity;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "measurementUnit")
+    @Column(name = "measurement_unit")
     @NotNull
     private MeasurementUnit measurementUnit;
 

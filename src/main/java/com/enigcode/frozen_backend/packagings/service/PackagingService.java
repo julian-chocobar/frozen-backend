@@ -10,7 +10,7 @@ import com.enigcode.frozen_backend.packagings.DTO.PackagingResponseDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO;
 
 public interface PackagingService {
-    PackagingResponseDTO savePackaging(PackagingCreateDTO packagingCreateDTO);
+    PackagingResponseDTO createPackaging(PackagingCreateDTO packagingCreateDTO);
     PackagingResponseDTO toggleActive(Long id);
     Page<PackagingResponseDTO> findAll(Pageable pageable);
     PackagingResponseDTO getPackaging(Long id);

@@ -32,7 +32,8 @@ public class PackagingController {
     @PostMapping
     public ResponseEntity<PackagingResponseDTO> createPackaging(
             @Valid @RequestBody PackagingCreateDTO packagingCreateDTO){
-        PackagingResponseDTO packagingResponseDTO = packagingService.savePackaging(packagingCreateDTO);
+        PackagingResponseDTO packagingResponseDTO = packagingService.createPackaging(packagingCreateDTO);
+
         return new ResponseEntity<>(packagingResponseDTO,HttpStatus.CREATED);
     }
 

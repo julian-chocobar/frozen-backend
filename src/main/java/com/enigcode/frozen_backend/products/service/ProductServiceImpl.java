@@ -31,6 +31,11 @@ public class ProductServiceImpl implements ProductService {
     final PackagingRepository packagingRepository;
     final ProductMapper productMapper;
 
+    /**
+     * Creacion de producto no listo para produccion donde se asignan fases vacias segun si es alcoholica
+     * @param productCreateDTO
+     * @return
+     */
     @Override
     @Transactional
     public ProductResponseDTO createProduct(ProductCreateDTO productCreateDTO) {
