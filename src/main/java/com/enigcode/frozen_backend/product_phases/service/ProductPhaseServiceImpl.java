@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ProductPhaseServiceImpl {
+public class ProductPhaseServiceImpl implements ProductPhaseService {
 
     final ProductPhaseRepository productPhaseRepository;
     final ProductRepository productRepository;
