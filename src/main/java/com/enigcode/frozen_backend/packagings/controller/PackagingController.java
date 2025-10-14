@@ -48,6 +48,17 @@ public class PackagingController {
     }
 
     @Operation(
+            summary = "Obtener empaque",
+            description = "Obtiene un empaque a partir de su id"
+    )
+    @GetMapping("/{id}")
+    public ResponseEntity<PackagingResponseDTO> getPackaging(@PathVariable Long id){
+        PackagingResponseDTO packagingResponseDTO = packagingService.getPackaging(id);
+
+        return new ResponseEntity<>(packagingResponseDTO,HttpStatus.OK);
+    }
+
+    @Operation(
             summary = "Obtener empaques",
             description = "Obtiene todos los empaques con paginación y filtros")
     @GetMapping

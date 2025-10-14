@@ -20,7 +20,7 @@ public interface PackagingMapper {
 
     PackagingResponseDTO toResponseDto(Packaging packaging);
 
-    PackagingSimpleResponseDTO tSimpleResponseDTO(Packaging packaging);
+    PackagingSimpleResponseDTO toSimpleResponseDTO(Packaging packaging);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Packaging partialUpdate(PackagingUpdateDTO packagingUpdateDTO, @MappingTarget Packaging packaging);

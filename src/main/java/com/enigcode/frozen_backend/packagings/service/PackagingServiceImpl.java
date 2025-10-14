@@ -8,9 +8,12 @@ import com.enigcode.frozen_backend.packagings.DTO.PackagingUpdateDTO;
 import com.enigcode.frozen_backend.packagings.mapper.PackagingMapper;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
+
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +33,7 @@ public class PackagingServiceImpl implements PackagingService{
      * @return PackagingResponseDTO
      */
     @Override
+    @Transactional
     public PackagingResponseDTO createPackaging(@Valid PackagingCreateDTO packagingCreateDTO) {
         Packaging packaging = packagingMapper.toEntity(packagingCreateDTO);
         packaging.setCreationDate(OffsetDateTime.now());
@@ -40,7 +44,13 @@ public class PackagingServiceImpl implements PackagingService{
         return packagingMapper.toResponseDto(savedPackaging);
     }
 
+    /**
+     * Alterna el estado del paquete 
+     * @param id
+     * @return PackagingResponseDTO
+     */
     @Override
+    @Transactional
     public PackagingResponseDTO toggleActive(Long id) {
         Packaging packaging = packagingRepository.findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Packaging no encontrado con ID: " + id));
@@ -53,21 +63,55 @@ public class PackagingServiceImpl implements PackagingService{
     }
 
     @Override
+    @Transactional
     public Page<PackagingResponseDTO> findAll(Pageable pageable) {
-        return null;
+        Pageable pageRequest = PageRequest.of(
+            pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort());
+        Page<Packaging> packagings = packagingRepository.findAll(pageRequest);
+
+        return packagings.map(packagingMapper::toResponseDto);
     }
 
+    /**
+     * Funcion para mostrar un paquete especifico segun id
+     * 
+     * @param id
+     * @retutn Vista detallada de los elementos del paquete
+     */
     @Override
+    @Transactional
     public PackagingResponseDTO getPackaging(Long id) {
-        return null;
+        Packaging packaging = packagingRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Packaging no encontrado con ID: " + id));
+                
+        return packagingMapper.toResponseDto(packaging);
     }
 
+     /**
+     * Funcion para mostrar a todos los paquetes activos
+     *
+     * @retutn Vista detallada de los paquetes activos
+     */
     @Override
+    @Transactional
     public List<PackagingSimpleResponseDTO> getActivePackagingList() {
-        return List.of();
+
+        List<PackagingSimpleResponseDTO> activePackagings = packagingRepository.findAll().stream()
+            .filter(packaging -> Boolean.TRUE.equals(packaging.getIsActive())).map(packagingMapper :: toSimpleResponseDTO).toList();
+               
+        return activePackagings;
     }
 
+    /**
+     * Funcion que cambia ciertos parametros de un paquete preexistente
+     * @param id
+     * @param packagingUpdateDTO
+     * @return PackagingResponseDTO
+     */
     @Override
+    @Transactional
     public PackagingResponseDTO updatePackaging(Long id,@Valid PackagingUpdateDTO packagingUpdateDTO) {
         Packaging originalPackaging = packagingRepository.findById(id)
                         .orElseThrow(()-> new ResourceNotFoundException("No se encontro packaging con id "+ id));
