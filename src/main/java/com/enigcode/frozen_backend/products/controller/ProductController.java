@@ -60,4 +60,13 @@ public class ProductController {
 
         return new ResponseEntity<>(productResponseDTO, HttpStatus.CREATED);
     }
+
+    @Operation(summary = "Mostrar información producto",
+            description = "Muestra información de un producto en especifico")
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDTO> getProduct(@PathVariable Long id){
+        ProductResponseDTO productResponseDTO = productService.getProduct(id);
+
+        return new ResponseEntity<>(productResponseDTO,HttpStatus.OK);
+    }
 }

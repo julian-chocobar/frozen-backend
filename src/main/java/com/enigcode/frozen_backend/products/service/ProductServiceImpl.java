@@ -199,6 +199,11 @@ public class ProductServiceImpl implements ProductService {
         return products.map(productMapper::toResponseDto);
     }
 
+    /**
+     * Funcion que devuelve un producto a partir de una id
+     * @param id
+     * @return ProductResponseDTO
+     */
     @Override
     @Transactional
     public ProductResponseDTO getProduct(Long id) {
