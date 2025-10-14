@@ -1,7 +1,6 @@
 package com.enigcode.frozen_backend.product_phases.DTO;
 
 import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
-import com.enigcode.frozen_backend.product_phases.model.Phase;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -16,18 +15,14 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class ProductPhaseCreateDTO {
-
     @NotNull(message = "Se requiere un id de producto")
     private Long productId;
 
-    @NotNull(message = "Se requiere indicar la fase de produccion")
-    private Phase phase;
-
-    @NotNull(message = "Se requiere asignar una cantidad de input")
+    @NotNull(message = "Se requiere asignar una cantidad de output esperado")
     @DecimalMin(value = "0.0")
     private Double input;
 
-    @NotNull(message = "Se requiere asignar una cantidad de output")
+    @NotNull(message = "Se requiere asignar una cantidad de output esperado")
     @DecimalMin(value = "0.0")
     private Double output;
 
