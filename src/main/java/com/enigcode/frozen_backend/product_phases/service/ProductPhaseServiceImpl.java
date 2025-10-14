@@ -1,8 +1,8 @@
 package com.enigcode.frozen_backend.product_phases.service;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
-import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseCreateDTO;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseResponseDTO;
+import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseUpdateDTO;
 import com.enigcode.frozen_backend.product_phases.mapper.ProductPhaseMapper;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.product_phases.repository.ProductPhaseRepository;
@@ -14,7 +14,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,16 +27,13 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
 
     @Override
     @Transactional
-    public ProductPhaseResponseDTO createProductPhase(ProductPhaseCreateDTO productPhaseCreateDTO) {
-        Product product = productRepository.findById(productPhaseCreateDTO.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product no encontrado con ID: " + productPhaseCreateDTO.getProductId()));
+    public ProductPhaseResponseDTO updateProductPhase(Long id, ProductPhaseUpdateDTO productPhaseUpdateDTO) {
+        ProductPhase productPhase = productPhaseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ProductPhase no encontrado con ID: " + id));
 
-        ProductPhase productPhase = productPhaseMapper.toEntity(productPhaseCreateDTO);
-        productPhase.setProduct(product);
-        productPhase.setIsReady(Boolean.FALSE);
-        productPhase.setCreationDate(OffsetDateTime.now());
+        productPhaseMapper.partialUpdate(productPhaseUpdateDTO, productPhase);
 
-        ProductPhase savedProductPhase = productPhaseRepository.saveAndFlush(productPhase);
+        ProductPhase savedProductPhase = productPhaseRepository.save(productPhase);
         return productPhaseMapper.toResponseDto(savedProductPhase);
     }
 

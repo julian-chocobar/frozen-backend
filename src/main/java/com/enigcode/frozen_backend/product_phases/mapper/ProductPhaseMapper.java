@@ -1,12 +1,15 @@
 package com.enigcode.frozen_backend.product_phases.mapper;
 
 import com.enigcode.frozen_backend.common.mapper.GlobalMapperConfig;
-import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseCreateDTO;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseResponseDTO;
+import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseUpdateDTO;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(config =GlobalMapperConfig.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ProductPhaseMapper {
@@ -15,9 +18,6 @@ public interface ProductPhaseMapper {
     @Mapping(target = "estimatedTime", source = "estimatedHours")
     ProductPhaseResponseDTO toResponseDto(ProductPhase productPhase);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "product", ignore = true)
-    @Mapping(target = "creationDate", ignore = true)
-    @Mapping(target = "isReady", ignore = true)
-    ProductPhase toEntity(ProductPhaseCreateDTO productPhaseCreateDTO);
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void partialUpdate(ProductPhaseUpdateDTO productPhaseUpdateDTO, @MappingTarget ProductPhase productPhase);
 }

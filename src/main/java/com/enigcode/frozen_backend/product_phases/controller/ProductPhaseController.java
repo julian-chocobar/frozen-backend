@@ -1,7 +1,7 @@
 package com.enigcode.frozen_backend.product_phases.controller;
 
-import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseCreateDTO;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseResponseDTO;
+import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseUpdateDTO;
 import com.enigcode.frozen_backend.product_phases.service.ProductPhaseService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,14 +31,15 @@ public class ProductPhaseController {
     final ProductPhaseService productPhaseService;
 
     @Operation(
-            summary = "Registrar fase de produccion",
-            description = "Crea una nueva fase de produccion y la asigna a un producto"
+            summary = "Modificar fase de produccion",
+            description = "Actualiza campos seleccionados de una fase de produccion"
     )
-    @PostMapping
-    public ResponseEntity<ProductPhaseResponseDTO> createProductPhase(
-            @Valid @RequestBody ProductPhaseCreateDTO productPhaseCreateDTO) {
-        ProductPhaseResponseDTO productPhaseResponseDTO = productPhaseService.createProductPhase(productPhaseCreateDTO);
-        return new ResponseEntity<>(productPhaseResponseDTO, HttpStatus.CREATED);
+    @PatchMapping("/{id}")
+    public ResponseEntity<ProductPhaseResponseDTO> updateProductPhase(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductPhaseUpdateDTO productPhaseUpdateDTO) {
+        ProductPhaseResponseDTO productPhaseResponseDTO = productPhaseService.updateProductPhase(id, productPhaseUpdateDTO);
+        return new ResponseEntity<>(productPhaseResponseDTO, HttpStatus.OK);
     }
 
     @Operation(

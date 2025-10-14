@@ -1,7 +1,7 @@
 package com.enigcode.frozen_backend.product_phases.service;
 
-import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseCreateDTO;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseResponseDTO;
+import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseUpdateDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface ProductPhaseService {
 
-    ProductPhaseResponseDTO createProductPhase(ProductPhaseCreateDTO productPhaseCreateDTO);
+    ProductPhaseResponseDTO updateProductPhase(Long id, ProductPhaseUpdateDTO productPhaseUpdateDTO);
 
     Page<ProductPhaseResponseDTO> findAll(Pageable pageable);
 
