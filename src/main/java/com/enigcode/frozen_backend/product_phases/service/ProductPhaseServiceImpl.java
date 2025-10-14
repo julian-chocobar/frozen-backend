@@ -32,6 +32,7 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
                 .orElseThrow(() -> new ResourceNotFoundException("ProductPhase no encontrado con ID: " + id));
 
         productPhaseMapper.partialUpdate(productPhaseUpdateDTO, productPhase);
+        productPhase.setIsReady(Boolean.TRUE);
 
         ProductPhase savedProductPhase = productPhaseRepository.save(productPhase);
         return productPhaseMapper.toResponseDto(savedProductPhase);
