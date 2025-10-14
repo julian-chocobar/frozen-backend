@@ -11,6 +11,5 @@ import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 public class ProductUpdateDTO {
     private String name;
     private Long packagingStandardID;
-    private MeasurementUnit measurementUnit;
     private Boolean isAlcoholic;
 }

@@ -38,7 +38,7 @@ public class Product {
     @OneToMany(
             mappedBy = "product",
             cascade = CascadeType.ALL,
-            orphanRemoval = false,
+            orphanRemoval = true,
             fetch = FetchType.LAZY
     )
     @OrderBy("id ASC")
@@ -83,5 +83,9 @@ public class Product {
             phases.add(7, Phase.DESALCOHOLIZACION);
         }
         return phases;
+    }
+
+    public void markAsReady() {
+        this.isReady = Boolean.TRUE;
     }
 }
