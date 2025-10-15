@@ -32,3 +32,6 @@ VALUES
     (13, 'YST-002', 'Levadura Lager W-34/70', 3, 'Fermentis', 9.50, 40.0, 'KG', 8.0, true, NOW(), NOW()),
     (14, 'CLN-001', 'Limpiador PBW', 4, 'Five Star', 12.00, 25.0, 'KG', 5.0, true, NOW(), NOW()),
     (15, 'SAN-001', 'Sanitizador Star San', 4, 'Five Star', 15.00, 20.0, 'LT', 5.0, true, NOW(), NOW());
+    
+-- ...inserciones manuales...
+SELECT setval('materials_seq', (SELECT MAX(id) FROM materials));
