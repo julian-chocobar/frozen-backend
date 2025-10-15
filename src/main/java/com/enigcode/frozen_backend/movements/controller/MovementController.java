@@ -48,7 +48,7 @@ public class MovementController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getMovements(
             MovementFilterDTO filterDTO,
-            @PageableDefault(size = 10, sort = "creationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 10, sort = "realizationDate", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<MovementResponseDTO> pageResponse = movementService.findAll(filterDTO, pageable);
 
         // Metadata de la página para el frontend
