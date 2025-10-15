@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,8 +41,12 @@ public class RecipeServiceImpl implements RecipeService{
         Material material = materialRepository.findById(recipeCreateDTO.getMaterialID())
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado" + recipeCreateDTO.getMaterialID()));
 
+        if(!productPhase.getRequiredMaterials().contains(material.getType()))
+            throw new BadRequestException("El tipo de material "+material.getType()+" no esta permitido en la fase "+productPhase.getPhase());
+
         recipe.setProductPhase(productPhase);
         recipe.setMaterial(material);
+
 
         Recipe savedRecipe = recipeRepository.saveAndFlush(recipe);
 
