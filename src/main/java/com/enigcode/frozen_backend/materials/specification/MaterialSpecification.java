@@ -18,14 +18,20 @@ public class MaterialSpecification {
     public static Specification<Material> createFilter(MaterialFilterDTO filterDTO) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            if (filterDTO.getName() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("name"), filterDTO.getName()));
+            if (filterDTO.getName() != null && !filterDTO.getName().trim().isEmpty()) {
+                String searchTerm = "%" + filterDTO.getName().toLowerCase() + "%";
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("name")),
+                        searchTerm));
             }
-            if (filterDTO.getSupplier() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("supplier"), filterDTO.getSupplier()));
+            if (filterDTO.getSupplier() != null && !filterDTO.getSupplier().trim().isEmpty()) {
+                String searchTerm = "%" + filterDTO.getSupplier().toLowerCase() + "%";
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("supplier")),
+                        searchTerm));
             }
             if (filterDTO.getType() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("category"), filterDTO.getType()));
+                predicates.add(criteriaBuilder.equal(root.get("type"), filterDTO.getType()));
             }
             if (filterDTO.getIsActive() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("isActive"), filterDTO.getIsActive()));

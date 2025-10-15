@@ -21,7 +21,7 @@ public class MaterialDetailDTO {
     private Double stock;
     private MeasurementUnit unitMeasurement;
     private Double threshold;
-    private boolean is_below_threshold;
+    private Boolean isBelowThreshold;
     private OffsetDateTime creationDate;
     private OffsetDateTime lastUpdateDate;
 }

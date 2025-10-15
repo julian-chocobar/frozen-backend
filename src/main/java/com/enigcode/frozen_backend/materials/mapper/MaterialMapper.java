@@ -1,4 +1,5 @@
 package com.enigcode.frozen_backend.materials.mapper;
+
 import com.enigcode.frozen_backend.common.mapper.GlobalMapperConfig;
 import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
 import com.enigcode.frozen_backend.materials.DTO.MaterialDetailDTO;
@@ -9,18 +10,18 @@ import org.mapstruct.*;
 
 @Mapper(config = GlobalMapperConfig.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface MaterialMapper {
-    @Mapping( target = "is_below_threshold",
-        expression = "java(material.getStock() != null && material.getThreshold() != null " +
-                "&& material.getStock() <= material.getThreshold())" )
-    MaterialDetailDTO toDetailDto(Material material);
+        @Mapping(target = "isBelowThreshold", expression = "java(material.getStock() != null && material.getThreshold() != null "
+                        +
+                        "&& material.getStock() <= material.getThreshold())")
+        MaterialDetailDTO toDetailDto(Material material);
 
-    @Mapping( target = "is_below_threshold",
-            expression = "java(material.getStock() != null && material.getThreshold() != null " +
-                    "&& material.getStock() <= material.getThreshold())" )
-    MaterialResponseDTO toResponseDto(Material material); 
-     
-    Material toEntity(MaterialCreateDTO materialCreateDTO);
+        @Mapping(target = "isBelowThreshold", expression = "java(material.getStock() != null && material.getThreshold() != null "
+                        +
+                        "&& material.getStock() <= material.getThreshold())")
+        MaterialResponseDTO toResponseDto(Material material);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    Material partialUpdate(MaterialUpdateDTO materialupdateDTO, @MappingTarget Material material);
+        Material toEntity(MaterialCreateDTO materialCreateDTO);
+
+        @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+        Material partialUpdate(MaterialUpdateDTO materialupdateDTO, @MappingTarget Material material);
 }
