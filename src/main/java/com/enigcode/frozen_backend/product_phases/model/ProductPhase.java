@@ -1,6 +1,5 @@
 package com.enigcode.frozen_backend.product_phases.model;
 
-import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.materials.model.MaterialType;
 import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import com.enigcode.frozen_backend.products.model.Product;
@@ -10,7 +9,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,5 +76,12 @@ public class ProductPhase {
 
     public List<MaterialType> getRequiredMaterials(){
         return REQUIRED_MATERIALS.getOrDefault(this.getPhase(), List.of());
+    }
+
+    public boolean isComplete() {
+        return this.getInput() != null
+                && this.getOutput() != null
+                && this.getOutputUnit() != null
+                && this.getEstimatedHours() != null;
     }
 }

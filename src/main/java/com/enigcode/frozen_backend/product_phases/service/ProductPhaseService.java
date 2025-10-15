@@ -16,4 +16,6 @@ public interface ProductPhaseService {
     ProductPhaseResponseDTO getProductPhase(Long id);
 
     List<ProductPhaseResponseDTO> getByProduct(Long productId);
+
+    ProductPhaseResponseDTO markAsReady(Long id);
 }

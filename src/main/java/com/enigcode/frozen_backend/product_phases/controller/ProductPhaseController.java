@@ -43,6 +43,17 @@ public class ProductPhaseController {
     }
 
     @Operation(
+            summary = "Marcar producto como Listo",
+            description = "Cambia el estado del producto como ready haciendo que este disponible para produccion"
+    )
+    @PatchMapping("/{id}/mark-ready")
+    public ResponseEntity<ProductPhaseResponseDTO> markAsReady(@PathVariable Long id){
+        ProductPhaseResponseDTO productPhaseResponseDTO = productPhaseService.markAsReady(id);
+
+        return new ResponseEntity<>(productPhaseResponseDTO, HttpStatus.OK);
+    }
+
+    @Operation(
             summary = "Obtener fases de produccion",
             description = "Obtiene todas las fases de produccion con paginacion"
     )

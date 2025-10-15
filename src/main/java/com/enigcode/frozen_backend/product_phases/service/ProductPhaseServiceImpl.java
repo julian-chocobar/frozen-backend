@@ -1,14 +1,17 @@
 package com.enigcode.frozen_backend.product_phases.service;
 
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+import com.enigcode.frozen_backend.materials.model.MaterialType;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseResponseDTO;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseUpdateDTO;
 import com.enigcode.frozen_backend.product_phases.mapper.ProductPhaseMapper;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.product_phases.repository.ProductPhaseRepository;
-import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
+import com.enigcode.frozen_backend.recipes.repository.RecipeRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,21 +26,32 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
 
     final ProductPhaseRepository productPhaseRepository;
     final ProductRepository productRepository;
+    final RecipeRepository recipeRepository;
     final ProductPhaseMapper productPhaseMapper;
 
+    /**
+     * Funcion que modifica parcialmente un product phase
+     * @param id
+     * @param productPhaseUpdateDTO
+     * @return
+     */
     @Override
     @Transactional
-    public ProductPhaseResponseDTO updateProductPhase(Long id, ProductPhaseUpdateDTO productPhaseUpdateDTO) {
+    public ProductPhaseResponseDTO updateProductPhase(Long id, @Valid ProductPhaseUpdateDTO productPhaseUpdateDTO) {
         ProductPhase productPhase = productPhaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ProductPhase no encontrado con ID: " + id));
 
         productPhaseMapper.partialUpdate(productPhaseUpdateDTO, productPhase);
-        productPhase.setIsReady(Boolean.TRUE);
 
         ProductPhase savedProductPhase = productPhaseRepository.save(productPhase);
         return productPhaseMapper.toResponseDto(savedProductPhase);
     }
 
+    /**
+     * Funcion que busca y devuelve todas las productphases paginadas
+     * @param pageable
+     * @return
+     */
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     public Page<ProductPhaseResponseDTO> findAll(Pageable pageable) {
@@ -45,6 +59,11 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
         return productPhases.map(productPhaseMapper::toResponseDto);
     }
 
+    /**
+     * Funcion que busca y devuelve product phase en especifico
+     * @param id
+     * @return
+     */
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     public ProductPhaseResponseDTO getProductPhase(Long id) {
@@ -54,6 +73,11 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
         return productPhaseMapper.toResponseDto(productPhase);
     }
 
+    /**
+     * Funcion que devuelve una lista de las fases segun el id del producto
+     * @param productId
+     * @return
+     */
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     public List<ProductPhaseResponseDTO> getByProduct(Long productId) {
@@ -66,5 +90,36 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
         return phases.stream()
                 .map(productPhaseMapper::toResponseDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Funcion que marca como lista a una fase si tiene todos sus campos completos y los materiales minimos requeridos
+     * @param id
+     * @return
+     */
+    @Override
+    public ProductPhaseResponseDTO markAsReady(Long id) {
+        ProductPhase productPhase = productPhaseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ProductPhase no encontrado con ID: " + id));
+
+        if (!productPhase.isComplete())
+            throw new BadRequestException("La fase no puede estar listo debido a que tiene campos requeridos vacíos");
+
+        List<MaterialType> requiredMaterials = productPhase.getRequiredMaterials();
+
+        // Se revisa que no falta ningun material o devuelve una lista con los materiales que faltan
+        if (requiredMaterials != null && !requiredMaterials.isEmpty()) {
+            List<MaterialType> missingMaterials = requiredMaterials.stream()
+                    .filter(type -> !recipeRepository.existsByMaterial_Type(type))
+                    .toList();
+            if (!missingMaterials.isEmpty()) {
+                throw new BadRequestException("Faltan materiales requeridos en las recetas: " + missingMaterials);
+            }
+        }
+
+        productPhase.setIsReady(Boolean.TRUE);
+        ProductPhase savedProductPhase = productPhaseRepository.save(productPhase);
+
+        return productPhaseMapper.toResponseDto(savedProductPhase);
     }
 }

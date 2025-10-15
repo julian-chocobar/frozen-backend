@@ -2,6 +2,7 @@ package com.enigcode.frozen_backend.recipes.service;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.materials.model.Material;
+import com.enigcode.frozen_backend.materials.model.MaterialType;
 import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.product_phases.repository.ProductPhaseRepository;
@@ -41,7 +42,8 @@ public class RecipeServiceImpl implements RecipeService{
         Material material = materialRepository.findById(recipeCreateDTO.getMaterialID())
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado" + recipeCreateDTO.getMaterialID()));
 
-        if(!productPhase.getRequiredMaterials().contains(material.getType()))
+        if(!productPhase.getRequiredMaterials().contains(material.getType())
+                && !material.getType().equals(MaterialType.OTROS))
             throw new BadRequestException("El tipo de material "+material.getType()+" no esta permitido en la fase "+productPhase.getPhase());
 
         recipe.setProductPhase(productPhase);
@@ -53,15 +55,11 @@ public class RecipeServiceImpl implements RecipeService{
         return recipeMapper.toResponseDTO(savedRecipe);
     }
 
-
-
     @Override
     @Transactional
     public RecipeResponseDTO updateRecipe(Long id, RecipeUpdateDTO recipeUpdateDTO){
         return null;
     }
-
-
 
     @Override
     @Transactional
@@ -69,15 +67,11 @@ public class RecipeServiceImpl implements RecipeService{
         return null;
     }
 
-
-
     @Override
     @Transactional
     public RecipeResponseDTO getRecipe(Long id){
         return null;
     }
-
-
 
     @Override
     @Transactional
