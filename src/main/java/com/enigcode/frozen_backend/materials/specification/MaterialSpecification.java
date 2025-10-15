@@ -24,6 +24,12 @@ public class MaterialSpecification {
             if (filterDTO.getSupplier() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("supplier"), filterDTO.getSupplier()));
             }
+            if (filterDTO.getType() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("category"), filterDTO.getType()));
+            }
+            if (filterDTO.getIsActive() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isActive"), filterDTO.getIsActive()));
+            }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }

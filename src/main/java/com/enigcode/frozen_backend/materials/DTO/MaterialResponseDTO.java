@@ -20,4 +20,5 @@ public class MaterialResponseDTO {
     private MeasurementUnit unitMeasurement;
     private Double threshold;
     private boolean is_below_threshold;
+    private boolean is_active;
 }
