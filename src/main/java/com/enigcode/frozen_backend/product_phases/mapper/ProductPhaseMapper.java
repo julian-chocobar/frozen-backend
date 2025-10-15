@@ -14,8 +14,6 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(config =GlobalMapperConfig.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ProductPhaseMapper {
 
-    @Mapping(target = "inputMaterials", source = "input")
-    @Mapping(target = "estimatedTime", source = "estimatedHours")
     ProductPhaseResponseDTO toResponseDto(ProductPhase productPhase);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

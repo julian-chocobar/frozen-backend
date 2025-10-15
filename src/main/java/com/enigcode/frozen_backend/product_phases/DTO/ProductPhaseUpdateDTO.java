@@ -17,8 +17,6 @@ import lombok.Setter;
 @Builder
 public class ProductPhaseUpdateDTO {
 
-    private Phase phase;
-
     @DecimalMin(value = "0.0")
     private Double input;
 
@@ -30,6 +28,4 @@ public class ProductPhaseUpdateDTO {
     @DecimalMin(value = "0.0")
     @JsonAlias({"estimatedTime"})
     private Double estimatedHours;
-
-    private Boolean isReady;
 }
