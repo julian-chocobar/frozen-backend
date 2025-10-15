@@ -15,7 +15,7 @@ public class RecipeCreateDTO {
     private Long productPhaseId;
 
     @NotNull(message = "Se requiere un id de material")
-    private Long materialID;
+    private Long materialId;
 
     @NotNull(message = "Se requiere asignar una cantidad de material")
     @DecimalMin(value = "0.0")

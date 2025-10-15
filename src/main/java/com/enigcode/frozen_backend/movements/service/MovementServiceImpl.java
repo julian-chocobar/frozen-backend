@@ -46,9 +46,9 @@ public class MovementServiceImpl implements MovementService {
         @Override
         @Transactional
         public MovementResponseDTO createMovement(@Valid MovementCreateDTO movementCreateDTO) {
-                Material material = materialRepository.findById(movementCreateDTO.getMaterialID())
+                Material material = materialRepository.findById(movementCreateDTO.getMaterialId())
                                 .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Material no encontrado con ID: " + movementCreateDTO.getMaterialID()));
+                                                "Material no encontrado con ID: " + movementCreateDTO.getMaterialId()));
 
                 if (movementCreateDTO.getType().equals(MovementType.EGRESO) &&
                                 movementCreateDTO.getStock() > material.getStock())

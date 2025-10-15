@@ -10,13 +10,13 @@ import lombok.*;
 @Builder
 public class ProductCreateDTO {
 
-    @NotNull(message =  "Se debe asignar un empaque estandar al producto")
-    private Long packagingStandardID;
+    @NotNull(message = "Se debe asignar un empaque estandar al producto")
+    private Long packagingStandardId;
 
-    @NotNull(message =  "Se debe asignar un nombre al producto")
+    @NotNull(message = "Se debe asignar un nombre al producto")
     private String name;
 
-    @NotNull(message =  "Se debe asignar un alcoholismo al producto")
+    @NotNull(message = "Se debe asignar un alcoholismo al producto")
     private Boolean isAlcoholic;
 
 }

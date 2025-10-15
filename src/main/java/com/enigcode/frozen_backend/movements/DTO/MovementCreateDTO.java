@@ -20,7 +20,7 @@ public class MovementCreateDTO {
     private Double stock;
 
     @NotNull(message = "El movimiento debe estar asociado a un material")
-    private Long materialID;
+    private Long materialId;
 
     @Size(max = 255, message = "El motivo no puede tener mas de 255 caracteres")
     private String reason;

@@ -36,16 +36,18 @@ public class ProductServiceImpl implements ProductService {
     final ProductMapper productMapper;
 
     /**
-     * Creacion de producto no listo para produccion donde se asignan fases vacias segun si es alcoholica
+     * Creacion de producto no listo para produccion donde se asignan fases vacias
+     * segun si es alcoholica
+     * 
      * @param productCreateDTO
      * @return
      */
     @Override
     @Transactional
     public ProductResponseDTO createProduct(@Valid ProductCreateDTO productCreateDTO) {
-        Packaging packaging = packagingRepository.findById(productCreateDTO.getPackagingStandardID())
+        Packaging packaging = packagingRepository.findById(productCreateDTO.getPackagingStandardId())
                 .orElseThrow(() -> new ResourceNotFoundException("Packaging no encontrado con ID: "
-                        + productCreateDTO.getPackagingStandardID()));
+                        + productCreateDTO.getPackagingStandardId()));
 
         OffsetDateTime dateNow = OffsetDateTime.now();
         Product product = Product.builder()
@@ -77,6 +79,7 @@ public class ProductServiceImpl implements ProductService {
     /**
      * Función que marca como listo para produccion a un producto
      * Deben estar listas todas sus fases para que esto se valide
+     * 
      * @param id
      * @return ProductResponseDTO
      */
@@ -90,7 +93,7 @@ public class ProductServiceImpl implements ProductService {
                 .stream()
                 .allMatch(ProductPhase::getIsReady);
 
-        if(!phases_ready)
+        if (!phases_ready)
             throw new BadRequestException("Se requieren completar las fases antes de que el producto este listo");
 
         product.markAsReady();
@@ -102,6 +105,7 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * Funcion que modifica parcialmente un producto
+     * 
      * @param id
      * @param productUpdateDTO
      * @return
@@ -112,13 +116,12 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product no encontrado con ID: " + id));
 
-        if(productUpdateDTO.getName() != null)
+        if (productUpdateDTO.getName() != null)
             product.setName(productUpdateDTO.getName());
-        if(productUpdateDTO.getIsAlcoholic() != null)
-            this.changeAlcoholicType(productUpdateDTO.getIsAlcoholic(),product);
-        if(productUpdateDTO.getPackagingStandardID() != null)
-            this.changePackaging(productUpdateDTO.getPackagingStandardID(), product);
-
+        if (productUpdateDTO.getIsAlcoholic() != null)
+            this.changeAlcoholicType(productUpdateDTO.getIsAlcoholic(), product);
+        if (productUpdateDTO.getPackagingStandardId() != null)
+            this.changePackaging(productUpdateDTO.getPackagingStandardId(), product);
 
         Product savedUpdatedProduct = productRepository.save(product);
 
@@ -126,20 +129,23 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * Cambia el estado de alcoholico de un producto eliminando o agregando la fase de desalcoholizacion
+     * Cambia el estado de alcoholico de un producto eliminando o agregando la fase
+     * de desalcoholizacion
+     * 
      * @param isAlcoholic
      * @param product
      */
     private void changeAlcoholicType(Boolean isAlcoholic, Product product) {
-        if(Objects.equals(isAlcoholic, product.getIsAlcoholic())) return;
+        if (Objects.equals(isAlcoholic, product.getIsAlcoholic()))
+            return;
         product.setIsAlcoholic(isAlcoholic);
 
         Optional<ProductPhase> desalcoholPhase = product.getPhases().stream()
-                .filter(phase-> phase.getPhase() == Phase.DESALCOHOLIZACION)
+                .filter(phase -> phase.getPhase() == Phase.DESALCOHOLIZACION)
                 .findFirst();
 
-        if(!isAlcoholic){
-            if(desalcoholPhase.isEmpty()){
+        if (!isAlcoholic) {
+            if (desalcoholPhase.isEmpty()) {
                 ProductPhase newDesalcoholPhase = ProductPhase.builder()
                         .product(product)
                         .phase(Phase.DESALCOHOLIZACION)
@@ -149,15 +155,16 @@ public class ProductServiceImpl implements ProductService {
 
                 product.getPhases().add(newDesalcoholPhase);
             }
-        }else{
+        } else {
             desalcoholPhase.ifPresent(phase -> {
                 product.getPhases().remove(phase);
             });
-            }
         }
+    }
 
     /**
      * Funcion auxiliar para modificar el packaging de un producto
+     * 
      * @param packagingStandardID
      * @param product
      */
@@ -171,6 +178,7 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * Funcion que altera el estado activo de un producto al contrario
+     * 
      * @param id
      * @return
      */

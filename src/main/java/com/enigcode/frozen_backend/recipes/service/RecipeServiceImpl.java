@@ -24,31 +24,33 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class RecipeServiceImpl implements RecipeService{
+public class RecipeServiceImpl implements RecipeService {
 
     final RecipeRepository recipeRepository;
     final MaterialRepository materialRepository;
     final ProductPhaseRepository productPhaseRepository;
     final RecipeMapper recipeMapper;
 
-    @Override       
+    @Override
     @Transactional
-    public RecipeResponseDTO createRecipe(RecipeCreateDTO recipeCreateDTO){ 
+    public RecipeResponseDTO createRecipe(RecipeCreateDTO recipeCreateDTO) {
         Recipe recipe = recipeMapper.toEntity(recipeCreateDTO);
         recipe.setCreationDate(OffsetDateTime.now());
 
         ProductPhase productPhase = productPhaseRepository.findById(recipeCreateDTO.getProductPhaseId())
-             .orElseThrow(() -> new ResourceNotFoundException("ProductPhase no encontrada" + recipeCreateDTO.getProductPhaseId()));
-        Material material = materialRepository.findById(recipeCreateDTO.getMaterialID())
-                .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado" + recipeCreateDTO.getMaterialID()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "ProductPhase no encontrada" + recipeCreateDTO.getProductPhaseId()));
+        Material material = materialRepository.findById(recipeCreateDTO.getMaterialId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Material no encontrado" + recipeCreateDTO.getMaterialId()));
 
-        if(!productPhase.getRequiredMaterials().contains(material.getType())
+        if (!productPhase.getRequiredMaterials().contains(material.getType())
                 && !material.getType().equals(MaterialType.OTROS))
-            throw new BadRequestException("El tipo de material "+material.getType()+" no esta permitido en la fase "+productPhase.getPhase());
+            throw new BadRequestException("El tipo de material " + material.getType() + " no esta permitido en la fase "
+                    + productPhase.getPhase());
 
         recipe.setProductPhase(productPhase);
         recipe.setMaterial(material);
-
 
         Recipe savedRecipe = recipeRepository.saveAndFlush(recipe);
 
@@ -57,25 +59,25 @@ public class RecipeServiceImpl implements RecipeService{
 
     @Override
     @Transactional
-    public RecipeResponseDTO updateRecipe(Long id, RecipeUpdateDTO recipeUpdateDTO){
+    public RecipeResponseDTO updateRecipe(Long id, RecipeUpdateDTO recipeUpdateDTO) {
         return null;
     }
 
     @Override
     @Transactional
-    public RecipeResponseDTO deleteRecipe(Long id){
+    public RecipeResponseDTO deleteRecipe(Long id) {
         return null;
     }
 
     @Override
     @Transactional
-    public RecipeResponseDTO getRecipe(Long id){
+    public RecipeResponseDTO getRecipe(Long id) {
         return null;
     }
 
     @Override
     @Transactional
-    public List<RecipeResponseDTO> getRecipeList(){
+    public List<RecipeResponseDTO> getRecipeList() {
         return null;
     }
 }
