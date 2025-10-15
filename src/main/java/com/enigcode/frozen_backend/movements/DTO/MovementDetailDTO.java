@@ -1,5 +1,6 @@
 package com.enigcode.frozen_backend.movements.DTO;
 
+import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import lombok.*;
 
@@ -18,6 +19,8 @@ public class MovementDetailDTO {
     private OffsetDateTime realizationDate;
 
     private Double stock;
+
+    private MeasurementUnit unitMeasurement;
 
     private String materialType;
 

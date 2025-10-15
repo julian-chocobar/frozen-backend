@@ -16,5 +16,6 @@ public interface MovementMapper {
     @Mapping(source = "material.id", target = "materialId")
     @Mapping(source = "material.name", target = "materialName")
     @Mapping(source = "material.code", target = "materialCode")
+    @Mapping(source = "material.unitMeasurement", target = "unitMeasurement")
     MovementDetailDTO toDetailDTO(Movement movement);
 }
