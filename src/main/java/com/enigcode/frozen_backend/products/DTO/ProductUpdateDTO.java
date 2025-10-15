@@ -1,7 +1,6 @@
 package com.enigcode.frozen_backend.products.DTO;
 
 import lombok.*;
-import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 
 @Getter
 @Setter

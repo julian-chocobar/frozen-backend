@@ -1,7 +1,6 @@
 package com.enigcode.frozen_backend.product_phases.DTO;
 
 import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
-import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;

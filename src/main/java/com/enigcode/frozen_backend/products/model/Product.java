@@ -4,7 +4,6 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 
 import com.enigcode.frozen_backend.product_phases.model.Phase;

@@ -1,6 +1,5 @@
 package com.enigcode.frozen_backend.products.DTO;
 
-import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
