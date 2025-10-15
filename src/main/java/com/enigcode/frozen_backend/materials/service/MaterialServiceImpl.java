@@ -8,6 +8,8 @@ import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,7 +24,7 @@ import com.enigcode.frozen_backend.materials.model.MaterialType;
 
 @Service
 @RequiredArgsConstructor
-public class MaterialServiceImpl implements MaterialService{
+public class MaterialServiceImpl implements MaterialService {
 
     final MaterialRepository materialRepository;
     final MaterialMapper materialMapper;
@@ -53,6 +55,7 @@ public class MaterialServiceImpl implements MaterialService{
 
     /**
      * Funcion que genera codigo de materiales
+     * 
      * @param type
      * @param id
      * @return devuelve el codigo generado
@@ -64,6 +67,7 @@ public class MaterialServiceImpl implements MaterialService{
 
     /**
      * Funcion que cambia ciertos parametros de un material preexistente
+     * 
      * @param id
      * @param materialUpdateDTO
      * @return MaterialResponseDTO
@@ -74,15 +78,16 @@ public class MaterialServiceImpl implements MaterialService{
         Material originalMaterial = materialRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
 
-        Material updatedMaterial = materialMapper.partialUpdate(materialUpdateDTO,originalMaterial);
+        Material updatedMaterial = materialMapper.partialUpdate(materialUpdateDTO, originalMaterial);
         updatedMaterial.setLastUpdateDate(OffsetDateTime.now(ZoneOffset.UTC));
         Material savedUpdatedMaterial = materialRepository.save(updatedMaterial);
 
-        return materialMapper.toResponseDto(savedUpdatedMaterial );
+        return materialMapper.toResponseDto(savedUpdatedMaterial);
     }
 
     /**
      * Funcion que cambia el estado de un material,
+     * 
      * @param id
      * @return materialResponseDTO
      */
@@ -101,11 +106,11 @@ public class MaterialServiceImpl implements MaterialService{
     /**
      * Busca materiales con paginación y filtros.
      *
-     * @param filterDTO  Criterios de filtrado (opcional)
-     * @param pageable Información de paginación:
-     *                 - page: número de página (0-based)
-     *                 - size: tamaño de página
-     *                 - sort: ordenamiento (ej: creationDate,desc)
+     * @param filterDTO Criterios de filtrado (opcional)
+     * @param pageable  Información de paginación:
+     *                  - page: número de página (0-based)
+     *                  - size: tamaño de página
+     *                  - sort: ordenamiento (ej: creationDate,desc)
      * @return Página de materiales y metadata
      */
     @Override
@@ -120,7 +125,21 @@ public class MaterialServiceImpl implements MaterialService{
     }
 
     /**
+     * Funcion para mostrar una lista simple de materiales (id y nombre)
+     * 
+     * @return Lista con id y nombre de todos los materiales
+     */
+    @Override
+    public List<MaterialSimpleResponseDTO> getMaterialSimpleList() {
+        return materialRepository.findAll()
+                .stream()
+                .map(m -> new MaterialSimpleResponseDTO(m.getId(), m.getName()))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Funcion para mostrar un material especifico segun id
+     * 
      * @param id
      * @return Vista detallada de los elementos del material
      */
