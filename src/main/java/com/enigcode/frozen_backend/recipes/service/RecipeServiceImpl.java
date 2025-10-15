@@ -88,10 +88,25 @@ public class RecipeServiceImpl implements RecipeService {
         return recipeMapper.toResponseDTO(savedRecipe);
     }
 
+
+      /**
+     * Funcion para eliminar una receta especifico segun id
+     * 
+     * @param id
+     * @retutn Id de la receta eliminada
+     */
     @Override
     @Transactional
     public RecipeResponseDTO deleteRecipe(Long id) {
-        return null;
+        Recipe recipe = recipeRepository.findById(id)   
+                .orElseThrow(()-> new ResourceNotFoundException("No se encontro receta con id "+ id));
+
+        if(recipe.getProductPhase().getIsReady())
+            new BadRequestException("No se puede eliminar esta receta por el estado de la fase");
+
+        recipeRepository.delete(recipe);
+
+        return recipeMapper.toResponseDTO(recipe);
     }
 
 

@@ -54,7 +54,7 @@ public class RecipeController {
     @Operation(
         summary = "Eliminar receta",
         description = "Elimina una receta segun su id")
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     public ResponseEntity<RecipeResponseDTO> deleteRecipe(@PathVariable Long id){
         RecipeResponseDTO recipeResponseDTO = recipeService.deleteRecipe(id);
 
