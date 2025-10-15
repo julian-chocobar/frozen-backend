@@ -31,6 +31,11 @@ public class RecipeServiceImpl implements RecipeService {
     final ProductPhaseRepository productPhaseRepository;
     final RecipeMapper recipeMapper;
 
+     /**
+     * Crea una nueva receta en la base de datos segun DTO
+     * @param recipeCreateDTO
+     * @return RecipeResponseDTO
+     */
     @Override
     @Transactional
     public RecipeResponseDTO createRecipe(RecipeCreateDTO recipeCreateDTO) {
@@ -57,10 +62,30 @@ public class RecipeServiceImpl implements RecipeService {
         return recipeMapper.toResponseDTO(savedRecipe);
     }
 
+
+     /**
+     * Funcion que cambia ciertos parametros de una receta preexistente
+     * @param id
+     * @param recipeUpdateDTO
+     * @return RecipeResponseDTO
+     */
     @Override
     @Transactional
     public RecipeResponseDTO updateRecipe(Long id, RecipeUpdateDTO recipeUpdateDTO) {
-        return null;
+        Recipe originalRecipe = recipeRepository.findById(id)
+                        .orElseThrow(()-> new ResourceNotFoundException("No se encontro receta con id "+ id));
+
+        Material material = materialRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Material no encontrado" + recipeUpdateDTO.getMaterialId()));
+        
+        originalRecipe.setMaterial(material);
+        originalRecipe.setQuantity(recipeUpdateDTO.getQuantity().intValue());
+        
+
+        Recipe savedRecipe = recipeRepository.save(originalRecipe);
+
+        return recipeMapper.toResponseDTO(savedRecipe);
     }
 
     @Override
@@ -69,15 +94,33 @@ public class RecipeServiceImpl implements RecipeService {
         return null;
     }
 
+
+    /**
+     * Funcion para mostrar una receta especifico segun id
+     * 
+     * @param id
+     * @retutn Vista detallada de los elementos de la receta
+     */
     @Override
     @Transactional
     public RecipeResponseDTO getRecipe(Long id) {
-        return null;
+        Recipe recipe = recipeRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Receta no encontrado con ID: " + id));
+
+        return recipeMapper.toResponseDTO(recipe);
     }
 
+     /**
+     * Funcion para mostrar a todas las recetas activos
+     *
+     * @retutn Vista detallada de las recetas activos
+     */
     @Override
     @Transactional
     public List<RecipeResponseDTO> getRecipeList() {
-        return null;
+        List<RecipeResponseDTO> activeRecipes = recipeRepository.findAll().stream()
+            .map(recipeMapper :: toResponseDTO).toList();
+
+        return activeRecipes;
     }
 }
