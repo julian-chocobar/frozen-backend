@@ -10,7 +10,9 @@ import lombok.*;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "recipes")
+@Table(name = "recipes", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"id_product_phase", "id_material"}, name = "UK_recipe_phase_material")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,7 +33,7 @@ public class Recipe {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_material")
     @NotNull
-    private Material material;
+    private Material material; 
 
     @NotNull
     @Min(value = 0)
