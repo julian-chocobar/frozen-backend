@@ -7,17 +7,14 @@ import com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingUpdateDTO;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
 @Mapper(config = GlobalMapperConfig.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface PackagingMapper {
 
     Packaging toEntity(PackagingCreateDTO packagingCreateDTO);
 
+    @Mapping(source = "material.name", target = "materialName")
     PackagingResponseDTO toResponseDto(Packaging packaging);
 
     PackagingSimpleResponseDTO toSimpleResponseDTO(Packaging packaging);

@@ -1,6 +1,10 @@
 package com.enigcode.frozen_backend.packagings.service;
 
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+import com.enigcode.frozen_backend.materials.model.Material;
+import com.enigcode.frozen_backend.materials.model.MaterialType;
+import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingCreateDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingResponseDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO;
@@ -26,6 +30,7 @@ public class PackagingServiceImpl implements PackagingService{
 
     final PackagingRepository packagingRepository;
     final PackagingMapper packagingMapper;
+    final MaterialRepository materialRepository;
 
     /**
      * Crea un nuevo packaging en la base de datos segun DTO
@@ -35,7 +40,15 @@ public class PackagingServiceImpl implements PackagingService{
     @Override
     @Transactional
     public PackagingResponseDTO createPackaging(@Valid PackagingCreateDTO packagingCreateDTO) {
+        Material material = materialRepository.findById(packagingCreateDTO.getMaterialId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Material no encontrado con id " + packagingCreateDTO.getMaterialId()));
+
+        if (!material.getType().equals(MaterialType.ENVASE))
+            throw new BadRequestException("El tipo de material debe ser un envase");
+
         Packaging packaging = packagingMapper.toEntity(packagingCreateDTO);
+        packaging.setMaterial(material);
         packaging.setCreationDate(OffsetDateTime.now());
         packaging.setIsActive(Boolean.TRUE);
 
@@ -114,12 +127,20 @@ public class PackagingServiceImpl implements PackagingService{
     @Transactional
     public PackagingResponseDTO updatePackaging(Long id,@Valid PackagingUpdateDTO packagingUpdateDTO) {
         Packaging originalPackaging = packagingRepository.findById(id)
-                        .orElseThrow(()-> new ResourceNotFoundException("No se encontro packaging con id "+ id));
-
+                        .orElseThrow(()-> new ResourceNotFoundException("No se encontró packaging con id "+ id));
         Packaging updatedPackaging = packagingMapper.partialUpdate(packagingUpdateDTO, originalPackaging);
+
+        if(packagingUpdateDTO.getMaterialId() != null
+                && !packagingUpdateDTO.getMaterialId().equals(originalPackaging.getMaterial().getId())) {
+            Material material = materialRepository.findById(packagingUpdateDTO.getMaterialId())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Material no encontrado con id " + packagingUpdateDTO.getMaterialId()));
+            if (!material.getType().equals(MaterialType.ENVASE))
+                throw new BadRequestException("El tipo de material debe ser un envase");
+            originalPackaging.setMaterial(material);
+        }
        
         Packaging savedPackaging = packagingRepository.save(updatedPackaging);
-
 
         return packagingMapper.toResponseDto(savedPackaging);
     }

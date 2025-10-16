@@ -11,9 +11,11 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class PackagingCreateDTO {
-    
     @NotNull
     private String name;
+
+    @NotNull
+    private Long materialId;
 
     @NotNull
     private MeasurementUnit measurementUnit;

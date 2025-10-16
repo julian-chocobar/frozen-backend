@@ -11,6 +11,7 @@ import lombok.*;
 public class PackagingResponseDTO {
     private Long id;
     private String name;
+    private String materialName;
     private MeasurementUnit measurementUnit;
     private Double quantity;
     private Boolean isActive;

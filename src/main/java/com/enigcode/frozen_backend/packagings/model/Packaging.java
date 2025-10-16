@@ -2,6 +2,7 @@ package com.enigcode.frozen_backend.packagings.model;
 
 import java.time.OffsetDateTime;
 
+import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
@@ -24,6 +25,11 @@ public class Packaging {
 
     @NotNull
     private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_material")
+    @NotNull
+    private Material material;
 
     @NotNull
     @DecimalMin(value = "0.0")
