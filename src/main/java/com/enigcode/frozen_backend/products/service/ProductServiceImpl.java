@@ -45,14 +45,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductResponseDTO createProduct(@Valid ProductCreateDTO productCreateDTO) {
-        Packaging packaging = packagingRepository.findById(productCreateDTO.getPackagingStandardId())
-                .orElseThrow(() -> new ResourceNotFoundException("Packaging no encontrado con ID: "
-                        + productCreateDTO.getPackagingStandardId()));
-
         OffsetDateTime dateNow = OffsetDateTime.now();
         Product product = Product.builder()
                 .name(productCreateDTO.getName())
-                .packaging(packaging)
                 .isActive(Boolean.TRUE)
                 .isReady(Boolean.FALSE)
                 .isAlcoholic(productCreateDTO.getIsAlcoholic())
@@ -120,8 +115,6 @@ public class ProductServiceImpl implements ProductService {
             product.setName(productUpdateDTO.getName());
         if (productUpdateDTO.getIsAlcoholic() != null)
             this.changeAlcoholicType(productUpdateDTO.getIsAlcoholic(), product);
-        if (productUpdateDTO.getPackagingStandardId() != null)
-            this.changePackaging(productUpdateDTO.getPackagingStandardId(), product);
 
         Product savedUpdatedProduct = productRepository.save(product);
 
@@ -160,20 +153,6 @@ public class ProductServiceImpl implements ProductService {
                 product.getPhases().remove(phase);
             });
         }
-    }
-
-    /**
-     * Funcion auxiliar para modificar el packaging de un producto
-     * 
-     * @param packagingStandardID
-     * @param product
-     */
-    private void changePackaging(Long packagingStandardID, Product product) {
-        Packaging packaging = packagingRepository.findById(packagingStandardID)
-                .orElseThrow(() -> new ResourceNotFoundException("Packaging no encontrado con ID: "
-                        + packagingStandardID));
-
-        product.setPackaging(packaging);
     }
 
     /**

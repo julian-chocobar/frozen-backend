@@ -33,7 +33,6 @@ public class ProductController {
             summary = "Marcar producto como Listo",
             description = "Cambia el estado del producto como ready haciendo que este disponible para produccion"
     )
-
     @PatchMapping("/{id}/mark-ready")
     public ResponseEntity<ProductResponseDTO> markAsReady(@PathVariable Long id){
         ProductResponseDTO productResponseDTO = productService.markAsReady(id);

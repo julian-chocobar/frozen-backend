@@ -13,10 +13,6 @@ import com.enigcode.frozen_backend.products.model.Product;
 @Mapper(config = GlobalMapperConfig.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ProductMapper {
 
-    @Mapping(source = "packaging.measurementUnit", target = "packagingMeasurementUnit")
-    @Mapping(source = "packaging.name", target = "packagingName")
-    @Mapping(source = "packaging.quantity", target = "packagingQuantity")
     ProductResponseDTO toResponseDto(Product product);
 
-    Product partialUpdate(ProductUpdateDTO productUpdateDTO, @MappingTarget Product product);
 }

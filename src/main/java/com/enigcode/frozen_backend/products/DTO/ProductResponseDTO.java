@@ -14,11 +14,8 @@ import java.time.OffsetDateTime;
 public class ProductResponseDTO {
     private Long id;
     private String name;
-    private MeasurementUnit packagingMeasurementUnit;
     private Boolean isAlcoholic;
     private Boolean isActive;
     private Boolean isReady;
     private OffsetDateTime creationDate;
-    private String packagingName;
-    private Double packagingQuantity;
 }

@@ -9,6 +9,5 @@ import lombok.*;
 @Builder
 public class ProductUpdateDTO {
     private String name;
-    private Long packagingStandardId;
     private Boolean isAlcoholic;
 }

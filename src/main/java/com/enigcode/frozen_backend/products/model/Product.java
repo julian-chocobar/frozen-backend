@@ -29,11 +29,6 @@ public class Product {
     @NotNull
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "packaging_id_standard")
-    @NotNull
-    private Packaging packaging;
-
     @OneToMany(
             mappedBy = "product",
             cascade = CascadeType.ALL,
