@@ -4,8 +4,6 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.enigcode.frozen_backend.packagings.model.Packaging;
-
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import jakarta.persistence.*;
@@ -29,12 +27,7 @@ public class Product {
     @NotNull
     private String name;
 
-    @OneToMany(
-            mappedBy = "product",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("id ASC")
     private List<ProductPhase> phases;
 
@@ -46,7 +39,7 @@ public class Product {
     @Column(name = "is_ready")
     @NotNull
     @Builder.Default
-    private Boolean isReady= false;
+    private Boolean isReady = false;
 
     @Column(name = "is_alcoholic")
     @NotNull
@@ -57,7 +50,7 @@ public class Product {
     @NotNull
     private OffsetDateTime creationDate;
 
-    public void toggleActive(){
+    public void toggleActive() {
         this.isActive = !this.isActive;
     }
 
@@ -70,8 +63,7 @@ public class Product {
                 Phase.FERMENTACION,
                 Phase.MADURACION,
                 Phase.GASIFICACION,
-                Phase.ENVASADO
-        ));
+                Phase.ENVASADO));
 
         if (!this.isAlcoholic) {
             phases.add(7, Phase.DESALCOHOLIZACION);

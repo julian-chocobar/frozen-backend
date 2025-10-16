@@ -34,7 +34,7 @@ public class ProductPhase {
         map.put(Phase.FERMENTACION, List.of(MaterialType.LEVADURA));
         map.put(Phase.MADURACION, List.of());
         map.put(Phase.GASIFICACION, List.of());
-        map.put(Phase.ENVASADO, List.of());
+        map.put(Phase.ENVASADO, List.of(MaterialType.ENVASE));
 
         REQUIRED_MATERIALS = map;
     }
@@ -74,7 +74,7 @@ public class ProductPhase {
     @NotNull
     private OffsetDateTime creationDate;
 
-    public List<MaterialType> getRequiredMaterials(){
+    public List<MaterialType> getRequiredMaterials() {
         return REQUIRED_MATERIALS.getOrDefault(this.getPhase(), List.of());
     }
 

@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import java.time.OffsetDateTime;
 
 @Data

@@ -1,7 +1,6 @@
 package com.enigcode.frozen_backend.products.service;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
-import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;

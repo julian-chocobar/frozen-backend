@@ -5,5 +5,6 @@ public enum MaterialType {
     LUPULO,
     AGUA,
     LEVADURA,
+    ENVASE,
     OTROS
 }
