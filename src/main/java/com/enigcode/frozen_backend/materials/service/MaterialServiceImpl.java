@@ -130,10 +130,21 @@ public class MaterialServiceImpl implements MaterialService {
      * @return Lista con id y nombre de todos los materiales
      */
     @Override
-    public List<MaterialSimpleResponseDTO> getMaterialSimpleList() {
-        return materialRepository.findAll()
-                .stream()
-                .map(m -> new MaterialSimpleResponseDTO(m.getId(), m.getName()))
+    public List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active) {
+        if (name == null || name.trim().isEmpty()) {
+            return List.of();
+        }
+        String q = name.trim();
+        List<Material> results;
+        if (active == null) {
+            results = materialRepository.findTop10ByNameContainingIgnoreCase(q);
+        } else if (active) {
+            results = materialRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(q);
+        } else {
+            results = materialRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(q);
+        }
+        return results.stream()
+                .map(m -> new MaterialSimpleResponseDTO(m.getId(), m.getCode(), m.getName()))
                 .collect(Collectors.toList());
     }
 

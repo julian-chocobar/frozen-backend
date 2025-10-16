@@ -24,5 +24,5 @@ public class MovementResponseDTO {
 
     private String materialType;
 
-    private String reason;
+    private String materialName;
 }

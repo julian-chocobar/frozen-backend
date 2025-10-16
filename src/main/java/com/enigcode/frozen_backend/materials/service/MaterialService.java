@@ -14,7 +14,7 @@ public interface MaterialService {
 
     Page<MaterialResponseDTO> findAll(MaterialFilterDTO filterDTO, Pageable pageable);
 
-    List<MaterialSimpleResponseDTO> getMaterialSimpleList();
+    List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active);
 
     MaterialDetailDTO getMaterial(Long id);
 }

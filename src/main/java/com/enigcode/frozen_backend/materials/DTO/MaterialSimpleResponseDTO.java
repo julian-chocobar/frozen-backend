@@ -11,5 +11,6 @@ import lombok.Builder;
 @AllArgsConstructor
 public class MaterialSimpleResponseDTO {
     private Long id;
+    private String code;
     private String name;
 }

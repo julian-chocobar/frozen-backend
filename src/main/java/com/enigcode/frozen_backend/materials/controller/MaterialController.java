@@ -73,8 +73,11 @@ public class MaterialController {
 
         @Operation(summary = "Lista de materiales (id y nombre)", description = "Devuelve una lista con el id y nombre de todos los materiales")
         @GetMapping("/id-name-list")
-        public ResponseEntity<List<MaterialSimpleResponseDTO>> getMaterialIdNameList() {
-                List<MaterialSimpleResponseDTO> list = materialService.getMaterialSimpleList();
+        public ResponseEntity<List<MaterialSimpleResponseDTO>> getAllMaterialIdNameList(
+                        @RequestParam(required = false, defaultValue = "") String name,
+                        @RequestParam(required = false) Boolean active) {
+                // null = todos, true = solo activos, false = solo inactivos
+                List<MaterialSimpleResponseDTO> list = materialService.getMaterialSimpleList(name, active);
                 return ResponseEntity.ok(list);
         }
 

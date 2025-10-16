@@ -16,12 +16,12 @@ class MaterialMapperTest {
     @Test
     void testToResponseDto_isBelowThresholdTrue() {
         Material material = new Material();
-        material.setStock(5.0);     
-        material.setThreshold(10.0); 
+        material.setStock(5.0);
+        material.setThreshold(10.0);
 
         MaterialResponseDTO dto = mapper.toResponseDto(material);
 
-        assertTrue(dto.getIs_below_threshold(), "Debe ser true cuando stock <= threshold");
+        assertTrue(dto.getIsBelowThreshold(), "Debe ser true cuando stock <= threshold");
     }
 
     @Test
@@ -32,7 +32,7 @@ class MaterialMapperTest {
 
         MaterialResponseDTO dto = mapper.toResponseDto(material);
 
-        assertFalse(dto.getIs_below_threshold(), "Debe ser false cuando stock > threshold");
+        assertFalse(dto.getIsBelowThreshold(), "Debe ser false cuando stock > threshold");
     }
 
     @Test
@@ -50,19 +50,25 @@ class MaterialMapperTest {
         assertEquals(5.0, material.getThreshold());
     }
 
-    @Test
-    void testPartialUpdate_ignoresNullValues() {
-        Material material = new Material();
-        material.setName("Cebada");
-        material.setStock(100.0);
+    /**
+     * No se puede actualizar el stock,
+     * se actualiza con la creacion de movimientos
+     */
 
-        MaterialUpdateDTO updateDTO = new MaterialUpdateDTO();
-        updateDTO.setStock(120.0);
-        // no seteamos name → debería mantenerse igual
-
-        mapper.partialUpdate(updateDTO, material);
-
-        assertEquals("Cebada", material.getName());
-        assertEquals(120.0, material.getStock());
-    }
+    /**
+     * @Test
+     *       void testPartialUpdate_ignoresNullValues() {
+     *       Material material = new Material();
+     *       material.setName("Cebada");
+     *       material.setStock(100.0);
+     * 
+     *       MaterialUpdateDTO updateDTO = new MaterialUpdateDTO();
+     *       updateDTO.setStock(120.0);
+     *       // no seteamos name → debería mantenerse igual
+     *       mapper.partialUpdate(updateDTO, material);
+     * 
+     *       assertEquals("Cebada", material.getName());
+     *       assertEquals(120.0, material.getStock());
+     *       }
+     */
 }

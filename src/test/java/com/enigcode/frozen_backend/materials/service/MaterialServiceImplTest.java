@@ -79,7 +79,8 @@ class MaterialServiceImplTest {
     @Test
     void testUpdateMaterial_NotFound() {
         when(materialRepository.findById(99L)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> materialService.updateMaterial(99L, new MaterialUpdateDTO()));
+        assertThrows(ResourceNotFoundException.class,
+                () -> materialService.updateMaterial(99L, new MaterialUpdateDTO()));
     }
 
     @Test

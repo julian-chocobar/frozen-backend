@@ -18,10 +18,11 @@ public class MovementSpecification {
             }
             if (filterDTO.getStartDate() != null) {
                 predicates
-                        .add(criteriaBuilder.greaterThanOrEqualTo(root.get("creationDate"), filterDTO.getStartDate()));
+                        .add(criteriaBuilder.greaterThanOrEqualTo(root.get("realizationDate"),
+                                filterDTO.getStartDate()));
             }
             if (filterDTO.getEndDate() != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("creationDate"), filterDTO.getEndDate()));
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("realizationDate"), filterDTO.getEndDate()));
             }
             return criteriaBuilder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
