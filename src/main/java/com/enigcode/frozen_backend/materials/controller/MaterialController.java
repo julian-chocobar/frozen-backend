@@ -29,7 +29,7 @@ public class MaterialController {
         @PostMapping
         public ResponseEntity<MaterialResponseDTO> createMaterial(
                         @Valid @RequestBody MaterialCreateDTO materialCreateDTO) {
-                MaterialResponseDTO materialResponseDTO = materialService.saveMaterial(materialCreateDTO);
+                MaterialResponseDTO materialResponseDTO = materialService.createMaterial(materialCreateDTO);
                 return new ResponseEntity<>(materialResponseDTO, HttpStatus.CREATED);
         }
 

@@ -1,7 +1,9 @@
 package com.enigcode.frozen_backend.materials.service;
 
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.materials.DTO.*;
+import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
 import lombok.RequiredArgsConstructor;
 import com.enigcode.frozen_backend.materials.mapper.MaterialMapper;
 import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
@@ -39,10 +41,12 @@ public class MaterialServiceImpl implements MaterialService {
      */
     @Override
     @Transactional
-    public MaterialResponseDTO saveMaterial(MaterialCreateDTO materialCreateDTO) {
+    public MaterialResponseDTO createMaterial(MaterialCreateDTO materialCreateDTO) {
         Material material = materialMapper.toEntity(materialCreateDTO);
         material.setCreationDate(OffsetDateTime.now(ZoneOffset.UTC));
         material.setIsActive(Boolean.TRUE);
+
+        materialUnitVerification(material);
 
         Material savedMaterial = materialRepository.save(material);
         String code = this.generateCode(savedMaterial.getType(), savedMaterial.getId());
@@ -51,6 +55,22 @@ public class MaterialServiceImpl implements MaterialService {
         Material finalMaterial = materialRepository.saveAndFlush(savedMaterial);
 
         return materialMapper.toResponseDto(finalMaterial);
+    }
+
+    /**
+     * Funcion que verifica que un material de tipo ENVASE tenga la unidad correspondiente UNIDAD o
+     * que la unidad de medida UNIDAD sea solo asignada a materiales de tipo ENVASE o OTROS
+     * @param material
+     */
+    private static void materialUnitVerification(Material material) {
+        if(material.getType().equals(MaterialType.ENVASE) &&
+                !material.getUnitMeasurement().equals(MeasurementUnit.UNIDAD))
+            throw new BadRequestException("El material de tipo ENVASE debe tener como unidad de medida UNIDAD");
+
+        if (material.getUnitMeasurement().equals(MeasurementUnit.UNIDAD) &&
+        (!material.getType().equals(MaterialType.ENVASE) &&
+                !material.getType().equals(MaterialType.OTROS)))
+            throw new BadRequestException("La unida de medida UNIDAD debe tener como material un tipo ENVASE o OTROS");
     }
 
     /**
@@ -78,8 +98,18 @@ public class MaterialServiceImpl implements MaterialService {
         Material originalMaterial = materialRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
 
+        String newCode = null;
+        if(!originalMaterial.getType().equals(materialUpdateDTO.getType()))
+            newCode = generateCode(materialUpdateDTO.getType(), originalMaterial.getId());
+
         Material updatedMaterial = materialMapper.partialUpdate(materialUpdateDTO, originalMaterial);
         updatedMaterial.setLastUpdateDate(OffsetDateTime.now(ZoneOffset.UTC));
+
+        if(newCode != null)
+            updatedMaterial.setCode(newCode);
+
+        materialUnitVerification(updatedMaterial);
+
         Material savedUpdatedMaterial = materialRepository.save(updatedMaterial);
 
         return materialMapper.toResponseDto(savedUpdatedMaterial);
@@ -161,5 +191,4 @@ public class MaterialServiceImpl implements MaterialService {
 
         return materialMapper.toDetailDto(material);
     }
-
 }

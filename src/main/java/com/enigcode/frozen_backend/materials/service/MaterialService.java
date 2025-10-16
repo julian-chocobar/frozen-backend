@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 
 public interface MaterialService {
-    MaterialResponseDTO saveMaterial(MaterialCreateDTO materialCreateDTO);
+    MaterialResponseDTO createMaterial(MaterialCreateDTO materialCreateDTO);
 
     MaterialResponseDTO updateMaterial(Long id, MaterialUpdateDTO materialUpdateDTO);
 
