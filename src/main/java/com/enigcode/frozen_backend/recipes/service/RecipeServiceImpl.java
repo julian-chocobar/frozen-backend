@@ -6,6 +6,7 @@ import com.enigcode.frozen_backend.materials.model.MaterialType;
 import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.product_phases.repository.ProductPhaseRepository;
+import com.enigcode.frozen_backend.product_phases.service.ProductPhaseService;
 import com.enigcode.frozen_backend.recipes.DTO.RecipeCreateDTO;
 import com.enigcode.frozen_backend.recipes.DTO.RecipeResponseDTO;
 import com.enigcode.frozen_backend.recipes.DTO.RecipeUpdateDTO;
@@ -29,6 +30,7 @@ public class RecipeServiceImpl implements RecipeService {
     final RecipeRepository recipeRepository;
     final MaterialRepository materialRepository;
     final ProductPhaseRepository productPhaseRepository;
+    final ProductPhaseService productPhaseService;
     final RecipeMapper recipeMapper;
 
      /**
@@ -93,7 +95,7 @@ public class RecipeServiceImpl implements RecipeService {
      * Funcion para eliminar una receta especifico segun id
      * 
      * @param id
-     * @retutn Id de la receta eliminada
+     * @return Id de la receta eliminada
      */
     @Override
     @Transactional
@@ -101,14 +103,15 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe recipe = recipeRepository.findById(id)   
                 .orElseThrow(()-> new ResourceNotFoundException("No se encontro receta con id "+ id));
 
-        if(recipe.getProductPhase().getIsReady())
-            new BadRequestException("No se puede eliminar esta receta por el estado de la fase");
+        ProductPhase productPhaseAssociated = recipe.getProductPhase();
 
         recipeRepository.delete(recipe);
 
+        if(productPhaseAssociated.getIsReady())
+            productPhaseService.reviewIsReady(recipe.getProductPhase());
+
         return recipeMapper.toResponseDTO(recipe);
     }
-
 
     /**
      * Funcion para mostrar una receta especifico segun id

@@ -122,4 +122,22 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
 
         return productPhaseMapper.toResponseDto(savedProductPhase);
     }
+
+    /**
+     * Funcion que revisa si hay al menos un material del tipo necesario, sino desmarca el ready del productphase
+     * @param productPhase
+     */
+    @Override
+    @Transactional
+    public void reviewIsReady(ProductPhase productPhase) {
+        List<MaterialType> requiredMaterials = productPhase.getRequiredMaterials();
+        if (requiredMaterials != null && !requiredMaterials.isEmpty()) {
+            Boolean allMatch = requiredMaterials.stream()
+                    .allMatch(recipeRepository::existsByMaterial_Type);
+            if (!allMatch) {
+                productPhase.setIsReady(Boolean.FALSE);
+                productPhase.getProduct().setIsReady(Boolean.FALSE);
+                productPhaseRepository.save(productPhase);
+            }};
+    }
 }
