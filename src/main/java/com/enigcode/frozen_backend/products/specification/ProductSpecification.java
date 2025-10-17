@@ -13,8 +13,11 @@ public class ProductSpecification {
     public static Specification<Product> createFilter(ProductFilterDTO filterDTO) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            if (filterDTO.getName() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("name"), filterDTO.getName()));
+            if (filterDTO.getName() != null && !filterDTO.getName().trim().isEmpty()) {
+                String searchTerm = "%" + filterDTO.getName().toLowerCase() + "%";
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("name")),
+                        searchTerm));
             }
             if (filterDTO.getIsActive() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("isActive"), filterDTO.getIsActive()));
