@@ -1,0 +1,48 @@
+package com.enigcode.frozen_backend.production_orders.Model;
+
+import com.enigcode.frozen_backend.batches.model.Batch;
+import com.enigcode.frozen_backend.products.model.Product;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+
+import java.time.OffsetDateTime;
+
+@Entity
+@Table(name = "production_orders")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ProductionOrder {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "production_orders_gen")
+    @SequenceGenerator(name = "production_orders_gen", sequenceName = "production_orders_seq", allocationSize = 1)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_batch")
+    @NotNull
+    private Batch batch;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_product")
+    @NotNull
+    private Product product;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    @NotNull
+    private OrderStatus status;
+
+    @NotNull
+    @DecimalMin(value = "0.0")
+    private Double quantity;
+
+    @Column(name = "creation_date")
+    @NotNull
+    private OffsetDateTime creationDate;
+}
