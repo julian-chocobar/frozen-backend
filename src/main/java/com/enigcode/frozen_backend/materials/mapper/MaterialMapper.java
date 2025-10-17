@@ -13,11 +13,15 @@ public interface MaterialMapper {
         @Mapping(target = "isBelowThreshold", expression = "java(material.getStock() != null && material.getThreshold() != null "
                         +
                         "&& material.getStock() <= material.getThreshold())")
+        @Mapping(target = "totalStock", expression = "java(material.getStock() + material.getReservedStock())")
+        @Mapping(source = "stock", target = "availableStock")
+        @Mapping(source = "reservedStock", target = "reservedStock")
         MaterialDetailDTO toDetailDto(Material material);
 
         @Mapping(target = "isBelowThreshold", expression = "java(material.getStock() != null && material.getThreshold() != null "
                         +
                         "&& material.getStock() <= material.getThreshold())")
+        @Mapping(target = "totalStock", expression = "java(material.getStock() + material.getReservedStock())")
         MaterialResponseDTO toResponseDto(Material material);
 
         Material toEntity(MaterialCreateDTO materialCreateDTO);

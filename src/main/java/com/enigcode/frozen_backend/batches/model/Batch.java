@@ -22,6 +22,9 @@ public class Batch {
     @SequenceGenerator(name = "batches_gen", sequenceName = "batches_seq", allocationSize = 1)
     private Long id;
 
+    @Column(unique = true)
+    private String code;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_packaging")
     @NotNull

@@ -16,7 +16,7 @@ public class MaterialResponseDTO {
     private MaterialType type;
     private String supplier;
     private Double value;
-    private Double stock;
+    private Double totalStock;
     private UnitMeasurement unitMeasurement;
     private Double threshold;
     private Boolean isBelowThreshold;

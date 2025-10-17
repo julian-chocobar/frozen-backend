@@ -56,7 +56,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> response = createErrorResponse(
                 "Error de validación de campos. Por favor, revisa los detalles.",
                 HttpStatus.BAD_REQUEST);
-        response.put("details", errors); // Agrega los errores específicos por campo
+        response.put("details", errors);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
@@ -69,7 +69,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleDataIntegrityViolation(
             DataIntegrityViolationException ex) {
 
-        // Mensaje genérico, puedes refinarlo para buscar la causa raíz específica del error de DB.
         String friendlyMessage = "El dato que intentas guardar ya existe o viola una restricción de la base de datos (Ej: código/nombre duplicado).";
 
         Map<String, Object> response = createErrorResponse(
@@ -87,7 +86,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleResourceNotFoundException(ResourceNotFoundException ex) {
 
         Map<String, Object> response = createErrorResponse(
-                ex.getMessage(), // Usa el mensaje que se pasó al lanzar la excepción
+                ex.getMessage(),
                 HttpStatus.NOT_FOUND);
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -99,9 +98,6 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllOtherExceptions(Exception ex) {
-
-        // ¡Importante! Loggea la excepción completa aquí para debug
-        // log.error("Error Interno del Servidor: ", ex);
 
         Map<String, Object> response = createErrorResponse(
                 "Ocurrió un error interno del servidor. Consulte los logs para más detalles.",

@@ -1,6 +1,7 @@
 package com.enigcode.frozen_backend.materials.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
@@ -38,6 +39,10 @@ public class Material {
     @ColumnDefault("0.0")
     private Double stock;
 
+    @NotNull
+    @ColumnDefault("0.0")
+    private Double reservedStock;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "unit_measurement")
     @NotNull
@@ -68,5 +73,19 @@ public class Material {
 
     public void increaseStock(Double stock) {
         this.stock += stock;
+    }
+
+    public void reserveStock(Double stock) {
+        this.reservedStock += stock;
+        reduceStock(stock);
+    }
+
+    public void returnStock(Double stock) {
+        reduceReservedStock(stock);
+        increaseStock(stock);
+    }
+
+    public void reduceReservedStock(Double stock) {
+        this.reservedStock -= stock;
     }
 }
