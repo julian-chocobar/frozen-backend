@@ -19,55 +19,53 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults())
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .httpBasic(Customizer.withDefaults());
-            
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/**").permitAll()
+                        .anyRequest().authenticated())
+                .httpBasic(Customizer.withDefaults());
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         // Especifica los orígenes permitidos (solo localhost:3000 en desarrollo)
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:3000",      // Desarrollo local
-            "http://127.0.0.1:3000"       // Alternativa a localhost
+                "http://localhost:3000", // Desarrollo local
+                "http://127.0.0.1:3000", // Alternativa a localhost
+                "https://frozen-frontend-kappa.vercel.app" // Producción
         ));
-        
+
         // Métodos HTTP permitidos
         configuration.setAllowedMethods(Arrays.asList(
-            "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
-        ));
-        
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+
         // Cabeceras permitidas
         configuration.setAllowedHeaders(Arrays.asList(
-            "authorization", 
-            "content-type", 
-            "x-auth-token",
-            "x-requested-with"
-        ));
-        
+                "authorization",
+                "content-type",
+                "x-auth-token",
+                "x-requested-with"));
+
         // Cabeceras expuestas
         configuration.setExposedHeaders(Arrays.asList(
-            "x-auth-token",
-            "x-total-count"  // Útil para paginación
+                "x-auth-token",
+                "x-total-count" // Útil para paginación
         ));
-        
+
         // Permitir credenciales (necesario si usas cookies/sesión)
         configuration.setAllowCredentials(true);
-        
+
         // Tiempo que la respuesta de pre-vuelo puede ser cacheada
         configuration.setMaxAge(3600L);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-    
+
 }
