@@ -3,7 +3,7 @@ package com.enigcode.frozen_backend.packagings.model;
 import java.time.OffsetDateTime;
 
 import com.enigcode.frozen_backend.materials.model.Material;
-import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -36,9 +36,9 @@ public class Packaging {
     private Double quantity;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "measurement_unit")
+    @Column(name = "unit_measurement")
     @NotNull
-    private MeasurementUnit measurementUnit;
+    private UnitMeasurement unitMeasurement;
 
     @Column(name = "is_active")
     @NotNull
@@ -49,7 +49,7 @@ public class Packaging {
     @NotNull
     private OffsetDateTime creationDate;
 
-     public void toggleActive(){
+    public void toggleActive() {
         this.isActive = !this.isActive;
     }
 

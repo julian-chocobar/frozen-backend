@@ -1,6 +1,5 @@
 package com.enigcode.frozen_backend.movements.controller;
 
-import com.enigcode.frozen_backend.movements.controller.MovementController;
 import com.enigcode.frozen_backend.movements.DTO.MovementCreateDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementResponseDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementDetailDTO;
@@ -8,7 +7,6 @@ import com.enigcode.frozen_backend.movements.service.MovementService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,16 +19,13 @@ class MovementControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @MockBean
     private MovementService movementService;
 
     @Test
     void testCreateMovement() throws Exception {
-        MovementCreateDTO createDTO = new MovementCreateDTO();
         // inicializar campos necesarios
         MovementResponseDTO responseDTO = new MovementResponseDTO();
-        responseDTO.setId("1");
+        responseDTO.setId(1L);
 
         when(movementService.createMovement(any(MovementCreateDTO.class))).thenReturn(responseDTO);
 
@@ -46,7 +41,7 @@ class MovementControllerTest {
     @Test
     void testGetMovement() throws Exception {
         MovementDetailDTO detailDTO = new MovementDetailDTO();
-        detailDTO.setId("1");
+        detailDTO.setId(1L);
 
         when(movementService.getMovement(1L)).thenReturn(detailDTO);
 

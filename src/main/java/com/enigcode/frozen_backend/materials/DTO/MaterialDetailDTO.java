@@ -1,7 +1,7 @@
 package com.enigcode.frozen_backend.materials.DTO;
 
 import com.enigcode.frozen_backend.materials.model.MaterialType;
-import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import lombok.*;
 
 import java.time.OffsetDateTime;
@@ -12,14 +12,14 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @Builder
 public class MaterialDetailDTO {
-    private String id;
+    private Long id;
     private String code;
     private String name;
     private MaterialType type;
     private String supplier;
     private Double value;
     private Double stock;
-    private MeasurementUnit unitMeasurement;
+    private UnitMeasurement unitMeasurement;
     private Double threshold;
     private Boolean isBelowThreshold;
     private OffsetDateTime creationDate;

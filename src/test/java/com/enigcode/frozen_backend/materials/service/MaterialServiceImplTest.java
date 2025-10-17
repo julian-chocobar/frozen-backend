@@ -10,8 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 
-import java.time.OffsetDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,7 +37,7 @@ class MaterialServiceImplTest {
         material = new Material();
         material.setId(1L);
         material.setName("Cartón");
-        material.setType(MaterialType.PACKAGING);
+        material.setType(MaterialType.ENVASE);
 
         responseDTO = new MaterialResponseDTO();
         responseDTO.setId(1L);
@@ -47,14 +47,14 @@ class MaterialServiceImplTest {
     @Test
     void testSaveMaterial() {
         MaterialCreateDTO createDTO = new MaterialCreateDTO();
-        createDTO.setType(MaterialType.PACKAGING);
+        createDTO.setType(MaterialType.ENVASE);
 
         when(materialMapper.toEntity(createDTO)).thenReturn(material);
         when(materialRepository.save(any(Material.class))).thenReturn(material);
         when(materialRepository.saveAndFlush(any(Material.class))).thenReturn(material);
         when(materialMapper.toResponseDto(any(Material.class))).thenReturn(responseDTO);
 
-        MaterialResponseDTO result = materialService.saveMaterial(createDTO);
+        MaterialResponseDTO result = materialService.createMaterial(createDTO);
 
         assertNotNull(result);
         assertEquals(responseDTO.getId(), result.getId());
@@ -112,7 +112,9 @@ class MaterialServiceImplTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Material> page = new PageImpl<>(List.of(material));
 
-        when(materialRepository.findAll(any(), eq(pageable))).thenReturn(page);
+        Specification<Material> spec = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+
+        when(materialRepository.findAll(spec, eq(pageable))).thenReturn(page);
         when(materialMapper.toResponseDto(any(Material.class))).thenReturn(responseDTO);
 
         Page<MaterialResponseDTO> result = materialService.findAll(new MaterialFilterDTO(), pageable);
@@ -127,7 +129,7 @@ class MaterialServiceImplTest {
         material.setName("Plástico");
         when(materialRepository.findAll()).thenReturn(List.of(material));
 
-        List<MaterialSimpleResponseDTO> result = materialService.getMaterialSimpleList();
+        List<MaterialSimpleResponseDTO> result = materialService.getMaterialSimpleList("Plás", null);
 
         assertEquals(1, result.size());
         assertEquals("Plástico", result.get(0).getName());

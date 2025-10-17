@@ -1,6 +1,6 @@
 package com.enigcode.frozen_backend.product_phases.DTO;
 
-import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
@@ -15,16 +15,15 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class ProductPhaseUpdateDTO {
-
     @DecimalMin(value = "0.0")
     private Double input;
 
     @DecimalMin(value = "0.0")
     private Double output;
 
-    private MeasurementUnit outputUnit;
+    private UnitMeasurement outputUnit;
 
     @DecimalMin(value = "0.0")
-    @JsonAlias({"estimatedTime"})
+    @JsonAlias({ "estimatedTime" })
     private Double estimatedHours;
 }

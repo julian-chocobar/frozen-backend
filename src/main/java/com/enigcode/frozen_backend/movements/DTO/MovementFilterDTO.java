@@ -11,13 +11,8 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @Builder
 public class MovementFilterDTO {
-
     private MovementType type;
-
     private OffsetDateTime startDate;
-
     private OffsetDateTime endDate;
-
     private Long materialId;
-
 }

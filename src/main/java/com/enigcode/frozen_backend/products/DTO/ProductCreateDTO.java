@@ -9,11 +9,9 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ProductCreateDTO {
-
     @NotNull(message = "Se debe asignar un nombre al producto")
     private String name;
 
     @NotNull(message = "Se debe asignar un alcoholismo al producto")
     private Boolean isAlcoholic;
-
 }

@@ -1,16 +1,12 @@
 package com.enigcode.frozen_backend.materials.controller;
 
-import com.enigcode.frozen_backend.materials.service.MaterialService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -21,22 +17,18 @@ class MaterialControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
-    @MockBean
-    private MaterialService materialService;
     private String materialJson;
 
     @BeforeEach
     void setup() throws Exception {
-        materialJson = """ 
-        { 
-            "name": "Malta",
-            "quantity": 10 
-        } 
-"""; 
-    } 
-    
+        materialJson = """
+                        {
+                            "name": "Malta",
+                            "quantity": 10
+                        }
+                """;
+    }
+
     @Test
     void testCreateMaterial() throws Exception {
         mockMvc.perform(post("/materials")
@@ -47,11 +39,11 @@ class MaterialControllerTest {
 
     @Test
     void testUpdateMaterial() throws Exception {
-        String updateJson = """ 
-        { 
-            "quantity": 20 
-        } 
-        """;
+        String updateJson = """
+                {
+                    "quantity": 20
+                }
+                """;
         mockMvc.perform(patch("/materials/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateJson)).andExpect(status().isOk());

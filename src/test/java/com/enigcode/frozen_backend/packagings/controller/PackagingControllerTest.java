@@ -1,16 +1,13 @@
 package com.enigcode.frozen_backend.packagings.controller;
-import com.enigcode.frozen_backend.packagings.service.PackagingService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -21,22 +18,16 @@ class PackagingControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
-    private PackagingService packagingService;
-
     private String packagingJson;
 
     @BeforeEach
     void setup() {
         packagingJson = """
-        {
-            "name": "Caja de cartón",
-            "capacity": 20
-        }
-        """;
+                {
+                    "name": "Caja de cartón",
+                    "capacity": 20
+                }
+                """;
     }
 
     @Test
@@ -50,10 +41,10 @@ class PackagingControllerTest {
     @Test
     void testUpdatePackaging() throws Exception {
         String updateJson = """
-        {
-            "capacity": 25
-        }
-        """;
+                {
+                    "capacity": 25
+                }
+                """;
 
         mockMvc.perform(patch("/packagings/1")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -85,4 +76,3 @@ class PackagingControllerTest {
                 .andExpect(status().isOk());
     }
 }
-

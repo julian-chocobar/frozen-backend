@@ -18,13 +18,13 @@ class PackagingMapperTest {
     void testToEntity() {
         PackagingCreateDTO dto = new PackagingCreateDTO();
         dto.setName("Caja grande");
-        dto.setCapacity(50);
+        dto.setQuantity(50.0);
 
         Packaging entity = mapper.toEntity(dto);
 
         assertNotNull(entity);
         assertEquals("Caja grande", entity.getName());
-        assertEquals(50, entity.getCapacity());
+        assertEquals(50, entity.getQuantity());
     }
 
     @Test
@@ -32,13 +32,13 @@ class PackagingMapperTest {
         Packaging packaging = new Packaging();
         packaging.setId(1L);
         packaging.setName("Bolsa plástica");
-        packaging.setCapacity(10);
+        packaging.setQuantity(10.0);
 
         PackagingResponseDTO dto = mapper.toResponseDto(packaging);
 
         assertNotNull(dto);
         assertEquals("Bolsa plástica", dto.getName());
-        assertEquals(10, dto.getCapacity());
+        assertEquals(10, dto.getQuantity());
     }
 
     @Test
@@ -58,14 +58,14 @@ class PackagingMapperTest {
     void testPartialUpdate() {
         Packaging packaging = new Packaging();
         packaging.setName("Caja vieja");
-        packaging.setCapacity(30);
+        packaging.setQuantity(30.0);
 
         PackagingUpdateDTO updateDTO = new PackagingUpdateDTO();
-        updateDTO.setCapacity(40); // solo modificamos capacidad
+        updateDTO.setQuantity(40.0); // solo modificamos capacidad
 
         Packaging updated = mapper.partialUpdate(updateDTO, packaging);
 
         assertEquals("Caja vieja", updated.getName()); // nombre no cambia
-        assertEquals(40, updated.getCapacity());       // capacidad actualizada
+        assertEquals(40, updated.getQuantity()); // capacidad actualizada
     }
 }

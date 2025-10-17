@@ -10,7 +10,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class RecipeCreateDTO {
-
     @NotNull(message = "Se requiere un id de product phase")
     private Long productPhaseId;
 

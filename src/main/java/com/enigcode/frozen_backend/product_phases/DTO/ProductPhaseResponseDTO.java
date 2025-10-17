@@ -1,6 +1,6 @@
 package com.enigcode.frozen_backend.product_phases.DTO;
 
-import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import lombok.*;
 
@@ -16,7 +16,7 @@ public class ProductPhaseResponseDTO {
     private Phase phase;
     private Double input;
     private Double output;
-    private MeasurementUnit outputUnit;
+    private UnitMeasurement outputUnit;
     private Double estimatedHours;
     private OffsetDateTime creationDate;
 }

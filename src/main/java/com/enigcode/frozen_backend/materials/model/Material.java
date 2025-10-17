@@ -41,7 +41,7 @@ public class Material {
     @Enumerated(EnumType.STRING)
     @Column(name = "unit_measurement")
     @NotNull
-    private MeasurementUnit unitMeasurement;
+    private UnitMeasurement unitMeasurement;
 
     @NotNull
     private Double threshold;
@@ -58,7 +58,7 @@ public class Material {
     @NotNull
     private OffsetDateTime creationDate;
 
-    public void toggleActive(){
+    public void toggleActive() {
         this.isActive = !this.isActive;
     }
 

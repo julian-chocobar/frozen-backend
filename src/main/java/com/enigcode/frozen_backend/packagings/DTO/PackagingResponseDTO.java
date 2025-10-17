@@ -1,6 +1,6 @@
 package com.enigcode.frozen_backend.packagings.DTO;
 
-import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import lombok.*;
 
 @Getter
@@ -12,7 +12,7 @@ public class PackagingResponseDTO {
     private Long id;
     private String name;
     private String materialName;
-    private MeasurementUnit measurementUnit;
+    private UnitMeasurement unitMeasurement;
     private Double quantity;
     private Boolean isActive;
 }

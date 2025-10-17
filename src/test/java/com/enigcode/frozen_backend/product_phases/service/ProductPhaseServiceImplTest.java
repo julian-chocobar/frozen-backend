@@ -124,7 +124,7 @@ class ProductPhaseServiceImplTest {
     @Test
     void testMarkAsReady_Success() {
         productPhase.setIsReady(false);
-        productPhase.setRequiredMaterials(Collections.emptyList());
+        // productPhase.setRequiredMaterials(Collections.emptyList());
         when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(productPhase));
         when(productPhaseRepository.save(productPhase)).thenReturn(productPhase);
         when(productPhaseMapper.toResponseDto(productPhase)).thenReturn(responseDTO);
@@ -157,9 +157,9 @@ class ProductPhaseServiceImplTest {
         when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(productPhase));
 
         doReturn(true).when(productPhase).isComplete();
-        productPhase.setRequiredMaterials(List.of(MaterialType.CARTON));
+        // productPhase.setRequiredMaterials(List.of(MaterialType.AGUA));
 
-        when(recipeRepository.existsByMaterial_Type(MaterialType.CARTON)).thenReturn(false);
+        when(recipeRepository.existsByMaterial_Type(MaterialType.AGUA)).thenReturn(false);
 
         assertThrows(BadRequestException.class, () -> productPhaseService.markAsReady(1L));
     }

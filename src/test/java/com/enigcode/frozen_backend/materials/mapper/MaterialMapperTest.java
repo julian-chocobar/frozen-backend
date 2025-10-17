@@ -2,7 +2,6 @@ package com.enigcode.frozen_backend.materials.mapper;
 
 import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
 import com.enigcode.frozen_backend.materials.DTO.MaterialResponseDTO;
-import com.enigcode.frozen_backend.materials.DTO.MaterialUpdateDTO;
 import com.enigcode.frozen_backend.materials.model.Material;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -49,26 +48,4 @@ class MaterialMapperTest {
         assertEquals(20.0, material.getStock());
         assertEquals(5.0, material.getThreshold());
     }
-
-    /**
-     * No se puede actualizar el stock,
-     * se actualiza con la creacion de movimientos
-     */
-
-    /**
-     * @Test
-     *       void testPartialUpdate_ignoresNullValues() {
-     *       Material material = new Material();
-     *       material.setName("Cebada");
-     *       material.setStock(100.0);
-     * 
-     *       MaterialUpdateDTO updateDTO = new MaterialUpdateDTO();
-     *       updateDTO.setStock(120.0);
-     *       // no seteamos name → debería mantenerse igual
-     *       mapper.partialUpdate(updateDTO, material);
-     * 
-     *       assertEquals("Cebada", material.getName());
-     *       assertEquals(120.0, material.getStock());
-     *       }
-     */
 }

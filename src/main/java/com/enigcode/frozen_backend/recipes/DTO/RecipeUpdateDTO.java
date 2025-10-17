@@ -9,7 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class RecipeUpdateDTO {
-
     private Long materialId;
 
     @DecimalMin(value = "0.0")

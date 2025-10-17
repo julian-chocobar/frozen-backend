@@ -1,6 +1,6 @@
 package com.enigcode.frozen_backend.materials.model;
 
-public enum MeasurementUnit {
+public enum UnitMeasurement {
     KG,
     LT,
     UNIDAD

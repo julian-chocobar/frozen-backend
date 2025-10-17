@@ -16,11 +16,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class MovementServiceImplTest {
@@ -141,7 +144,9 @@ class MovementServiceImplTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Movement> page = new PageImpl<>(List.of(movement));
 
-        when(movementRepository.findAll(any(), eq(pageable))).thenReturn(page);
+        Specification<Movement> spec = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+
+        when(movementRepository.findAll(spec, eq(pageable))).thenReturn(page);
         when(movementMapper.toResponseDto(any(Movement.class))).thenReturn(responseDTO);
 
         Page<MovementResponseDTO> result = movementService.findAll(new MovementFilterDTO(), pageable);

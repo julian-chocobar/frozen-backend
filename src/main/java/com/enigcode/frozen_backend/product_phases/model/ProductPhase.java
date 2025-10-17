@@ -1,7 +1,7 @@
 package com.enigcode.frozen_backend.product_phases.model;
 
 import com.enigcode.frozen_backend.materials.model.MaterialType;
-import com.enigcode.frozen_backend.materials.model.MeasurementUnit;
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import com.enigcode.frozen_backend.products.model.Product;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
@@ -61,7 +61,7 @@ public class ProductPhase {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "output_unit")
-    private MeasurementUnit outputUnit;
+    private UnitMeasurement outputUnit;
 
     @Column(name = "estimated_hours")
     private Double estimatedHours;

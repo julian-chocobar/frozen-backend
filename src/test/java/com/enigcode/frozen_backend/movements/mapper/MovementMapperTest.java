@@ -1,6 +1,7 @@
+package com.enigcode.frozen_backend.movements.mapper;
+
 import com.enigcode.frozen_backend.movements.DTO.MovementDetailDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementResponseDTO;
-import com.enigcode.frozen_backend.movements.mapper.MovementMapper;
 import com.enigcode.frozen_backend.movements.model.Movement;
 import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.materials.model.MaterialType;
@@ -16,14 +17,14 @@ class MovementMapperTest {
     @Test
     void testToResponseDto() {
         Material material = new Material();
-        material.setType(MaterialType.CONSUMABLE);
+        material.setType(MaterialType.MALTA);
 
         Movement movement = new Movement();
         movement.setMaterial(material);
 
         MovementResponseDTO dto = mapper.toResponseDto(movement);
 
-        assertEquals(MaterialType.CONSUMABLE, dto.getMaterialType());
+        assertEquals(MaterialType.MALTA, dto.getMaterialType());
     }
 
     @Test
@@ -32,7 +33,7 @@ class MovementMapperTest {
         material.setId(1L);
         material.setName("Malta");
         material.setCode("M001");
-        material.setType(MaterialType.CONSUMABLE);
+        material.setType(MaterialType.MALTA);
 
         Movement movement = new Movement();
         movement.setMaterial(material);
@@ -42,6 +43,6 @@ class MovementMapperTest {
         assertEquals(1L, dto.getMaterialId());
         assertEquals("Malta", dto.getMaterialName());
         assertEquals("M001", dto.getMaterialCode());
-        assertEquals(MaterialType.CONSUMABLE, dto.getMaterialType());
+        assertEquals(MaterialType.MALTA, dto.getMaterialType());
     }
 }
