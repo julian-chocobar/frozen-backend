@@ -4,6 +4,7 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadReque
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.materials.model.MaterialType;
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingCreateDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingResponseDTO;
@@ -45,7 +46,10 @@ public class PackagingServiceImpl implements PackagingService{
                         new ResourceNotFoundException("Material no encontrado con id " + packagingCreateDTO.getMaterialId()));
 
         if (!material.getType().equals(MaterialType.ENVASE))
-            throw new BadRequestException("El tipo de material debe ser un envase");
+            throw new BadRequestException("El tipo de material debe ser " + MaterialType.ENVASE);
+
+        if (packagingCreateDTO.getUnitMeasurement().equals(UnitMeasurement.UNIDAD))
+            throw new BadRequestException("La unidad de medida no puede ser " + UnitMeasurement.UNIDAD);
 
         Packaging packaging = packagingMapper.toEntity(packagingCreateDTO);
         packaging.setMaterial(material);
@@ -136,9 +140,13 @@ public class PackagingServiceImpl implements PackagingService{
                     .orElseThrow(() ->
                             new ResourceNotFoundException("Material no encontrado con id " + packagingUpdateDTO.getMaterialId()));
             if (!material.getType().equals(MaterialType.ENVASE))
-                throw new BadRequestException("El tipo de material debe ser un envase");
+                throw new BadRequestException("El tipo de material debe ser un envase " + MaterialType.ENVASE);
             originalPackaging.setMaterial(material);
         }
+
+        if (packagingUpdateDTO.getUnitMeasurement() != null &&
+                packagingUpdateDTO.getUnitMeasurement().equals(UnitMeasurement.UNIDAD))
+            throw new BadRequestException("La unidad de medida no puede ser " + UnitMeasurement.UNIDAD);
        
         Packaging savedPackaging = packagingRepository.save(updatedPackaging);
 
