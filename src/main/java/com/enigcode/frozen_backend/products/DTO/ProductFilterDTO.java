@@ -9,6 +9,7 @@ import lombok.*;
 @Builder
 public class ProductFilterDTO {
     private String name;
-    private String isActive;
-    private String isAlcoholic;
+    private Boolean isActive;
+    private Boolean isAlcoholic;
+    private Boolean isReady;
 }

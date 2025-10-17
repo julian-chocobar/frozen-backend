@@ -22,6 +22,9 @@ public class ProductSpecification {
             if (filterDTO.getIsAlcoholic() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("isAlcoholic"), filterDTO.getIsAlcoholic()));
             }
+            if (filterDTO.getIsReady() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isReady"), filterDTO.getIsReady()));
+            }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
