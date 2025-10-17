@@ -12,4 +12,6 @@ public interface RecipeService {
     RecipeResponseDTO deleteRecipe(Long id);
     RecipeResponseDTO getRecipe(Long id);
     List<RecipeResponseDTO> getRecipeList();
+    List<RecipeResponseDTO> getMaterialByPhase(Long id);
+    List<RecipeResponseDTO> getMaterialByProduct(Long id);
 }

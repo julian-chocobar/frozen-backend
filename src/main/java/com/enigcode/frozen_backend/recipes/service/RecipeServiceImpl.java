@@ -117,7 +117,7 @@ public class RecipeServiceImpl implements RecipeService {
      * Funcion para mostrar una receta especifico segun id
      * 
      * @param id
-     * @retutn Vista detallada de los elementos de la receta
+     * @return Vista detallada de los elementos de la receta
      */
     @Override
     @Transactional
@@ -131,7 +131,7 @@ public class RecipeServiceImpl implements RecipeService {
      /**
      * Funcion para mostrar a todas las recetas activos
      *
-     * @retutn Vista detallada de las recetas activos
+     * @return Vista detallada de las recetas activos
      */
     @Override
     @Transactional
@@ -140,5 +140,29 @@ public class RecipeServiceImpl implements RecipeService {
             .map(recipeMapper :: toResponseDTO).toList();
 
         return activeRecipes;
+    }
+
+    /**
+     * Funcion para mostrar todos los materiales asociados a una fase
+     * 
+     * @param id id de la fase
+     * @return RecipeResponseDTO de las recetas de esa fase
+     */
+    @Override
+    @Transactional
+    public List<RecipeResponseDTO> getMaterialByPhase(Long id){
+        List<RecipeResponseDTO> materialsByPhase = recipeRepository.findAll()
+                .stream().filter(recipe -> recipe.getProductPhase().getId() == id).map(recipeMapper :: toResponseDTO).toList();
+        
+        return materialsByPhase;
+    }
+
+    @Override
+    @Transactional
+    public List<RecipeResponseDTO> getMaterialByProduct(Long id){
+        List<RecipeResponseDTO> materialsByProduct = recipeRepository.findAll()
+                .stream().filter(recipe -> recipe.getProductPhase().getProduct().getId() == id).map(recipeMapper :: toResponseDTO).toList();
+        
+        return materialsByProduct;
     }
 }

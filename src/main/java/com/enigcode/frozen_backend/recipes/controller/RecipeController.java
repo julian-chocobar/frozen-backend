@@ -65,14 +65,14 @@ public class RecipeController {
         summary = "Obtener receta",
         description = "Obtiene una receta a partir de su id"
     )
-     @GetMapping("/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<RecipeResponseDTO> getRecipe(@PathVariable Long id){
         RecipeResponseDTO recipeResponseDTO = recipeService.getRecipe(id);
 
         return new ResponseEntity<>(recipeResponseDTO,HttpStatus.OK);
     }
     
-     @Operation(
+    @Operation(
         summary = "Obtener lista simple de recetas",
         description = "Obtiene una lista simple con id y nombre de todas las recetas activas"
     )
@@ -80,6 +80,27 @@ public class RecipeController {
     public ResponseEntity<List<RecipeResponseDTO>> getRecipeList() {
         List<RecipeResponseDTO> recipeResponseDTOs = recipeService.getRecipeList();
         return ResponseEntity.ok(recipeResponseDTOs);
+    }
+
+    @Operation(
+        summary = "Obtener materiales por fase",
+        description = "Obtiene una lista de materiales asociados a una fase segun el id de la fase"
+    )
+    @GetMapping("/by-product-phase/{id}")
+    public ResponseEntity<List<RecipeResponseDTO>> getMaterialByPhase(@PathVariable Long id) {
+        List<RecipeResponseDTO> materialsByPhase = recipeService.getMaterialByPhase(id);
+        return ResponseEntity.ok(materialsByPhase);
+    }
+
+
+    @Operation(
+        summary = "Obtener materiales por producto",
+        description = "Obtiene una lista de materiales asociados a un producto segun el id de la producto"
+    )
+    @GetMapping("/by-product/{id}")
+    public ResponseEntity<List<RecipeResponseDTO>> getMaterialByProduct(@PathVariable Long id) {
+        List<RecipeResponseDTO> materialsByProduct = recipeService.getMaterialByProduct(id);
+        return ResponseEntity.ok(materialsByProduct);
     }
 
 }
