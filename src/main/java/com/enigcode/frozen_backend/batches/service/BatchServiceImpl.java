@@ -1,10 +1,12 @@
 package com.enigcode.frozen_backend.batches.service;
 
+import com.enigcode.frozen_backend.batches.DTO.BatchFilterDTO;
 import com.enigcode.frozen_backend.batches.DTO.BatchResponseDTO;
 import com.enigcode.frozen_backend.batches.mapper.BatchMapper;
 import com.enigcode.frozen_backend.batches.model.Batch;
 import com.enigcode.frozen_backend.batches.model.BatchStatus;
 import com.enigcode.frozen_backend.batches.repository.BatchRepository;
+import com.enigcode.frozen_backend.batches.specification.BatchSpecification;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
@@ -13,6 +15,9 @@ import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDT
 import com.enigcode.frozen_backend.products.model.Product;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import org.springframework.stereotype.Service;
 
@@ -89,5 +94,15 @@ public class BatchServiceImpl implements BatchService{
                 .orElseThrow(()-> new ResourceNotFoundException("No se encontró lote con id " + id));
 
         return batchMapper.toResponseDTO(batch);
+    }
+
+    @Override
+    public Page<BatchResponseDTO> findAll(BatchFilterDTO filterDTO, Pageable pageable) {
+        Pageable pageRequest = PageRequest.of(
+                                pageable.getPageNumber(),
+                                pageable.getPageSize(),
+                                pageable.getSort());
+        Page<Batch> batches = batchRepository.findAll(BatchSpecification.createFilter(filterDTO), pageRequest);
+        return batches.map(batchMapper::toResponseDTO);
     }
 }

@@ -1,4 +1,4 @@
-package com.enigcode.frozen_backend.production_orders.specification;
+package com.enigcode.frozen_backend.batches.specification;
 
 import jakarta.persistence.criteria.Predicate;
 
@@ -7,12 +7,12 @@ import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderFilterDTO;
-import com.enigcode.frozen_backend.production_orders.Model.ProductionOrder;
+import com.enigcode.frozen_backend.batches.DTO.BatchFilterDTO;
+import com.enigcode.frozen_backend.batches.model.Batch;
 
-public class ProductionOrderSpecification {
+public class BatchSpecification {
     
-    public static Specification<ProductionOrder> createFilter (ProductionOrderFilterDTO filterDTO){
+    public static Specification<Batch> createFilter (BatchFilterDTO filterDTO){
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (filterDTO.getProductId() != null) {
