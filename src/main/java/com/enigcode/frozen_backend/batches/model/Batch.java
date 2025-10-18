@@ -1,6 +1,7 @@
 package com.enigcode.frozen_backend.batches.model;
 
 import com.enigcode.frozen_backend.packagings.model.Packaging;
+import com.enigcode.frozen_backend.production_orders.Model.ProductionOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -30,6 +31,9 @@ public class Batch {
     @NotNull
     private Packaging packaging;
 
+    @OneToOne(mappedBy = "batch")
+    private ProductionOrder productionOrder;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     @NotNull
@@ -39,17 +43,20 @@ public class Batch {
     @Min(value = 0)
     private Integer quantity;
 
-    @Column(name = "planned_date")
-    @NotNull
-    private OffsetDateTime plannedDate;
-
     @Column(name = "creation_date")
     @NotNull
     private OffsetDateTime creationDate;
+
+    @Column(name = "planned_date")
+    @NotNull
+    private OffsetDateTime plannedDate;
 
     @Column(name = "start_date")
     private OffsetDateTime startDate;
 
     @Column(name = "completed_date")
     private OffsetDateTime completedDate;
+
+    @Column(name = "estimated_completed_date")
+    private OffsetDateTime estimatedCompletedDate;
 }

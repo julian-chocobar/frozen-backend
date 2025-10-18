@@ -22,4 +22,5 @@ public interface ProductPhaseService {
     ProductPhaseResponseDTO markAsReady(Long id);
 
     void reviewIsReady(@NotNull ProductPhase productPhase);
+
 }

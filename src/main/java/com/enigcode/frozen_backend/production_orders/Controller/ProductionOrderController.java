@@ -65,4 +65,15 @@ public class ProductionOrderController {
 
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
+
+    @Operation(
+            summary = "Recibir informacion de una orden de produccion",
+            description = "Devuelve los datos de una ordend de produccion especificada por id"
+    )
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductionOrderResponseDTO> getProductionOrder(@PathVariable Long id){
+        ProductionOrderResponseDTO dto = productionOrderService.getProductionOrder(id);
+
+        return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
 }

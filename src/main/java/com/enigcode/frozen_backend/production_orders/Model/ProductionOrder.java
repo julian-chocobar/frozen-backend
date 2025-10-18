@@ -23,8 +23,8 @@ public class ProductionOrder {
     @SequenceGenerator(name = "production_orders_gen", sequenceName = "production_orders_seq", allocationSize = 1)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_batch")
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_batch",referencedColumnName = "id")
     @NotNull
     private Batch batch;
 
@@ -37,6 +37,10 @@ public class ProductionOrder {
     @Column(name = "status")
     @NotNull
     private OrderStatus status;
+
+    @Column(name = "validation_date")
+    @NotNull
+    private OffsetDateTime validationDate;
 
     @NotNull
     @DecimalMin(value = "0.0")

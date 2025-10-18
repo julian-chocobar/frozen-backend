@@ -7,6 +7,7 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.Resource
 import com.enigcode.frozen_backend.movements.DTO.MovementSimpleCreateDTO;
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import com.enigcode.frozen_backend.movements.service.MovementService;
+import com.enigcode.frozen_backend.product_phases.service.ProductPhaseService;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderResponseDTO;
 import com.enigcode.frozen_backend.production_orders.Mapper.ProductionOrderMapper;
@@ -49,8 +50,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
         if(product.getIsReady().equals(Boolean.FALSE))
             throw new BadRequestException("El producto "+ product.getId()+ "no esta listo para produccion");
 
-        Batch batch = batchService.createBatch(createDTO.getPackagingId(),
-                createDTO.getPlannedDate(), createDTO.getQuantity());
+        Batch batch = batchService.createBatch(createDTO, product);
 
         if(!batch.getPackaging().getUnitMeasurement().equals(product.getUnitMeasurement()))
             throw new BadRequestException("La unidad del producto: " + product.getUnitMeasurement() +
@@ -113,6 +113,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
                 productionOrder.getQuantity()/productionOrder.getProduct().getStandardQuantity());
 
         productionOrder.setStatus(OrderStatus.APROBADO);
+        productionOrder.setValidationDate(OffsetDateTime.now());
 
         ProductionOrder savedProductionOrder = productionOrderRepository.save(productionOrder);
 
@@ -161,10 +162,24 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
                 productionOrder.getQuantity()/productionOrder.getProduct().getStandardQuantity());
 
         productionOrder.setStatus(orderStatus);
+        productionOrder.setValidationDate(OffsetDateTime.now());
 
         ProductionOrder savedProductionOrder = productionOrderRepository.save(productionOrder);
 
         return productionOrderMapper.toResponseDTO(savedProductionOrder);
+    }
+
+    /**
+     * Busca y devuelve informacion de un production order especificado por id
+     * @param id
+     * @return
+     */
+    @Override
+    public ProductionOrderResponseDTO getProductionOrder(Long id) {
+        ProductionOrder productionOrder = productionOrderRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("No se encontro Orden de id "+ id));
+
+        return productionOrderMapper.toResponseDTO(productionOrder);
     }
 
     /**

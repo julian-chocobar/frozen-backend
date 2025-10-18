@@ -4,6 +4,8 @@ import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import com.enigcode.frozen_backend.production_orders.Model.OrderStatus;
 import lombok.*;
 
+import java.time.OffsetDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -11,10 +13,16 @@ import lombok.*;
 @Builder
 public class ProductionOrderResponseDTO {
     private Long id;
+    private Long batchId;
     private String batchCode;
     private String packagingName;
     private String productName;
     private OrderStatus status;
+    private OffsetDateTime validationDate;
     private Double quantity;
     private UnitMeasurement unitMeasurement;
+    private OffsetDateTime plannedDate;
+    private OffsetDateTime startDate;
+    private OffsetDateTime estimatedCompletedDate;
+    private OffsetDateTime completedDate;
 }

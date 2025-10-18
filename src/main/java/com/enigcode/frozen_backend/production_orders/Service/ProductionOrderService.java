@@ -9,4 +9,5 @@ public interface ProductionOrderService {
     ProductionOrderResponseDTO createProductionOrder(ProductionOrderCreateDTO productionOrderCreateDTO);
     ProductionOrderResponseDTO approveOrder(Long id);
     ProductionOrderResponseDTO returnOrder(Long id, OrderStatus orderStatus);
+    ProductionOrderResponseDTO getProductionOrder(Long id);
 }
