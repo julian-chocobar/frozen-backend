@@ -39,7 +39,6 @@ public class ProductionOrder {
     private OrderStatus status;
 
     @Column(name = "validation_date")
-    @NotNull
     private OffsetDateTime validationDate;
 
     @NotNull
