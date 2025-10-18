@@ -165,4 +165,155 @@ class RecipeServiceImplTest {
         assertEquals(1, result.size());
         assertSame(response, result.get(0));
     }
+
+    @Test
+    void getMaterialByPhase_success() {
+        // Arrange
+        Long phaseId = 1L;
+        ProductPhase productPhase = ProductPhase.builder()
+                .id(phaseId)
+                .phase(Phase.MOLIENDA)
+                .build();
+        
+        Recipe recipe1 = new Recipe();
+        Recipe recipe2 = new Recipe();
+        List<Recipe> recipes = List.of(recipe1, recipe2);
+        
+        RecipeResponseDTO response1 = new RecipeResponseDTO();
+        RecipeResponseDTO response2 = new RecipeResponseDTO();
+
+        when(productPhaseRepository.findById(phaseId)).thenReturn(Optional.of(productPhase));
+        when(recipeRepository.findByProductPhase(productPhase)).thenReturn(recipes);
+        when(recipeMapper.toResponseDTO(recipe1)).thenReturn(response1);
+        when(recipeMapper.toResponseDTO(recipe2)).thenReturn(response2);
+
+        // Act
+        List<RecipeResponseDTO> result = service.getMaterialByPhase(phaseId);
+
+        // Assert
+        assertEquals(2, result.size());
+        assertSame(response1, result.get(0));
+        assertSame(response2, result.get(1));
+        verify(productPhaseRepository).findById(phaseId);
+        verify(recipeRepository).findByProductPhase(productPhase);
+    }
+
+    @Test
+    void getMaterialByPhase_productPhaseNotFound_throws() {
+        // Arrange
+        Long phaseId = 999L;
+        when(productPhaseRepository.findById(phaseId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> service.getMaterialByPhase(phaseId));
+        verify(productPhaseRepository).findById(phaseId);
+        verify(recipeRepository, never()).findByProductPhase(any());
+    }
+
+    @Test
+    void getMaterialByProduct_success() {
+        // Arrange
+        Long productId = 1L;
+        Recipe recipe1 = new Recipe();
+        Recipe recipe2 = new Recipe();
+        List<Recipe> recipes = List.of(recipe1, recipe2);
+        
+        RecipeResponseDTO response1 = new RecipeResponseDTO();
+        RecipeResponseDTO response2 = new RecipeResponseDTO();
+
+        when(recipeRepository.findByProductPhase_ProductId(productId)).thenReturn(recipes);
+        when(recipeMapper.toResponseDTO(recipe1)).thenReturn(response1);
+        when(recipeMapper.toResponseDTO(recipe2)).thenReturn(response2);
+
+        // Act
+        List<RecipeResponseDTO> result = service.getMaterialByProduct(productId);
+
+        // Assert
+        assertEquals(2, result.size());
+        assertSame(response1, result.get(0));
+        assertSame(response2, result.get(1));
+        verify(recipeRepository).findByProductPhase_ProductId(productId);
+    }
+
+    @Test
+    void getMaterialByProduct_emptyList() {
+        // Arrange
+        Long productId = 999L;
+        when(recipeRepository.findByProductPhase_ProductId(productId)).thenReturn(List.of());
+
+        // Act
+        List<RecipeResponseDTO> result = service.getMaterialByProduct(productId);
+
+        // Assert
+        assertTrue(result.isEmpty());
+        verify(recipeRepository).findByProductPhase_ProductId(productId);
+    }
+
+    @Test
+    void getRecipeByProduct_success() {
+        // Arrange
+        Long productId = 1L;
+        Recipe recipe1 = new Recipe();
+        Recipe recipe2 = new Recipe();
+        List<Recipe> recipes = List.of(recipe1, recipe2);
+
+        when(recipeRepository.findByProductPhase_ProductId(productId)).thenReturn(recipes);
+
+        // Act
+        List<Recipe> result = service.getRecipeByProduct(productId);
+
+        // Assert
+        assertEquals(2, result.size());
+        assertSame(recipe1, result.get(0));
+        assertSame(recipe2, result.get(1));
+        verify(recipeRepository).findByProductPhase_ProductId(productId);
+    }
+
+    @Test
+    void getRecipeByProduct_emptyList() {
+        // Arrange
+        Long productId = 999L;
+        when(recipeRepository.findByProductPhase_ProductId(productId)).thenReturn(List.of());
+
+        // Act
+        List<Recipe> result = service.getRecipeByProduct(productId);
+
+        // Assert
+        assertTrue(result.isEmpty());
+        verify(recipeRepository).findByProductPhase_ProductId(productId);
+    }
+
+    @Test
+    void createRecipe_withOtrosType_shouldAllowAnyPhase() {
+        // Arrange - Material tipo OTROS debe permitirse en cualquier fase
+        RecipeCreateDTO dto = RecipeCreateDTO.builder()
+                .productPhaseId(1L)
+                .materialId(2L)
+                .quantity(5.0)
+                .build();
+        Recipe recipe = new Recipe();
+        ProductPhase phase = ProductPhase.builder()
+                .id(1L)
+                .phase(Phase.COCCION)
+                .build();
+        Material material = Material.builder()
+                .id(2L)
+                .type(MaterialType.OTROS) // OTROS se permite en cualquier fase
+                .build();
+        Recipe saved = new Recipe();
+        RecipeResponseDTO response = new RecipeResponseDTO();
+
+        when(recipeMapper.toEntity(dto)).thenReturn(recipe);
+        when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(phase));
+        when(materialRepository.findById(2L)).thenReturn(Optional.of(material));
+        when(recipeRepository.saveAndFlush(any())).thenReturn(saved);
+        when(recipeMapper.toResponseDTO(saved)).thenReturn(response);
+
+        // Act
+        RecipeResponseDTO result = service.createRecipe(dto);
+
+        // Assert
+        assertSame(response, result);
+        verify(recipeRepository).saveAndFlush(any());
+    }
 }
