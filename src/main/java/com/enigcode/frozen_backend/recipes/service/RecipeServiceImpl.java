@@ -151,18 +151,41 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     @Transactional
     public List<RecipeResponseDTO> getMaterialByPhase(Long id){
-        List<RecipeResponseDTO> materialsByPhase = recipeRepository.findAll()
-                .stream().filter(recipe -> recipe.getProductPhase().getId() == id).map(recipeMapper :: toResponseDTO).toList();
-        
+        List<Recipe> recipes = recipeRepository.findByProductPhase(id);
+
+        List<RecipeResponseDTO> materialsByPhase =
+                recipes.stream()
+                        .map(recipeMapper::toResponseDTO)
+                        .toList();
+
         return materialsByPhase;
     }
 
+    /**
+     * Funcion que busca todas las recetas de un producto en especifico
+     * @param id
+     * @return Lista de recipeResponseDto
+     */
     @Override
     @Transactional
     public List<RecipeResponseDTO> getMaterialByProduct(Long id){
-        List<RecipeResponseDTO> materialsByProduct = recipeRepository.findAll()
-                .stream().filter(recipe -> recipe.getProductPhase().getProduct().getId() == id).map(recipeMapper :: toResponseDTO).toList();
-        
+        List<Recipe> recipes = getRecipeByProduct(id);
+
+        List<RecipeResponseDTO> materialsByProduct =
+                recipes.stream()
+                        .map(recipeMapper::toResponseDTO)
+                        .toList();
+
         return materialsByProduct;
+    }
+
+    /**
+     * Funcion que busca todas las recetas de un producto en especifico
+     * @param id
+     * @return lista de recetas
+     */
+    @Override
+    public List<Recipe> getRecipeByProduct(Long id) {
+        return recipeRepository.findByProductPhase_ProductId(id);
     }
 }

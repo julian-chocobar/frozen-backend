@@ -38,12 +38,12 @@ public class BatchServiceImpl implements BatchService{
                         .startDate(null)
                         .completedDate(null)
                         .build();
-        
-        return batch;
-    }
 
+        Batch savedBatch = batchRepository.saveAndFlush(batch);
+        savedBatch.setCode(generateCode(savedBatch));
+        return savedBatch;
+    }
      private String generateCode(Batch batch) {
         return "LOT-" + batch.getId();
     }
-
 }

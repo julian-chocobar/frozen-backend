@@ -46,6 +46,9 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
 
         Double quantity = batch.getQuantity() * batch.getPackaging().getQuantity() ;
 
+        Double materialQuantityMultiplier = quantity / product.getStandardQuantity();
+
+
         ProductionOrder productionOrder = ProductionOrder.builder()
                 .batch(batch)
                 .product(product)
@@ -54,6 +57,8 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
                 .creationDate(OffsetDateTime.now())
                 .build();
 
+
+        productionOrderRepository.saveAndFlush(productionOrder);
         return null;
     }
 }
