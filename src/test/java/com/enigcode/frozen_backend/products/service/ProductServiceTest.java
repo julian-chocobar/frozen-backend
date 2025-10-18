@@ -1,7 +1,6 @@
 package com.enigcode.frozen_backend.products.service;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
-import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
@@ -73,7 +72,6 @@ class ProductServiceTest {
 
         @Test
         void createProduct_isAlcoholic_createsPhases_andPersists() {
-                when(packagingRepository.findById(1L)).thenReturn(Optional.of(packaging));
                 when(productRepository.saveAndFlush(any(Product.class))).thenAnswer(inv -> {
                         Product p = inv.getArgument(0);
                         p.setId(10L);
@@ -87,7 +85,6 @@ class ProductServiceTest {
 
                 ProductResponseDTO resp = service.createProduct(dto);
 
-                verify(packagingRepository).findById(1L);
                 ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
                 verify(productRepository).saveAndFlush(captor.capture());
 
@@ -106,7 +103,6 @@ class ProductServiceTest {
 
         @Test
         void createProduct_notAlcoholic_addsDesalcoholPhase() {
-                when(packagingRepository.findById(1L)).thenReturn(Optional.of(packaging));
                 when(productRepository.saveAndFlush(any(Product.class))).thenAnswer(inv -> {
                         Product p = inv.getArgument(0);
                         p.setId(11L);
@@ -130,17 +126,26 @@ class ProductServiceTest {
         }
 
         @Test
-        void createProduct_packagingNotFound_throws404() {
-                when(packagingRepository.findById(99L)).thenReturn(Optional.empty());
+        void createProduct_createsWithoutPackaging() {
+                when(productRepository.saveAndFlush(any(Product.class))).thenAnswer(inv -> {
+                        Product p = inv.getArgument(0);
+                        p.setId(12L);
+                        return p;
+                });
 
                 var dto = ProductCreateDTO.builder()
                                 .name("X")
                                 .isAlcoholic(true)
                                 .build();
 
-                assertThatThrownBy(() -> service.createProduct(dto))
-                                .isInstanceOf(ResourceNotFoundException.class);
-                verify(productRepository, never()).saveAndFlush(any());
+                ProductResponseDTO resp = service.createProduct(dto);
+
+                ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
+                verify(productRepository).saveAndFlush(captor.capture());
+                Product saved = captor.getValue();
+                assertThat(saved.getName()).isEqualTo("X");
+                assertThat(saved.getIsAlcoholic()).isTrue();
+                assertThat(resp.getId()).isEqualTo(12L);
         }
 
         @Test
@@ -267,9 +272,7 @@ class ProductServiceTest {
                                 .creationDate(OffsetDateTime.now()).phases(new ArrayList<>())
                                 .build();
 
-                Specification<Product> spec = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
-
-                when(productRepository.findAll(spec,
+                when(productRepository.findAll(ArgumentMatchers.<Specification<Product>>any(),
                                 any(org.springframework.data.domain.Pageable.class)))
                                 .thenReturn(new PageImpl<>(List.of(product)));
 

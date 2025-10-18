@@ -3,6 +3,8 @@ package com.enigcode.frozen_backend.product_phases.service;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.materials.model.MaterialType;
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseResponseDTO;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseUpdateDTO;
 import com.enigcode.frozen_backend.product_phases.mapper.ProductPhaseMapper;
@@ -124,12 +126,16 @@ class ProductPhaseServiceImplTest {
     @Test
     void testMarkAsReady_Success() {
         productPhase.setIsReady(false);
-        // productPhase.setRequiredMaterials(Collections.emptyList());
+        // Set fields to make phase complete and with no required materials
+        productPhase.setPhase(Phase.FILTRACION); // no required materials
+        productPhase.setInput(1.0);
+        productPhase.setOutput(1.0);
+        productPhase.setOutputUnit(UnitMeasurement.KG);
+        productPhase.setEstimatedHours(1.0);
+
         when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(productPhase));
         when(productPhaseRepository.save(productPhase)).thenReturn(productPhase);
         when(productPhaseMapper.toResponseDto(productPhase)).thenReturn(responseDTO);
-
-        doReturn(true).when(productPhase).isComplete();
 
         ProductPhaseResponseDTO result = productPhaseService.markAsReady(1L);
 
@@ -147,8 +153,7 @@ class ProductPhaseServiceImplTest {
     @Test
     void testMarkAsReady_IncompletePhase() {
         when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(productPhase));
-        doReturn(false).when(productPhase).isComplete();
-
+        // Leave fields null so isComplete() returns false
         assertThrows(BadRequestException.class, () -> productPhaseService.markAsReady(1L));
     }
 
@@ -156,8 +161,13 @@ class ProductPhaseServiceImplTest {
     void testMarkAsReady_MissingMaterials() {
         when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(productPhase));
 
-        doReturn(true).when(productPhase).isComplete();
-        // productPhase.setRequiredMaterials(List.of(MaterialType.AGUA));
+        // Make complete
+        productPhase.setInput(1.0);
+        productPhase.setOutput(1.0);
+        productPhase.setOutputUnit(UnitMeasurement.KG);
+        productPhase.setEstimatedHours(1.0);
+        // Choose a phase that requires AGUA
+        productPhase.setPhase(Phase.MACERACION);
 
         when(recipeRepository.existsByMaterial_Type(MaterialType.AGUA)).thenReturn(false);
 

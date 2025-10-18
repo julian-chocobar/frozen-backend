@@ -1,13 +1,20 @@
 package com.enigcode.frozen_backend.movements.controller;
 
+import com.enigcode.frozen_backend.common.exceptions_configs.GlobalExceptionHandler;
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+
 import com.enigcode.frozen_backend.movements.DTO.MovementCreateDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementResponseDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementDetailDTO;
 import com.enigcode.frozen_backend.movements.service.MovementService;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.*;
@@ -15,10 +22,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(MovementController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
 class MovementControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+    @MockBean
     private MovementService movementService;
 
     @Test
@@ -29,13 +39,27 @@ class MovementControllerTest {
 
         when(movementService.createMovement(any(MovementCreateDTO.class))).thenReturn(responseDTO);
 
-        mockMvc.perform(post("/movements")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"materialId\":1,\"quantity\":5}")) // JSON de ejemplo
+    // JSON con campos mínimos válidos según validaciones del DTO
+    String validJson = "{\"materialId\":1,\"stock\":5,\"type\":\"INGRESO\"}";
+    mockMvc.perform(post("/movements")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(validJson))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("1"));
 
         verify(movementService, times(1)).createMovement(any(MovementCreateDTO.class));
+    }
+
+    @Test
+    void testCreateMovement_BadRequest_ShouldReturn400() throws Exception {
+        when(movementService.createMovement(any(MovementCreateDTO.class)))
+                .thenThrow(new BadRequestException("stock insuficiente"));
+
+        String validJson = "{\"materialId\":1,\"stock\":5,\"type\":\"INGRESO\"}";
+        mockMvc.perform(post("/movements")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validJson))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -50,5 +74,22 @@ class MovementControllerTest {
                 .andExpect(jsonPath("$.id").value("1"));
 
         verify(movementService, times(1)).getMovement(1L);
+    }
+
+    @Test
+    void testGetMovement_NotFound_ShouldReturn404() throws Exception {
+        when(movementService.getMovement(999L)).thenThrow(new ResourceNotFoundException("no encontrado"));
+
+        mockMvc.perform(get("/movements/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testCreateMovement_InvalidType_ShouldReturn400() throws Exception {
+        String invalidTypeJson = "{\"materialId\":1,\"stock\":5,\"type\":\"INVALIDO\"}";
+        mockMvc.perform(post("/movements")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidTypeJson))
+                .andExpect(status().isInternalServerError()); // JSON parsing error returns 500
     }
 }

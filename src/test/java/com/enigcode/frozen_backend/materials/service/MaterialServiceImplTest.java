@@ -8,7 +8,10 @@ import com.enigcode.frozen_backend.materials.model.MaterialType;
 import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -16,7 +19,11 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
 
+import org.mockito.ArgumentMatchers;
+
+@ExtendWith(MockitoExtension.class)
 class MaterialServiceImplTest {
 
     @Mock
@@ -33,11 +40,12 @@ class MaterialServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         material = new Material();
         material.setId(1L);
+
         material.setName("Cartón");
         material.setType(MaterialType.ENVASE);
+        material.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.UNIDAD);
 
         responseDTO = new MaterialResponseDTO();
         responseDTO.setId(1L);
@@ -47,7 +55,13 @@ class MaterialServiceImplTest {
     @Test
     void testSaveMaterial() {
         MaterialCreateDTO createDTO = new MaterialCreateDTO();
+
         createDTO.setType(MaterialType.ENVASE);
+        createDTO.setName("Cartón");
+        createDTO.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.UNIDAD);
+        createDTO.setThreshold(1.0);
+        createDTO.setStock(0.0);
+        createDTO.setValue(0.0);
 
         when(materialMapper.toEntity(createDTO)).thenReturn(material);
         when(materialRepository.save(any(Material.class))).thenReturn(material);
@@ -58,12 +72,14 @@ class MaterialServiceImplTest {
 
         assertNotNull(result);
         assertEquals(responseDTO.getId(), result.getId());
-        verify(materialRepository, times(2)).save(any(Material.class));
+        verify(materialRepository, times(1)).save(any(Material.class));
+        verify(materialRepository, times(1)).saveAndFlush(any(Material.class));
     }
 
     @Test
     void testUpdateMaterial_Success() {
         MaterialUpdateDTO updateDTO = new MaterialUpdateDTO();
+    updateDTO.setType(MaterialType.ENVASE);
 
         when(materialRepository.findById(1L)).thenReturn(Optional.of(material));
         when(materialMapper.partialUpdate(updateDTO, material)).thenReturn(material);
@@ -112,9 +128,7 @@ class MaterialServiceImplTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Material> page = new PageImpl<>(List.of(material));
 
-        Specification<Material> spec = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
-
-        when(materialRepository.findAll(spec, eq(pageable))).thenReturn(page);
+        when(materialRepository.findAll(ArgumentMatchers.<Specification<Material>>any(), any(Pageable.class))).thenReturn(page);
         when(materialMapper.toResponseDto(any(Material.class))).thenReturn(responseDTO);
 
         Page<MaterialResponseDTO> result = materialService.findAll(new MaterialFilterDTO(), pageable);
@@ -126,10 +140,11 @@ class MaterialServiceImplTest {
     @Test
     void testGetMaterialSimpleList() {
         material.setId(1L);
+        material.setCode("MAT-1");
         material.setName("Plástico");
-        when(materialRepository.findAll()).thenReturn(List.of(material));
+        when(materialRepository.findTop10ByNameContainingIgnoreCase("Pl")).thenReturn(List.of(material));
 
-        List<MaterialSimpleResponseDTO> result = materialService.getMaterialSimpleList("Plás", null);
+        List<MaterialSimpleResponseDTO> result = materialService.getMaterialSimpleList("Pl", null);
 
         assertEquals(1, result.size());
         assertEquals("Plástico", result.get(0).getName());

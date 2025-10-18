@@ -40,16 +40,40 @@ class ProductMapperTest {
     }
 
     @Test
-    void partialUpdate_updates_is_alcoholic_and_keeps_name() {
-        Product product = buildProduct();
-
-        ProductUpdateDTO update = ProductUpdateDTO.builder()
+    void partialUpdate_updates_nonNull_fields() {
+        Product existing = Product.builder()
+                .id(1L)
+                .name("APA")
                 .isAlcoholic(false)
                 .build();
 
-        Product result = mapper.partialUpdate(update, product);
+        ProductUpdateDTO dto = ProductUpdateDTO.builder()
+                .name("IPA")
+                .isAlcoholic(true)
+                .build();
+
+        Product result = mapper.partialUpdate(dto, existing);
 
         assertThat(result.getName()).isEqualTo("IPA");
-        assertThat(result.getIsAlcoholic()).isFalse();
+        assertThat(result.getIsAlcoholic()).isTrue();
+    }
+
+    @Test
+    void partialUpdate_ignores_null_fields() {
+        Product existing = Product.builder()
+                .id(2L)
+                .name("Stout")
+                .isAlcoholic(true)
+                .build();
+
+        ProductUpdateDTO dto = ProductUpdateDTO.builder()
+                .name(null)
+                .isAlcoholic(null)
+                .build();
+
+        Product result = mapper.partialUpdate(dto, existing);
+
+        assertThat(result.getName()).isEqualTo("Stout");
+        assertThat(result.getIsAlcoholic()).isTrue();
     }
 }

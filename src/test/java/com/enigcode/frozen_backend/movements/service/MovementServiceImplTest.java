@@ -8,24 +8,31 @@ import com.enigcode.frozen_backend.movements.DTO.MovementCreateDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementDetailDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementFilterDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementResponseDTO;
+import com.enigcode.frozen_backend.movements.DTO.MovementSimpleCreateDTO;
 import com.enigcode.frozen_backend.movements.mapper.MovementMapper;
 import com.enigcode.frozen_backend.movements.model.Movement;
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import com.enigcode.frozen_backend.movements.repository.MovementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import org.mockito.ArgumentMatchers;
+
+@ExtendWith(MockitoExtension.class)
 class MovementServiceImplTest {
 
     @Mock
@@ -44,10 +51,10 @@ class MovementServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         material = new Material();
         material.setId(1L);
         material.setStock(50.0);
+        material.setReservedStock(0.0);
 
         movement = Movement.builder()
                 .id(1L)
@@ -144,14 +151,146 @@ class MovementServiceImplTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Movement> page = new PageImpl<>(List.of(movement));
 
-        Specification<Movement> spec = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
-
-        when(movementRepository.findAll(spec, eq(pageable))).thenReturn(page);
+        when(movementRepository.findAll(ArgumentMatchers.<Specification<Movement>>any(), any(Pageable.class))).thenReturn(page);
         when(movementMapper.toResponseDto(any(Movement.class))).thenReturn(responseDTO);
 
         Page<MovementResponseDTO> result = movementService.findAll(new MovementFilterDTO(), pageable);
 
         assertEquals(1, result.getTotalElements());
         assertEquals(1L, result.getContent().get(0).getId());
+    }
+
+    @Test
+    void testCreateReserveOrReturn_Reserva_Success() {
+        Material material1 = new Material();
+        material1.setId(1L);
+        material1.setStock(100.0);
+        material1.setReservedStock(0.0);
+
+        MovementSimpleCreateDTO dto = new MovementSimpleCreateDTO();
+        dto.setMaterial(material1);
+        dto.setStock(20.0);
+
+        List<MovementSimpleCreateDTO> materials = List.of(dto);
+
+        when(movementRepository.saveAllAndFlush(anyList())).thenReturn(new ArrayList<>());
+
+        movementService.createReserveOrReturn(MovementType.RESERVA, materials);
+
+        assertEquals(80.0, material1.getStock()); // stock disponible reducido
+        assertEquals(20.0, material1.getReservedStock()); // stock reservado incrementado
+        verify(movementRepository).saveAllAndFlush(anyList());
+    }
+
+    @Test
+    void testCreateReserveOrReturn_Reserva_StockInsuficiente() {
+        Material material1 = new Material();
+        material1.setId(1L);
+        material1.setStock(10.0);
+        material1.setReservedStock(0.0);
+
+        MovementSimpleCreateDTO dto = new MovementSimpleCreateDTO();
+        dto.setMaterial(material1);
+        dto.setStock(20.0); // más de lo disponible
+
+        List<MovementSimpleCreateDTO> materials = List.of(dto);
+
+        assertThrows(BadRequestException.class, 
+            () -> movementService.createReserveOrReturn(MovementType.RESERVA, materials));
+    }
+
+    @Test
+    void testCreateReserveOrReturn_Devuelto_Success() {
+        Material material1 = new Material();
+        material1.setId(1L);
+        material1.setStock(80.0);
+        material1.setReservedStock(20.0);
+
+        MovementSimpleCreateDTO dto = new MovementSimpleCreateDTO();
+        dto.setMaterial(material1);
+        dto.setStock(15.0);
+
+        List<MovementSimpleCreateDTO> materials = List.of(dto);
+
+        when(movementRepository.saveAllAndFlush(anyList())).thenReturn(new ArrayList<>());
+
+        movementService.createReserveOrReturn(MovementType.DEVUELTO, materials);
+
+        assertEquals(95.0, material1.getStock()); // stock disponible incrementado
+        assertEquals(5.0, material1.getReservedStock()); // stock reservado reducido
+        verify(movementRepository).saveAllAndFlush(anyList());
+    }
+
+    @Test
+    void testCreateReserveOrReturn_Devuelto_ReservedStockInsuficiente() {
+        Material material1 = new Material();
+        material1.setId(1L);
+        material1.setStock(80.0);
+        material1.setReservedStock(5.0);
+
+        MovementSimpleCreateDTO dto = new MovementSimpleCreateDTO();
+        dto.setMaterial(material1);
+        dto.setStock(15.0); // más de lo reservado
+
+        List<MovementSimpleCreateDTO> materials = List.of(dto);
+
+        assertThrows(BadRequestException.class, 
+            () -> movementService.createReserveOrReturn(MovementType.DEVUELTO, materials));
+    }
+
+    @Test
+    void testCreateReserveOrReturn_TipoInvalido() {
+        Material material1 = new Material();
+        material1.setId(1L);
+        material1.setStock(100.0);
+        material1.setReservedStock(0.0);
+
+        MovementSimpleCreateDTO dto = new MovementSimpleCreateDTO();
+        dto.setMaterial(material1);
+        dto.setStock(20.0);
+
+        List<MovementSimpleCreateDTO> materials = List.of(dto);
+
+        assertThrows(BadRequestException.class, 
+            () -> movementService.createReserveOrReturn(MovementType.INGRESO, materials));
+    }
+
+    @Test
+    void testConfirmReservation_Success() {
+        Material material1 = new Material();
+        material1.setId(1L);
+        material1.setStock(80.0);
+        material1.setReservedStock(20.0);
+
+        MovementSimpleCreateDTO dto = new MovementSimpleCreateDTO();
+        dto.setMaterial(material1);
+        dto.setStock(15.0);
+
+        List<MovementSimpleCreateDTO> materials = List.of(dto);
+
+        when(movementRepository.saveAllAndFlush(anyList())).thenReturn(new ArrayList<>());
+
+        movementService.confirmReservation(materials);
+
+        assertEquals(80.0, material1.getStock()); // stock disponible no cambia
+        assertEquals(5.0, material1.getReservedStock()); // stock reservado reducido
+        verify(movementRepository).saveAllAndFlush(anyList());
+    }
+
+    @Test
+    void testConfirmReservation_ReservedStockInsuficiente() {
+        Material material1 = new Material();
+        material1.setId(1L);
+        material1.setStock(80.0);
+        material1.setReservedStock(10.0);
+
+        MovementSimpleCreateDTO dto = new MovementSimpleCreateDTO();
+        dto.setMaterial(material1);
+        dto.setStock(15.0); // más de lo reservado
+
+        List<MovementSimpleCreateDTO> materials = List.of(dto);
+
+        assertThrows(BadRequestException.class, 
+            () -> movementService.confirmReservation(materials));
     }
 }

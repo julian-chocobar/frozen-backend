@@ -5,9 +5,13 @@ import com.enigcode.frozen_backend.packagings.DTO.*;
 import com.enigcode.frozen_backend.packagings.mapper.PackagingMapper;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
+import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 
 import java.time.OffsetDateTime;
@@ -16,10 +20,13 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class PackagingServiceImplTest {
 
     @Mock
     private PackagingRepository packagingRepository;
+    @Mock
+    private MaterialRepository materialRepository;
     @Mock
     private PackagingMapper packagingMapper;
 
@@ -31,8 +38,6 @@ class PackagingServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-
         packaging = new Packaging();
         packaging.setId(1L);
         packaging.setName("Caja grande");
@@ -48,7 +53,11 @@ class PackagingServiceImplTest {
     void testCreatePackaging_Success() {
         PackagingCreateDTO createDTO = new PackagingCreateDTO();
         createDTO.setName("Caja mediana");
+        createDTO.setMaterialId(1L);
+    createDTO.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.KG);
+        createDTO.setQuantity(1.0);
 
+        when(materialRepository.findById(1L)).thenReturn(Optional.of(new com.enigcode.frozen_backend.materials.model.Material() {{ setId(1L); setType(com.enigcode.frozen_backend.materials.model.MaterialType.ENVASE); }}));
         when(packagingMapper.toEntity(createDTO)).thenReturn(packaging);
         when(packagingRepository.saveAndFlush(any(Packaging.class))).thenReturn(packaging);
         when(packagingMapper.toResponseDto(any(Packaging.class))).thenReturn(responseDTO);

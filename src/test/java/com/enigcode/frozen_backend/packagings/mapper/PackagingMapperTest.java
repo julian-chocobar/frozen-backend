@@ -5,6 +5,7 @@ import com.enigcode.frozen_backend.packagings.DTO.PackagingResponseDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO;
 import com.enigcode.frozen_backend.packagings.DTO.PackagingUpdateDTO;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
+import com.enigcode.frozen_backend.materials.model.Material;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
@@ -19,6 +20,7 @@ class PackagingMapperTest {
         PackagingCreateDTO dto = new PackagingCreateDTO();
         dto.setName("Caja grande");
         dto.setQuantity(50.0);
+        dto.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.UNIDAD);
 
         Packaging entity = mapper.toEntity(dto);
 
@@ -33,12 +35,17 @@ class PackagingMapperTest {
         packaging.setId(1L);
         packaging.setName("Bolsa plástica");
         packaging.setQuantity(10.0);
+        packaging.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.UNIDAD);
+        Material material = new Material();
+        material.setName("Polietileno");
+        packaging.setMaterial(material);
 
         PackagingResponseDTO dto = mapper.toResponseDto(packaging);
 
         assertNotNull(dto);
         assertEquals("Bolsa plástica", dto.getName());
-        assertEquals(10, dto.getQuantity());
+    assertEquals(10, dto.getQuantity());
+    assertEquals("Polietileno", dto.getMaterialName());
     }
 
     @Test
@@ -60,12 +67,13 @@ class PackagingMapperTest {
         packaging.setName("Caja vieja");
         packaging.setQuantity(30.0);
 
-        PackagingUpdateDTO updateDTO = new PackagingUpdateDTO();
+    PackagingUpdateDTO updateDTO = new PackagingUpdateDTO();
         updateDTO.setQuantity(40.0); // solo modificamos capacidad
+    updateDTO.setName(null); // null debe ignorarse
 
         Packaging updated = mapper.partialUpdate(updateDTO, packaging);
 
-        assertEquals("Caja vieja", updated.getName()); // nombre no cambia
+        assertEquals("Caja vieja", updated.getName()); // nombre no cambia (ignorado por null)
         assertEquals(40, updated.getQuantity()); // capacidad actualizada
     }
 }

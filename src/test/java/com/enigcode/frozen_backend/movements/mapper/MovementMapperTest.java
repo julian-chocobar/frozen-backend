@@ -24,7 +24,7 @@ class MovementMapperTest {
 
         MovementResponseDTO dto = mapper.toResponseDto(movement);
 
-        assertEquals(MaterialType.MALTA, dto.getMaterialType());
+        assertEquals("MALTA", dto.getMaterialType());
     }
 
     @Test
@@ -40,9 +40,9 @@ class MovementMapperTest {
 
         MovementDetailDTO dto = mapper.toDetailDTO(movement);
 
-        assertEquals(1L, dto.getMaterialId());
+        assertEquals("1", dto.getMaterialId());
         assertEquals("Malta", dto.getMaterialName());
         assertEquals("M001", dto.getMaterialCode());
-        assertEquals(MaterialType.MALTA, dto.getMaterialType());
+        assertEquals("MALTA", dto.getMaterialType());
     }
 }
