@@ -51,6 +51,8 @@ public class ProductServiceImpl implements ProductService {
                 .isReady(Boolean.FALSE)
                 .isAlcoholic(productCreateDTO.getIsAlcoholic())
                 .creationDate(dateNow)
+                .standardQuantity(productCreateDTO.getStandardQuantity())
+                .unitMeasurement(productCreateDTO.getUnitMeasurement())
                 .build();
 
         // Se le asigna una ProductPhase incompleto a cada producto
@@ -112,8 +114,15 @@ public class ProductServiceImpl implements ProductService {
 
         if (productUpdateDTO.getName() != null)
             product.setName(productUpdateDTO.getName());
+
         if (productUpdateDTO.getIsAlcoholic() != null)
             this.changeAlcoholicType(productUpdateDTO.getIsAlcoholic(), product);
+
+        if (productUpdateDTO.getStandardQuantity() != null)
+            product.setStandardQuantity(productUpdateDTO.getStandardQuantity());
+            
+        if (productUpdateDTO.getUnitMeasurement() != null)
+            product.setUnitMeasurement(productUpdateDTO.getUnitMeasurement());
 
         Product savedUpdatedProduct = productRepository.save(product);
 

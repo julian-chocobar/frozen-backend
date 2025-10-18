@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.OffsetDateTime;
 
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -17,4 +19,6 @@ public class ProductResponseDTO {
     private Boolean isActive;
     private Boolean isReady;
     private OffsetDateTime creationDate;
+    private Double standardQuantity;
+    private UnitMeasurement unitMeasurement;
 }
