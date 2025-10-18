@@ -4,9 +4,11 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -30,6 +32,15 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("id ASC")
     private List<ProductPhase> phases;
+
+    @NotNull
+    @DecimalMin(value = "0.0")
+    private Double standardQuantity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unit_measurement")
+    @NotNull
+    private UnitMeasurement unitMeasurement;
 
     @Column(name = "is_active")
     @NotNull
