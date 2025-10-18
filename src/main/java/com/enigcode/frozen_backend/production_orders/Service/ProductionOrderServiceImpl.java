@@ -2,6 +2,7 @@ package com.enigcode.frozen_backend.production_orders.Service;
 
 import com.enigcode.frozen_backend.batches.model.Batch;
 import com.enigcode.frozen_backend.batches.service.BatchService;
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderResponseDTO;
@@ -23,14 +24,22 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
 
     /**
      * Funcion que crea una nueva orden de produccion en estado pendiente junto al lote que le corresponde
-     * @param productionOrderCreateDTO
+     * @param createDTO
      * @return
      */
     @Override
-    public ProductionOrderResponseDTO createProductionOrder(ProductionOrderCreateDTO productionOrderCreateDTO) {
-        Product product = productRepository.findById(productionOrderCreateDTO.getProductId())
+    public ProductionOrderResponseDTO createProductionOrder(ProductionOrderCreateDTO createDTO) {
+        Product product = productRepository.findById(createDTO.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "No se encontró producto con id " + productionOrderCreateDTO.getProductId()));
+                        "No se encontró producto con id " + createDTO.getProductId()));
+
+        Batch batch = batchService.createBatch(createDTO.getPackagingId(),
+                createDTO.getPlannedDate());
+
+        if(!batch.getPackaging().getUnitMeasurement().equals(product.getUnitMeasurement()))
+            throw new BadRequestException("La unidad del producto: " + product.getUnitMeasurement() +
+                    " y del packaging: " + batch.getPackaging().getUnitMeasurement() + " deben ser la misma");
+
 
         return null;
     }
