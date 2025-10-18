@@ -1,6 +1,5 @@
 package com.enigcode.frozen_backend.movements.service;
 
-import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.movements.DTO.*;
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import jakarta.transaction.Transactional;

@@ -3,7 +3,6 @@ package com.enigcode.frozen_backend.batches.controller;
 import com.enigcode.frozen_backend.batches.DTO.BatchResponseDTO;
 import com.enigcode.frozen_backend.batches.service.BatchService;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

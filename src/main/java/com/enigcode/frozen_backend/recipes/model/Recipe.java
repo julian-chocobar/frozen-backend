@@ -4,7 +4,6 @@ import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
