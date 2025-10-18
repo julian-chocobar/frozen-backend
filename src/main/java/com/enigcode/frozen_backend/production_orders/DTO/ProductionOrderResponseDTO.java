@@ -1,5 +1,6 @@
 package com.enigcode.frozen_backend.production_orders.DTO;
 
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import com.enigcode.frozen_backend.production_orders.Model.OrderStatus;
 import lombok.*;
 
@@ -15,4 +16,5 @@ public class ProductionOrderResponseDTO {
     private String productName;
     private OrderStatus status;
     private Double quantity;
+    private UnitMeasurement unitMeasurement;
 }

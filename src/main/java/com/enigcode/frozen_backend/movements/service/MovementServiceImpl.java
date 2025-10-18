@@ -76,12 +76,12 @@ public class MovementServiceImpl implements MovementService {
         }
 
         /**
-         * Funcion que crea nuevos movimientos de reserva o devuelto de stock
+         * Funcion que crea nuevos movimientos de reserva o devuelto de stock debe
+         * llamarse en el contexto de un transaccional
          * @param type Tiene que ser RESERVA o DEVUELTO
          * @param materials es una List<MovementSimpleCreateDTO> donde tiene material y stock
          */
         @Override
-        @Transactional
         public void createReserveOrReturn (@NotNull MovementType type,@Valid List<MovementSimpleCreateDTO> materials){
                 List<Movement> movements = new ArrayList<>();
 
@@ -113,10 +113,9 @@ public class MovementServiceImpl implements MovementService {
 
         /**
          * Funcion utilizada para crear los movimientos de egreso a partir del stock reservado de un producto
-         * se debe usar con precaucion
+         * se debe en contexto de transaccional
          * @param materials es una List<MovementSimpleCreateDTO> donde tiene material y stock
          */
-        @Transactional
         @Override
         public void confirmReservation(@Valid List<MovementSimpleCreateDTO> materials){
                 List<Movement> movements = new ArrayList<>();

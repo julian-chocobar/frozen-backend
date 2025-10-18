@@ -82,7 +82,7 @@ public class RecipeServiceImpl implements RecipeService {
                         "Material no encontrado" + recipeUpdateDTO.getMaterialId()));
         
         originalRecipe.setMaterial(material);
-        originalRecipe.setQuantity(recipeUpdateDTO.getQuantity().intValue());
+        originalRecipe.setQuantity(recipeUpdateDTO.getQuantity());
         
 
         Recipe savedRecipe = recipeRepository.save(originalRecipe);
@@ -151,7 +151,9 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     @Transactional
     public List<RecipeResponseDTO> getMaterialByPhase(Long id){
-        List<Recipe> recipes = recipeRepository.findByProductPhase(id);
+        ProductPhase productPhase = productPhaseRepository.findById(id).orElseThrow(() ->
+                new ResourceNotFoundException("No se encontró Product Phase con id " + id ));
+        List<Recipe> recipes = recipeRepository.findByProductPhase(productPhase);
 
         List<RecipeResponseDTO> materialsByPhase =
                 recipes.stream()

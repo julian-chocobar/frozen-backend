@@ -3,6 +3,7 @@ package com.enigcode.frozen_backend.recipes.model;
 import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -36,8 +37,8 @@ public class Recipe {
     private Material material; 
 
     @NotNull
-    @Min(value = 0)
-    private Integer quantity;
+    @DecimalMin(value = "0.0")
+    private Double quantity;
 
     @Column(name = "creation_date")
     @NotNull
