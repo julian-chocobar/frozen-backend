@@ -16,7 +16,7 @@ public class BatchServiceImpl implements BatchService{
     final BatchMapper batchMapper;
 
     @Override
-    public Batch createBatch(Long packagingId, OffsetDateTime plannedDate) {
+    public Batch createBatch(Long packagingId, OffsetDateTime plannedDate, Double orderQuantity) {
         return null;
     }
 }

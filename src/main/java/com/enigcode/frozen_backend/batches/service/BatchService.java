@@ -6,5 +6,5 @@ import jakarta.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 
 public interface BatchService {
-    Batch createBatch(Long packagingId, OffsetDateTime plannedDate);
+    Batch createBatch(Long packagingId, OffsetDateTime plannedDate, Double orderQuantity);
 }

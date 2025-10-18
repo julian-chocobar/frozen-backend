@@ -7,11 +7,15 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.Resource
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderResponseDTO;
 import com.enigcode.frozen_backend.production_orders.Mapper.ProductionOrderMapper;
+import com.enigcode.frozen_backend.production_orders.Model.OrderStatus;
+import com.enigcode.frozen_backend.production_orders.Model.ProductionOrder;
 import com.enigcode.frozen_backend.production_orders.Repository.ProductionOrderRepository;
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.OffsetDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -34,12 +38,21 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
                         "No se encontró producto con id " + createDTO.getProductId()));
 
         Batch batch = batchService.createBatch(createDTO.getPackagingId(),
-                createDTO.getPlannedDate());
+                createDTO.getPlannedDate(), createDTO.getQuantity());
 
         if(!batch.getPackaging().getUnitMeasurement().equals(product.getUnitMeasurement()))
             throw new BadRequestException("La unidad del producto: " + product.getUnitMeasurement() +
                     " y del packaging: " + batch.getPackaging().getUnitMeasurement() + " deben ser la misma");
 
+        Double quantity = batch.getQuantity() * batch.getPackaging().getQuantity() ;
+
+        ProductionOrder productionOrder = ProductionOrder.builder()
+                .batch(batch)
+                .product(product)
+                .status(OrderStatus.PENDIENTE)
+                .quantity(quantity)
+                .creationDate(OffsetDateTime.now())
+                .build();
 
         return null;
     }
