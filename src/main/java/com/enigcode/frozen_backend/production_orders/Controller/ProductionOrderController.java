@@ -8,10 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/production-orders")
@@ -34,4 +31,14 @@ public class ProductionOrderController {
         return new ResponseEntity<>(productionOrderResponseDTO, HttpStatus.CREATED);
     }
 
+    @Operation(
+            summary = "Aprobación de orden de produccion",
+            description = "Un usuario con cargo determinado puede aprobar una orden de produccion"
+    )
+    @PatchMapping("/{id}/approve-order")
+    public ResponseEntity<ProductionOrderResponseDTO> approveOrder(@PathVariable Long id){
+        ProductionOrderResponseDTO dto = productionOrderService.approveOrder(id);
+
+        return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
 }

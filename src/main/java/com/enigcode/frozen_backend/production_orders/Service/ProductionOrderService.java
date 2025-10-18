@@ -6,4 +6,5 @@ import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderResponse
 
 public interface ProductionOrderService {
     ProductionOrderResponseDTO createProductionOrder(ProductionOrderCreateDTO productionOrderCreateDTO);
+    ProductionOrderResponseDTO approveOrder(Long id);
 }

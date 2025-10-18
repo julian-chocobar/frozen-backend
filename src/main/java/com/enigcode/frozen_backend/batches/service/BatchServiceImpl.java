@@ -22,6 +22,14 @@ public class BatchServiceImpl implements BatchService{
     final BatchMapper batchMapper;
     final PackagingRepository packagingRepository;
 
+    /**
+     * Crea un Lote cuando se crea una orden de produccion, la misma tiene que ser transactional
+     * TODO: Cuando se cree el lote se deben crear automaticamente sus fases
+     * @param packagingId
+     * @param plannedDate
+     * @param orderQuantity
+     * @return
+     */
     @Override
     public Batch createBatch(Long packagingId, OffsetDateTime plannedDate, Double orderQuantity) {
         Packaging packaging = packagingRepository.findById(packagingId)
@@ -43,7 +51,13 @@ public class BatchServiceImpl implements BatchService{
         savedBatch.setCode(generateCode(savedBatch));
         return savedBatch;
     }
-     private String generateCode(Batch batch) {
+
+    /**
+     * Funcion que genera codigo para lotes
+     * @param batch
+     * @return
+     */
+    private String generateCode(Batch batch) {
         return "LOT-" + batch.getId();
     }
 }

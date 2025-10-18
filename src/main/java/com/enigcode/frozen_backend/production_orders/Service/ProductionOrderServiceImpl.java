@@ -15,8 +15,8 @@ import com.enigcode.frozen_backend.production_orders.Model.ProductionOrder;
 import com.enigcode.frozen_backend.production_orders.Repository.ProductionOrderRepository;
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
-import com.enigcode.frozen_backend.recipes.model.Recipe;
 import com.enigcode.frozen_backend.recipes.service.RecipeService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -76,11 +76,12 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
 
     /**
      * Funcion auxiliar para reservar materiales segun id de producto
+     * TODO: Cuando esten las fases de produccion de un lote se deben adherir los materiales a cada una de las fases correspondientes
      * @param productId
-     * @param materialQuantityMultiplier
+     * @param materialQuantityMultiplier la cantidad de producto dividido el estandar del mismo
      */
     private void reserveMaterials(Long productId, Double materialQuantityMultiplier) {
-        //FALTA IMPLEMENTAR LA VINCULACION DE LOS MATERIALES A LAS DISTINTAS FASES DE PRODUCCION
+        //FIXME: FALTA IMPLEMENTAR LA VINCULACION DE LOS MATERIALES A LAS DISTINTAS FASES DE PRODUCCION
         List<MovementSimpleCreateDTO> reserveMaterialMovements =
                 recipeService.getRecipeByProduct(productId).stream().map(recipe -> {
                     return  MovementSimpleCreateDTO.builder()
@@ -90,5 +91,50 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
                 }).toList();
 
         movementService.createReserveOrReturn(MovementType.RESERVA, reserveMaterialMovements);
+    }
+
+    /**
+     * Funcion que permite aprobar una orden de produccion si tenes un rol determinado
+     * TODO: Actualmente vuelve a calcular los materiales necesarios y reduce de la reserva a partir de eso, cuando se tenga el modulo ProductionMaterial se debe cambiar
+     * @param id
+     * @return
+     */
+    @Override
+    @Transactional
+    public ProductionOrderResponseDTO approveOrder(Long id) {
+        ProductionOrder productionOrder = productionOrderRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException("No se encontró orden de produccion con id " + id));
+
+        if(!productionOrder.getStatus().equals(OrderStatus.PENDIENTE))
+            throw new BadRequestException("La orden esta en estado " + productionOrder.getStatus());
+
+        //FIXME: FUNCION QUE DEBE SER MODIFICADA EN PROXIMO SPRINT (MODULO NO COMPLETADO)
+        confirmApprovedMaterials(productionOrder.getProduct().getId(),
+                productionOrder.getQuantity()/productionOrder.getProduct().getStandardQuantity());
+
+        productionOrder.setStatus(OrderStatus.APROBADO);
+
+        ProductionOrder savedProductionOrder = productionOrderRepository.save(productionOrder);
+
+        return productionOrderMapper.toResponseDTO(savedProductionOrder);
+    }
+
+    /**
+     * Funcion que confirma la aprobacion de los materiales y por cada material lo pasa a los asocia a las fases
+     * TODO: Actualmente la logica se calcula de nuevo, esto debe ser remplazado para buscar los materiales y cantidades ya calculadas en la creacion
+     * @param productId
+     * @param materialQuantityMultiplier
+     */
+    private void confirmApprovedMaterials(Long productId, Double materialQuantityMultiplier) {
+        //FIXME: Esta lista se debera buscar de la ProducionMaterials ya reservadas para ese producto
+        List<MovementSimpleCreateDTO> confirmReservationMovements =
+                recipeService.getRecipeByProduct(productId).stream().map(recipe -> {
+                    return  MovementSimpleCreateDTO.builder()
+                            .material(recipe.getMaterial())
+                            .stock(recipe.getQuantity() * materialQuantityMultiplier)
+                            .build();
+                }).toList();
+
+        movementService.confirmReservation(confirmReservationMovements);
     }
 }
