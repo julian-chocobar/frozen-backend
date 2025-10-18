@@ -37,13 +37,13 @@ class RecipeMapperTest {
         Recipe recipe = Recipe.builder()
                 .id(10L)
                 .material(material)
-                .quantity(7)
+                .quantity(7.0)
                 .build();
         RecipeResponseDTO dto = mapper.toResponseDTO(recipe);
         assertNotNull(dto);
         assertEquals("Malta", dto.getMaterialName());
         assertEquals("M001", dto.getMaterialCode());
         assertEquals("KG", dto.getMaterialUnit());
-        assertEquals(7, dto.getQuantity());
+        assertEquals(7.0, dto.getQuantity());
     }
 }

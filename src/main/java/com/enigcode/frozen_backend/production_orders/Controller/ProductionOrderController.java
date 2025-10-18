@@ -21,7 +21,7 @@ public class ProductionOrderController {
     final ProductionOrderService productionOrderService;
 
     @Operation(
-            summary = "Creacion de orden de producción",
+            summary = "Creación de orden de producción",
             description = "Se crea una nueva orden de produccion pendiente, la cual crea su lote asociado,queda a" +
                     " espera de aprobación o rechazo"
     )
@@ -33,4 +33,5 @@ public class ProductionOrderController {
 
         return new ResponseEntity<>(productionOrderResponseDTO, HttpStatus.CREATED);
     }
+
 }
