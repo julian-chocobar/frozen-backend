@@ -137,4 +137,49 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
 
         movementService.confirmReservation(confirmReservationMovements);
     }
+
+    /**
+     * Funcion que permite cancelar una orden de produccion si esta sigue pendiente y devolver los materiales utilizados
+     * TODO: Actualmente vuelve a calcular los materiales necesarios y reduce de la reserva a partir de eso, cuando se tenga el modulo ProductionMaterial se debe cambiar
+     * @param id
+     * @return
+     */
+    @Override
+    @Transactional
+    public ProductionOrderResponseDTO cancelOrder(Long id) {
+        ProductionOrder productionOrder = productionOrderRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException("No se encontró orden de produccion con id " + id));
+
+        if(!productionOrder.getStatus().equals(OrderStatus.PENDIENTE))
+            throw new BadRequestException("La orden esta en estado " + productionOrder.getStatus());
+
+        //FIXME: FUNCION QUE DEBE SER MODIFICADA EN PROXIMO SPRINT (MODULO NO COMPLETADO)
+        returnReservedMaterials(productionOrder.getProduct().getId(),
+                productionOrder.getQuantity()/productionOrder.getProduct().getStandardQuantity());
+
+        productionOrder.setStatus(OrderStatus.CANCELADA);
+
+        ProductionOrder savedProductionOrder = productionOrderRepository.save(productionOrder);
+
+        return productionOrderMapper.toResponseDTO(savedProductionOrder);
+    }
+
+    /**
+     * Funcion que devuelve de los materiales reservadios debido a la cancelacion de una orden
+     * TODO: Actualmente la logica se calcula de nuevo, esto debe ser remplazado para buscar los materiales y cantidades ya calculadas en la creacion
+     * @param productId
+     * @param materialQuantityMultiplier
+     */
+    private void returnReservedMaterials(Long productId, Double materialQuantityMultiplier) {
+        //FIXME: Esta lista se debera buscar de la ProducionMaterials ya reservadas para ese producto
+        List<MovementSimpleCreateDTO> returnReservedMaterialsMovements =
+                recipeService.getRecipeByProduct(productId).stream().map(recipe -> {
+                    return  MovementSimpleCreateDTO.builder()
+                            .material(recipe.getMaterial())
+                            .stock(recipe.getQuantity() * materialQuantityMultiplier)
+                            .build();
+                }).toList();
+
+        movementService.createReserveOrReturn(MovementType.DEVUELTO, returnReservedMaterialsMovements);
+    }
 }

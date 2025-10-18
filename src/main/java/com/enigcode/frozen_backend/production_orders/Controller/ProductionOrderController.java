@@ -35,9 +35,21 @@ public class ProductionOrderController {
             summary = "Aprobación de orden de produccion",
             description = "Un usuario con cargo determinado puede aprobar una orden de produccion"
     )
-    @PatchMapping("/{id}/approve-order")
+    @PatchMapping("/{id}/approve")
     public ResponseEntity<ProductionOrderResponseDTO> approveOrder(@PathVariable Long id){
         ProductionOrderResponseDTO dto = productionOrderService.approveOrder(id);
+
+        return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Cancelación de orden de produccion",
+            description = "Se puede cancelar una orden de produccion en caso de que se quiera echar marcha atras antes" +
+                    "de ser aprobada o rechazada"
+    )
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<ProductionOrderResponseDTO> cancelOrder(@PathVariable Long id){
+        ProductionOrderResponseDTO dto = productionOrderService.cancelOrder(id);
 
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
