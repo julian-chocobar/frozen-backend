@@ -146,18 +146,21 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
      */
     @Override
     @Transactional
-    public ProductionOrderResponseDTO cancelOrder(Long id) {
+    public ProductionOrderResponseDTO returnOrder(Long id, OrderStatus orderStatus) {
         ProductionOrder productionOrder = productionOrderRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("No se encontró orden de produccion con id " + id));
 
         if(!productionOrder.getStatus().equals(OrderStatus.PENDIENTE))
             throw new BadRequestException("La orden esta en estado " + productionOrder.getStatus());
 
+        if(orderStatus.equals(OrderStatus.PENDIENTE))
+            throw new BadRequestException("Esta funcion no cambia a estado " + orderStatus);
+
         //FIXME: FUNCION QUE DEBE SER MODIFICADA EN PROXIMO SPRINT (MODULO NO COMPLETADO)
         returnReservedMaterials(productionOrder.getProduct().getId(),
                 productionOrder.getQuantity()/productionOrder.getProduct().getStandardQuantity());
 
-        productionOrder.setStatus(OrderStatus.CANCELADA);
+        productionOrder.setStatus(orderStatus);
 
         ProductionOrder savedProductionOrder = productionOrderRepository.save(productionOrder);
 

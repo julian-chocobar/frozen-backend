@@ -2,6 +2,7 @@ package com.enigcode.frozen_backend.production_orders.Controller;
 
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderResponseDTO;
+import com.enigcode.frozen_backend.production_orders.Model.OrderStatus;
 import com.enigcode.frozen_backend.production_orders.Service.ProductionOrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -49,7 +50,18 @@ public class ProductionOrderController {
     )
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<ProductionOrderResponseDTO> cancelOrder(@PathVariable Long id){
-        ProductionOrderResponseDTO dto = productionOrderService.cancelOrder(id);
+        ProductionOrderResponseDTO dto = productionOrderService.returnOrder(id, OrderStatus.CANCELADA);
+
+        return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Rechazo de orden de produccion",
+            description = "Se puede rechazar una orden de produccion si tenes un rol especifico"
+    )
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<ProductionOrderResponseDTO> rejectOrder(@PathVariable Long id){
+        ProductionOrderResponseDTO dto = productionOrderService.returnOrder(id, OrderStatus.RECHAZADO);
 
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
