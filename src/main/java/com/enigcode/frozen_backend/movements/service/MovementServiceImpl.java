@@ -162,8 +162,8 @@ public class MovementServiceImpl implements MovementService {
                                 pageable.getPageNumber(),
                                 pageable.getPageSize(),
                                 pageable.getSort());
-                Page<Movement> materials = movementRepository.findAll(
+                Page<Movement> movements = movementRepository.findAll(
                                 MovementSpecification.createFilter(filterDTO), pageRequest);
-                return materials.map(movementMapper::toResponseDto);
+                return movements.map(movementMapper::toResponseDto);
         }
 }

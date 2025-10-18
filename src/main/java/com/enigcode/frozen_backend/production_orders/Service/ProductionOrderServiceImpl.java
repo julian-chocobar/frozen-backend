@@ -8,16 +8,22 @@ import com.enigcode.frozen_backend.movements.DTO.MovementSimpleCreateDTO;
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import com.enigcode.frozen_backend.movements.service.MovementService;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
+import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderFilterDTO;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderResponseDTO;
 import com.enigcode.frozen_backend.production_orders.Mapper.ProductionOrderMapper;
 import com.enigcode.frozen_backend.production_orders.Model.OrderStatus;
 import com.enigcode.frozen_backend.production_orders.Model.ProductionOrder;
 import com.enigcode.frozen_backend.production_orders.Repository.ProductionOrderRepository;
+import com.enigcode.frozen_backend.production_orders.specification.ProductionOrderSpecification;
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
 import com.enigcode.frozen_backend.recipes.service.RecipeService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -166,6 +172,19 @@ public class ProductionOrderServiceImpl implements ProductionOrderService{
         ProductionOrder savedProductionOrder = productionOrderRepository.save(productionOrder);
 
         return productionOrderMapper.toResponseDTO(savedProductionOrder);
+    }
+
+    @Override
+    public Page<ProductionOrderResponseDTO> findAll(ProductionOrderFilterDTO filterDTO, Pageable pageable) {
+        Pageable pageRequest = PageRequest.of(
+                                pageable.getPageNumber(),
+                                pageable.getPageSize(),
+                                pageable.getSort());
+        Page<ProductionOrder> orders = productionOrderRepository.findAll(
+                ProductionOrderSpecification.createFilter(filterDTO),
+                pageRequest);
+        return orders.map(productionOrderMapper::toResponseDTO);
+        
     }
 
     /**
