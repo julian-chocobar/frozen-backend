@@ -87,9 +87,9 @@ public class PackagingController {
     @GetMapping("/list")
     public ResponseEntity<List<PackagingSimpleResponseDTO>> getPackagingList(
             @RequestParam(required = false, defaultValue = "") String name,
-            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) Long productId) {
-        List<PackagingSimpleResponseDTO> packagings = packagingService.getPackagingList(name, isActive, productId);
+        List<PackagingSimpleResponseDTO> packagings = packagingService.getPackagingList(name, active, productId);
         return ResponseEntity.ok(packagings);
     }
 
