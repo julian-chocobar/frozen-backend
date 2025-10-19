@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProductPhaseRepository extends JpaRepository<ProductPhase, Long> {
     List<ProductPhase> findByProductIdOrderByCreationDateAsc(Long productId);
+    List<ProductPhase> findByProductIdOrderByIdAsc(Long productId);
 }

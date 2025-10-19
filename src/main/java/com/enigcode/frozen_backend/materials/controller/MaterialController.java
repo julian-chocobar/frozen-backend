@@ -1,6 +1,8 @@
 package com.enigcode.frozen_backend.materials.controller;
 
 import com.enigcode.frozen_backend.materials.DTO.*;
+import com.enigcode.frozen_backend.materials.model.MaterialType;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import com.enigcode.frozen_backend.materials.service.MaterialService;
@@ -78,9 +80,10 @@ public class MaterialController {
         public ResponseEntity<List<MaterialSimpleResponseDTO>> getAllMaterialIdNameList(
                         @RequestParam(required = false, defaultValue = "") String name,
                         @RequestParam(required = false) Boolean active,
-                        @RequestParam(required = false) Phase phase) {
+                        @RequestParam(required = false) Phase phase,
+                        @RequestParam(required = false) MaterialType type) {
                 // null = todos, true = solo activos, false = solo inactivos
-                List<MaterialSimpleResponseDTO> list = materialService.getMaterialSimpleList(name, active, phase);
+                List<MaterialSimpleResponseDTO> list = materialService.getMaterialSimpleList(name, active, phase, type);
                 return ResponseEntity.ok(list);
         }
 

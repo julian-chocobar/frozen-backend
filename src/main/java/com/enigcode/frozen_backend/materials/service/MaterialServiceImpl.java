@@ -171,17 +171,16 @@ public class MaterialServiceImpl implements MaterialService {
      * @return Lista con id y nombre de todos los materiales
      */
     @Override
-    public List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active, Phase phase) {
+    public List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active, Phase phase, MaterialType type) {
         if (name == null || name.trim().isEmpty()) {
             return List.of();
         }
         String q = name.trim();
         List<Material> results;
         
-        // Get the valid material types for the given phase
-        List<MaterialType> validMaterialTypes = phase != null ? getValidMaterialTypesForPhase(phase) : null;
-        
-        if (validMaterialTypes != null) {
+        // Handle Phase filter (takes precedence over type if both are provided)
+        if (phase != null) {
+            List<MaterialType> validMaterialTypes = getValidMaterialTypesForPhase(phase);
             if (active == null) {
                 results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCase(validMaterialTypes, q);
             } else if (active) {
@@ -189,7 +188,19 @@ public class MaterialServiceImpl implements MaterialService {
             } else {
                 results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(validMaterialTypes, q);
             }
-        } else {
+        } 
+        // Handle MaterialType filter (only if phase is not provided)
+        else if (type != null) {
+            if (active == null) {
+                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCase(List.of(type), q);
+            } else if (active) {
+                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(List.of(type), q);
+            } else {
+                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(List.of(type), q);
+            }
+        }
+        // No type or phase filter
+        else {
             if (active == null) {
                 results = materialRepository.findTop10ByNameContainingIgnoreCase(q);
             } else if (active) {

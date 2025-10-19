@@ -81,7 +81,7 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     public List<ProductPhaseResponseDTO> getByProduct(Long productId) {
-        List<ProductPhase> phases = productPhaseRepository.findByProductIdOrderByCreationDateAsc(productId);
+        List<ProductPhase> phases = productPhaseRepository.findByProductIdOrderByIdAsc(productId);
 
         if (phases.isEmpty() && !productRepository.existsById(productId)) {
             throw new ResourceNotFoundException("Product no encontrado con ID: " + productId);

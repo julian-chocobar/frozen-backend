@@ -19,4 +19,5 @@ public class ProductPhaseResponseDTO {
     private UnitMeasurement outputUnit;
     private Double estimatedHours;
     private OffsetDateTime creationDate;
+    private Boolean isReady;
 }

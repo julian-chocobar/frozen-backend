@@ -4,6 +4,7 @@ import com.enigcode.frozen_backend.materials.DTO.*;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import org.springframework.data.domain.Page;
 import java.util.List;
+import com.enigcode.frozen_backend.materials.model.MaterialType;
 import org.springframework.data.domain.Pageable;
 
 public interface MaterialService {
@@ -15,7 +16,7 @@ public interface MaterialService {
 
     Page<MaterialResponseDTO> findAll(MaterialFilterDTO filterDTO, Pageable pageable);
 
-    List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active, Phase phase);
+    List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active, Phase phase, MaterialType type);
 
     MaterialDetailDTO getMaterial(Long id);
 }

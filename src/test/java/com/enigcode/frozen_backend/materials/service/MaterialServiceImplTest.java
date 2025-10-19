@@ -144,7 +144,7 @@ class MaterialServiceImplTest {
         material.setName("Plástico");
         when(materialRepository.findTop10ByNameContainingIgnoreCase("Pl")).thenReturn(List.of(material));
 
-        List<MaterialSimpleResponseDTO> result = materialService.getMaterialSimpleList("Pl", null, null);
+        List<MaterialSimpleResponseDTO> result = materialService.getMaterialSimpleList("Pl", null, null, null);
 
         assertEquals(1, result.size());
         assertEquals("Plástico", result.get(0).getName());
