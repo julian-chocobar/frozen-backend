@@ -31,14 +31,16 @@ class ProductIntegrationTest {
     void productCrudHappyPath() throws Exception {
         String createJson = "{" +
                 "\"name\":\"Cerveza Rubia\"," +
-                "\"isAlcoholic\":true" +
+                "\"isAlcoholic\":true," +
+                "\"standardQuantity\":1.0," +
+                "\"unitMeasurement\":\"UNIDAD\"" +
                 "}";
 
         String createResponse = mockMvc.perform(post("/products")
                         .with(httpBasic(USER, PASS))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createJson))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.name").value("Cerveza Rubia"))
                 .andExpect(jsonPath("$.isAlcoholic").value(true))

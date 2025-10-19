@@ -17,7 +17,7 @@ public interface RecipeMapper {
 
     @Mapping(source = "material.name", target = "materialName")
     @Mapping(source = "material.code", target = "materialCode")
-    @Mapping(source = "material.unitMeasurement.", target = "materialUnit")
+    @Mapping(source = "material.unitMeasurement", target = "materialUnit")
     RecipeResponseDTO toResponseDTO(Recipe recipe);
 
    

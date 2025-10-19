@@ -30,7 +30,7 @@ public class ProductController {
     public ResponseEntity<ProductResponseDTO> createProduct(@Valid @RequestBody ProductCreateDTO productCreateDTO) {
         ProductResponseDTO productResponseDTO = productService.createProduct(productCreateDTO);
 
-        return new ResponseEntity<>(productResponseDTO, HttpStatus.OK);
+        return new ResponseEntity<>(productResponseDTO, HttpStatus.CREATED);
     }
 
     @Operation(summary = "Marcar producto como Listo", description = "Cambia el estado del producto como ready haciendo que este disponible para produccion")

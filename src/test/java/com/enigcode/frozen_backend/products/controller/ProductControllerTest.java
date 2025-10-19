@@ -61,7 +61,7 @@ class ProductControllerTest {
                 mockMvc.perform(post("/products")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(json))
-                                .andExpect(status().isOk());
+                                .andExpect(status().isCreated());
         }
 
         @Test

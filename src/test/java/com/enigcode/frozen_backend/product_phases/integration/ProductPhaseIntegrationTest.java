@@ -34,14 +34,16 @@ class ProductPhaseIntegrationTest {
         // 1) Create a product to seed its phases
         String createProductJson = "{" +
                 "\"name\":\"IPA Fases\"," +
-                "\"isAlcoholic\":true" +
+                "\"isAlcoholic\":true," +
+                "\"standardQuantity\":1.0," +
+                "\"unitMeasurement\":\"UNIDAD\"" +
                 "}";
 
         String productResponse = mockMvc.perform(post("/products")
                         .with(httpBasic(USER, PASS))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createProductJson))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andReturn()
                 .getResponse()

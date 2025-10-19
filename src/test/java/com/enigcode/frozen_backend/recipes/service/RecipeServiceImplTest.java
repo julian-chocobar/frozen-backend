@@ -97,20 +97,20 @@ class RecipeServiceImplTest {
 
     @Test
     void updateRecipe_success() {
-        RecipeUpdateDTO dto = RecipeUpdateDTO.builder().materialId(2L).quantity(10.0).build();
-        Recipe original = new Recipe();
-        Material material = Material.builder().id(2L).build();
-        Recipe saved = new Recipe();
-        RecipeResponseDTO response = new RecipeResponseDTO();
+    RecipeUpdateDTO dto = RecipeUpdateDTO.builder().materialId(2L).quantity(10.0).build();
+    Recipe original = new Recipe();
+    Material material = Material.builder().id(2L).build();
+    Recipe saved = new Recipe();
+    RecipeResponseDTO response = new RecipeResponseDTO();
 
-        when(recipeRepository.findById(1L)).thenReturn(Optional.of(original));
-        when(materialRepository.findById(1L)).thenReturn(Optional.of(material));
-        when(recipeRepository.save(original)).thenReturn(saved);
-        when(recipeMapper.toResponseDTO(saved)).thenReturn(response);
+    when(recipeRepository.findById(1L)).thenReturn(Optional.of(original));
+    when(materialRepository.findById(2L)).thenReturn(Optional.of(material));
+    when(recipeRepository.save(original)).thenReturn(saved);
+    when(recipeMapper.toResponseDTO(saved)).thenReturn(response);
 
-        RecipeResponseDTO result = service.updateRecipe(1L, dto);
-        assertSame(response, result);
-        verify(recipeRepository).save(original);
+    RecipeResponseDTO result = service.updateRecipe(1L, dto);
+    assertSame(response, result);
+    verify(recipeRepository).save(original);
     }
 
     @Test

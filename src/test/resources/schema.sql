@@ -3,6 +3,7 @@ CREATE SEQUENCE IF NOT EXISTS RECIPES_SEQ START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS PRODUCT_PHASES_SEQ START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS PRODUCTS_SEQ START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS PACKAGINGS_SEQ START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS MOVEMENTS_SEQ START WITH 1 INCREMENT BY 1;
 
 -- Quoted lowercase aliases to satisfy Hibernate when globally_quoted_identifiers=true
 CREATE SEQUENCE IF NOT EXISTS "materials_seq" START WITH 1 INCREMENT BY 1;
@@ -10,11 +11,14 @@ CREATE SEQUENCE IF NOT EXISTS "recipes_seq" START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS "product_phases_seq" START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS "products_seq" START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS "packagings_seq" START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS "movements_seq" START WITH 1 INCREMENT BY 1;
 
 -- Table for products as per JPA entity mapping
 CREATE TABLE IF NOT EXISTS products (
 	id BIGINT DEFAULT NEXT VALUE FOR PRODUCTS_SEQ PRIMARY KEY,
 	name VARCHAR(255) NOT NULL,
+	standard_quantity DOUBLE NOT NULL,
+	unit_measurement VARCHAR(50) NOT NULL,
 	is_active BOOLEAN NOT NULL,
 	is_ready BOOLEAN NOT NULL,
 	is_alcoholic BOOLEAN NOT NULL,
@@ -25,6 +29,8 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE TABLE IF NOT EXISTS "products" (
 	"id" BIGINT DEFAULT NEXT VALUE FOR "products_seq" PRIMARY KEY,
 	"name" VARCHAR(255) NOT NULL,
+	"standard_quantity" DOUBLE NOT NULL,
+	"unit_measurement" VARCHAR(50) NOT NULL,
 	"is_active" BOOLEAN NOT NULL,
 	"is_ready" BOOLEAN NOT NULL,
 	"is_alcoholic" BOOLEAN NOT NULL,
@@ -115,4 +121,117 @@ CREATE TABLE IF NOT EXISTS "packagings" (
 	"is_active" BOOLEAN NOT NULL,
 	"creation_date" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "fk_packagings_material_q" FOREIGN KEY ("id_material") REFERENCES "materials"("id")
+);
+
+-- Table for movements as per JPA entity mapping
+CREATE TABLE IF NOT EXISTS movements (
+	id BIGINT DEFAULT NEXT VALUE FOR MOVEMENTS_SEQ PRIMARY KEY,
+	id_material BIGINT NOT NULL,
+	id_usuario BIGINT,
+	type VARCHAR(50) NOT NULL,
+	realization_date TIMESTAMP WITH TIME ZONE NOT NULL,
+	stock DOUBLE NOT NULL,
+	reason VARCHAR(255),
+	CONSTRAINT fk_movements_material FOREIGN KEY (id_material) REFERENCES materials(id)
+);
+
+-- Quoted version for Hibernate globally quoted identifiers
+CREATE TABLE IF NOT EXISTS "movements" (
+	"id" BIGINT DEFAULT NEXT VALUE FOR "movements_seq" PRIMARY KEY,
+	"id_material" BIGINT NOT NULL,
+	"id_usuario" BIGINT,
+	"type" VARCHAR(50) NOT NULL,
+	"realization_date" TIMESTAMP WITH TIME ZONE NOT NULL,
+	"stock" DOUBLE NOT NULL,
+	"reason" VARCHAR(255),
+	CONSTRAINT "fk_movements_material_q" FOREIGN KEY ("id_material") REFERENCES "materials"("id")
+);
+
+
+-- Table for recipes as per JPA entity mapping
+CREATE TABLE IF NOT EXISTS recipes (
+	id BIGINT DEFAULT NEXT VALUE FOR RECIPES_SEQ PRIMARY KEY,
+	id_product_phase BIGINT NOT NULL,
+	id_material BIGINT NOT NULL,
+	quantity DOUBLE NOT NULL,
+	creation_date TIMESTAMP WITH TIME ZONE NOT NULL,
+	CONSTRAINT fk_recipes_product_phase FOREIGN KEY (id_product_phase) REFERENCES product_phases(id),
+	CONSTRAINT fk_recipes_material FOREIGN KEY (id_material) REFERENCES materials(id),
+	CONSTRAINT UK_recipe_phase_material UNIQUE (id_product_phase, id_material)
+);
+
+-- Quoted version for Hibernate globally quoted identifiers
+CREATE TABLE IF NOT EXISTS "recipes" (
+	"id" BIGINT DEFAULT NEXT VALUE FOR "recipes_seq" PRIMARY KEY,
+	"id_product_phase" BIGINT NOT NULL,
+	"id_material" BIGINT NOT NULL,
+	"quantity" DOUBLE NOT NULL,
+	"creation_date" TIMESTAMP WITH TIME ZONE NOT NULL,
+	CONSTRAINT "fk_recipes_product_phase_q" FOREIGN KEY ("id_product_phase") REFERENCES "product_phases"("id"),
+	CONSTRAINT "fk_recipes_material_q" FOREIGN KEY ("id_material") REFERENCES "materials"("id"),
+	CONSTRAINT "UK_recipe_phase_material_q" UNIQUE ("id_product_phase", "id_material")
+);
+
+-- Sequence for batches
+CREATE SEQUENCE IF NOT EXISTS BATCHES_SEQ START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS "batches_seq" START WITH 1 INCREMENT BY 1;
+
+-- Sequence for production_orders
+CREATE SEQUENCE IF NOT EXISTS PRODUCTION_ORDERS_SEQ START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS "production_orders_seq" START WITH 1 INCREMENT BY 1;
+
+-- Table for batches as per JPA entity mapping
+CREATE TABLE IF NOT EXISTS batches (
+	id BIGINT DEFAULT NEXT VALUE FOR BATCHES_SEQ PRIMARY KEY,
+	code VARCHAR(255),
+	id_packaging BIGINT NOT NULL,
+	status VARCHAR(50) NOT NULL,
+	quantity INTEGER NOT NULL,
+	creation_date TIMESTAMP WITH TIME ZONE NOT NULL,
+	planned_date TIMESTAMP WITH TIME ZONE NOT NULL,
+	start_date TIMESTAMP WITH TIME ZONE,
+	completed_date TIMESTAMP WITH TIME ZONE,
+	estimated_completed_date TIMESTAMP WITH TIME ZONE,
+	CONSTRAINT fk_batches_packaging FOREIGN KEY (id_packaging) REFERENCES packagings(id)
+);
+
+-- Quoted version for Hibernate globally quoted identifiers
+CREATE TABLE IF NOT EXISTS "batches" (
+	"id" BIGINT DEFAULT NEXT VALUE FOR "batches_seq" PRIMARY KEY,
+	"code" VARCHAR(255),
+	"id_packaging" BIGINT NOT NULL,
+	"status" VARCHAR(50) NOT NULL,
+	"quantity" INTEGER NOT NULL,
+	"creation_date" TIMESTAMP WITH TIME ZONE NOT NULL,
+	"planned_date" TIMESTAMP WITH TIME ZONE NOT NULL,
+	"start_date" TIMESTAMP WITH TIME ZONE,
+	"completed_date" TIMESTAMP WITH TIME ZONE,
+	"estimated_completed_date" TIMESTAMP WITH TIME ZONE,
+	CONSTRAINT "fk_batches_packaging_q" FOREIGN KEY ("id_packaging") REFERENCES "packagings"("id")
+);
+
+-- Table for production_orders as per JPA entity mapping
+CREATE TABLE IF NOT EXISTS production_orders (
+	id BIGINT DEFAULT NEXT VALUE FOR PRODUCTION_ORDERS_SEQ PRIMARY KEY,
+	id_product BIGINT NOT NULL,
+	id_batch BIGINT,
+	quantity DOUBLE NOT NULL,
+	status VARCHAR(50) NOT NULL,
+	creation_date TIMESTAMP WITH TIME ZONE NOT NULL,
+	validation_date TIMESTAMP WITH TIME ZONE,
+	CONSTRAINT fk_production_orders_product FOREIGN KEY (id_product) REFERENCES products(id),
+	CONSTRAINT fk_production_orders_batch FOREIGN KEY (id_batch) REFERENCES batches(id)
+);
+
+-- Quoted version for Hibernate globally quoted identifiers
+CREATE TABLE IF NOT EXISTS "production_orders" (
+	"id" BIGINT DEFAULT NEXT VALUE FOR "production_orders_seq" PRIMARY KEY,
+	"id_product" BIGINT NOT NULL,
+	"id_batch" BIGINT,
+	"quantity" DOUBLE NOT NULL,
+	"status" VARCHAR(50) NOT NULL,
+	"creation_date" TIMESTAMP WITH TIME ZONE NOT NULL,
+	"validation_date" TIMESTAMP WITH TIME ZONE,
+	CONSTRAINT "fk_production_orders_product_q" FOREIGN KEY ("id_product") REFERENCES "products"("id"),
+	CONSTRAINT "fk_production_orders_batch_q" FOREIGN KEY ("id_batch") REFERENCES "batches"("id")
 );
