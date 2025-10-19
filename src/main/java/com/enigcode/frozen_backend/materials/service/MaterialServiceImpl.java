@@ -10,7 +10,9 @@ import com.enigcode.frozen_backend.materials.repository.MaterialRepository;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.enigcode.frozen_backend.materials.specification.MaterialSpecification;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
 
 import jakarta.transaction.Transactional;
 
@@ -168,22 +171,61 @@ public class MaterialServiceImpl implements MaterialService {
      * @return Lista con id y nombre de todos los materiales
      */
     @Override
-    public List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active) {
+    public List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active, Phase phase) {
         if (name == null || name.trim().isEmpty()) {
             return List.of();
         }
         String q = name.trim();
         List<Material> results;
-        if (active == null) {
-            results = materialRepository.findTop10ByNameContainingIgnoreCase(q);
-        } else if (active) {
-            results = materialRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(q);
+        
+        // Get the valid material types for the given phase
+        List<MaterialType> validMaterialTypes = phase != null ? getValidMaterialTypesForPhase(phase) : null;
+        
+        if (validMaterialTypes != null) {
+            if (active == null) {
+                results = materialRepository.findTop10ByMaterialTypeInAndNameContainingIgnoreCase(validMaterialTypes, q);
+            } else if (active) {
+                results = materialRepository.findTop10ByMaterialTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(validMaterialTypes, q);
+            } else {
+                results = materialRepository.findTop10ByMaterialTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(validMaterialTypes, q);
+            }
         } else {
-            results = materialRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(q);
+            if (active == null) {
+                results = materialRepository.findTop10ByNameContainingIgnoreCase(q);
+            } else if (active) {
+                results = materialRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(q);
+            } else {
+                results = materialRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(q);
+            }
         }
+        
         return results.stream()
                 .map(m -> new MaterialSimpleResponseDTO(m.getId(), m.getCode(), m.getName()))
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Returns the list of valid material types for a given phase
+     * @param phase The phase to get valid material types for
+     * @return List of valid MaterialType for the phase, or null if phase is null or no restrictions
+     */
+    private List<MaterialType> getValidMaterialTypesForPhase(Phase phase) {
+        if (phase == null) {
+            return null;
+        }
+        
+        Map<Phase, List<MaterialType>> phaseMaterialMap = new EnumMap<>(Phase.class);
+        phaseMaterialMap.put(Phase.MOLIENDA, List.of(MaterialType.MALTA));
+        phaseMaterialMap.put(Phase.MACERACION, List.of(MaterialType.AGUA));
+        phaseMaterialMap.put(Phase.FILTRACION, List.of());
+        phaseMaterialMap.put(Phase.COCCION, List.of(MaterialType.AGUA, MaterialType.LUPULO));
+        phaseMaterialMap.put(Phase.FERMENTACION, List.of(MaterialType.LEVADURA));
+        phaseMaterialMap.put(Phase.MADURACION, List.of());
+        phaseMaterialMap.put(Phase.GASIFICACION, List.of());
+        phaseMaterialMap.put(Phase.ENVASADO, List.of(MaterialType.ENVASE));
+        phaseMaterialMap.put(Phase.DESALCOHOLIZACION, List.of());
+        
+        return phaseMaterialMap.get(phase);
     }
 
     /**

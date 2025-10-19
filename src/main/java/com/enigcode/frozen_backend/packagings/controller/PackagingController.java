@@ -85,8 +85,11 @@ public class PackagingController {
         description = "Obtiene una lista simple con id y nombre de todos los empaques activos"
     )
     @GetMapping("/list")
-    public ResponseEntity<List<PackagingSimpleResponseDTO>> getPackagingList() {
-        List<PackagingSimpleResponseDTO> packagings = packagingService.getActivePackagingList();
+    public ResponseEntity<List<PackagingSimpleResponseDTO>> getPackagingList(
+            @RequestParam(required = false, defaultValue = "") String name,
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) Long productId) {
+        List<PackagingSimpleResponseDTO> packagings = packagingService.getPackagingList(name, isActive, productId);
         return ResponseEntity.ok(packagings);
     }
 
@@ -97,11 +100,8 @@ public class PackagingController {
     )
     @PatchMapping("/{id}")
     public ResponseEntity<PackagingResponseDTO> updatePackaging(@PathVariable Long id,
-         @Valid @RequestBody PackagingUpdateDTO packagingUpdateDTO) {
+        @Valid @RequestBody PackagingUpdateDTO packagingUpdateDTO) {
         PackagingResponseDTO packagingResponseDTO = packagingService.updatePackaging(id, packagingUpdateDTO);
         return new ResponseEntity<>(packagingResponseDTO, HttpStatus.OK);
     }
-
-
-
 }

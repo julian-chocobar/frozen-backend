@@ -13,7 +13,8 @@ import com.enigcode.frozen_backend.packagings.DTO.PackagingUpdateDTO;
 import com.enigcode.frozen_backend.packagings.mapper.PackagingMapper;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
-
+import com.enigcode.frozen_backend.products.model.Product;
+import com.enigcode.frozen_backend.products.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +30,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PackagingServiceImpl implements PackagingService{
 
-    final PackagingRepository packagingRepository;
-    final PackagingMapper packagingMapper;
-    final MaterialRepository materialRepository;
+    private final PackagingRepository packagingRepository;
+    private final PackagingMapper packagingMapper;
+    private final MaterialRepository materialRepository;
+    private final ProductRepository productRepository;
 
     /**
      * Crea un nuevo packaging en la base de datos segun DTO
@@ -104,22 +106,7 @@ public class PackagingServiceImpl implements PackagingService{
                         .orElseThrow(() -> new ResourceNotFoundException("Packaging no encontrado con ID: " + id));
                 
         return packagingMapper.toResponseDto(packaging);
-    }
-
-     /**
-     * Funcion para mostrar a todos los paquetes activos
-     *
-     * @retutn Vista detallada de los paquetes activos
-     */
-    @Override
-    @Transactional
-    public List<PackagingSimpleResponseDTO> getActivePackagingList() {
-
-        List<PackagingSimpleResponseDTO> activePackagings = packagingRepository.findAll().stream()
-            .filter(packaging -> Boolean.TRUE.equals(packaging.getIsActive())).map(packagingMapper :: toSimpleResponseDTO).toList();
-               
-        return activePackagings;
-    }
+    } 
 
     /**
      * Funcion que cambia ciertos parametros de un paquete preexistente
@@ -147,9 +134,58 @@ public class PackagingServiceImpl implements PackagingService{
         if (packagingUpdateDTO.getUnitMeasurement() != null &&
                 packagingUpdateDTO.getUnitMeasurement().equals(UnitMeasurement.UNIDAD))
             throw new BadRequestException("La unidad de medida no puede ser " + UnitMeasurement.UNIDAD);
-       
         Packaging savedPackaging = packagingRepository.save(updatedPackaging);
 
         return packagingMapper.toResponseDto(savedPackaging);
+    }
+
+    /**
+     * Funcion para mostrar a todos los paquetes activos
+     *
+     * @retutn Vista detallada de los paquetes activos
+     */
+    @Override
+    @Transactional
+    public List<PackagingSimpleResponseDTO> getPackagingList(String name, Boolean isActive, Long productId) {
+        // If no name is provided, return empty list
+        if (name == null || name.trim().isEmpty()) {
+            return List.of();
+        }
+        
+        String searchName = name.trim();
+        List<Packaging> results;
+        
+        // Get unit measurement from product if productId is provided
+        UnitMeasurement productUnitMeasurement = null;
+        if (productId != null) {
+            Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+            productUnitMeasurement = product.getUnitMeasurement();
+        }
+        
+        // Query based on active status and unit measurement
+        if (productUnitMeasurement != null) {
+            // Filter by unit measurement from product
+            if (isActive == null) {
+                results = packagingRepository.findTop10ByUnitMeasurementAndNameContainingIgnoreCase(productUnitMeasurement, searchName);
+            } else if (isActive) {
+                results = packagingRepository.findTop10ByUnitMeasurementAndNameContainingIgnoreCaseAndIsActiveTrue(productUnitMeasurement, searchName);
+            } else {
+                results = packagingRepository.findTop10ByUnitMeasurementAndNameContainingIgnoreCaseAndIsActiveFalse(productUnitMeasurement, searchName);
+            }
+        } else {
+            // No unit measurement filter
+            if (isActive == null) {
+                results = packagingRepository.findTop10ByNameContainingIgnoreCase(searchName);
+            } else if (isActive) {
+                results = packagingRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(searchName);
+            } else {
+                results = packagingRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(searchName);
+            }
+        }
+        
+        return results.stream()
+                .map(packagingMapper::toSimpleResponseDTO)
+                .toList();
     }
 }

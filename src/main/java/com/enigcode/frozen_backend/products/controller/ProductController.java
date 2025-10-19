@@ -2,9 +2,11 @@ package com.enigcode.frozen_backend.products.controller;
 
 import com.enigcode.frozen_backend.products.DTO.ProductCreateDTO;
 import com.enigcode.frozen_backend.products.DTO.ProductResponseDTO;
+import com.enigcode.frozen_backend.products.DTO.ProductSimpleDTO;
 import com.enigcode.frozen_backend.products.DTO.ProductUpdateDTO;
 import com.enigcode.frozen_backend.products.DTO.ProductFilterDTO;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Page;
@@ -78,4 +80,16 @@ public class ProductController {
         response.put("isLast", pageResponse.isLast());
         return ResponseEntity.ok(response);
     }
+    
+    @Operation(summary = "Lista de productos (id y nombre)", description = "Devuelve una lista con el id y nombre de todos los productos")
+    @GetMapping("/id-name-list")
+    public ResponseEntity<List<ProductSimpleDTO>> getAllProductSimpleList(
+            @RequestParam(required = false, defaultValue = "") String name,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) Boolean ready) {
+        // null = todos, true = solo activos, false = solo inactivos
+        List<ProductSimpleDTO> list = productService.getProductSimpleList(name, active, ready);
+        return ResponseEntity.ok(list);
+    }
+    
 }

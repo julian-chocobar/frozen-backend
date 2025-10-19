@@ -15,6 +15,6 @@ public interface PackagingService {
     PackagingResponseDTO toggleActive(Long id);
     Page<PackagingResponseDTO> findAll(Pageable pageable);
     PackagingResponseDTO getPackaging(Long id);
-    List<PackagingSimpleResponseDTO> getActivePackagingList();
+    List<PackagingSimpleResponseDTO> getPackagingList(String name, Boolean isActive, Long productId);
     PackagingResponseDTO updatePackaging(Long id, PackagingUpdateDTO packagingUpdateDTO);
 }

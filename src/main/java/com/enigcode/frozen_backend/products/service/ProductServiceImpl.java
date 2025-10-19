@@ -23,6 +23,7 @@ import com.enigcode.frozen_backend.products.mapper.ProductMapper;
 import com.enigcode.frozen_backend.products.DTO.ProductCreateDTO;
 import com.enigcode.frozen_backend.products.DTO.ProductFilterDTO;
 import com.enigcode.frozen_backend.products.DTO.ProductResponseDTO;
+import com.enigcode.frozen_backend.products.DTO.ProductSimpleDTO;
 import com.enigcode.frozen_backend.products.DTO.ProductUpdateDTO;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 
@@ -199,6 +200,27 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product no encontrado con ID: " + id));
         return productMapper.toResponseDto(product);
+    }
+
+    @Override
+    public List<ProductSimpleDTO> getProductSimpleList(String name, Boolean active, Boolean ready) {
+        if (name == null || name.trim().isEmpty()) {
+            return List.of();
+        }
+        String q = name.trim();
+        List<Product> results;
+        
+        if (active == null) {
+            results = productRepository.findTop10ByNameContainingIgnoreCase(q);
+        } else if (active) {
+            results = productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(q);
+        } else {
+            results = productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(q);
+        }
+        
+        return results.stream()
+                .map(m -> new ProductSimpleDTO(m.getId(), m.getName()))
+                .toList();
     }
 
 }

@@ -4,6 +4,8 @@ import com.enigcode.frozen_backend.materials.DTO.*;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import com.enigcode.frozen_backend.materials.service.MaterialService;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -75,9 +77,10 @@ public class MaterialController {
         @GetMapping("/id-name-list")
         public ResponseEntity<List<MaterialSimpleResponseDTO>> getAllMaterialIdNameList(
                         @RequestParam(required = false, defaultValue = "") String name,
-                        @RequestParam(required = false) Boolean active) {
+                        @RequestParam(required = false) Boolean active,
+                        @RequestParam(required = false) Phase phase) {
                 // null = todos, true = solo activos, false = solo inactivos
-                List<MaterialSimpleResponseDTO> list = materialService.getMaterialSimpleList(name, active);
+                List<MaterialSimpleResponseDTO> list = materialService.getMaterialSimpleList(name, active, phase);
                 return ResponseEntity.ok(list);
         }
 

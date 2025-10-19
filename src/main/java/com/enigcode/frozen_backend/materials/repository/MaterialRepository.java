@@ -1,6 +1,7 @@
 package com.enigcode.frozen_backend.materials.repository;
 
 import com.enigcode.frozen_backend.materials.model.Material;
+import com.enigcode.frozen_backend.materials.model.MaterialType;
 
 import java.util.List;
 
@@ -29,5 +30,11 @@ public interface MaterialRepository extends JpaRepository<Material, Long>, JpaSp
   List<Material> findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(String name);
 
   List<Material> findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(String name);
+  
+  List<Material> findTop10ByMaterialTypeInAndNameContainingIgnoreCase(List<MaterialType> materialTypes, String name);
+  
+  List<Material> findTop10ByMaterialTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(List<MaterialType> materialTypes, String name);
+  
+  List<Material> findTop10ByMaterialTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(List<MaterialType> materialTypes, String name);
 
 }

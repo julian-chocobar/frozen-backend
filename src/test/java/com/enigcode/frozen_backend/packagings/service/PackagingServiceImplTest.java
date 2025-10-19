@@ -18,6 +18,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -121,18 +122,41 @@ class PackagingServiceImplTest {
     }
 
     @Test
-    void testGetActivePackagingList() {
-        Packaging inactive = new Packaging();
-        inactive.setId(2L);
-        inactive.setIsActive(false);
-
-        when(packagingRepository.findAll()).thenReturn(List.of(packaging, inactive));
-        when(packagingMapper.toSimpleResponseDTO(packaging)).thenReturn(new PackagingSimpleResponseDTO());
-
-        List<PackagingSimpleResponseDTO> result = packagingService.getActivePackagingList();
-
+    void testGetPackagingList_FiltersActivePackagings() {
+        // Given
+        String searchName = "test";
+        Boolean isActive = true;
+        Long productId = null;
+        
+        // Create test data
+        Packaging activePackaging = new Packaging();
+        activePackaging.setId(1L);
+        activePackaging.setName("Test Packaging");
+        activePackaging.setIsActive(true);
+        
+        Packaging inactivePackaging = new Packaging();
+        inactivePackaging.setId(2L);
+        inactivePackaging.setName("Test Inactive");
+        inactivePackaging.setIsActive(false);
+        
+        // Mock repository response
+        when(packagingRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(searchName))
+            .thenReturn(List.of(activePackaging));
+        
+        // Mock mapper
+        PackagingSimpleResponseDTO expectedResponse = new PackagingSimpleResponseDTO();
+        expectedResponse.setId(1L);
+        expectedResponse.setName("Test Packaging");
+        when(packagingMapper.toSimpleResponseDTO(activePackaging)).thenReturn(expectedResponse);
+        
+        // When
+        List<PackagingSimpleResponseDTO> result = packagingService.getPackagingList(searchName, isActive, productId);
+        
+        // Then
         assertEquals(1, result.size());
-        verify(packagingRepository).findAll();
+        assertEquals(expectedResponse, result.get(0));
+        verify(packagingRepository).findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(searchName);
+        verify(packagingMapper).toSimpleResponseDTO(activePackaging);
     }
 
     @Test
