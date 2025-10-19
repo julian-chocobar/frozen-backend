@@ -46,6 +46,11 @@ public class MaterialServiceImpl implements MaterialService {
         material.setCreationDate(OffsetDateTime.now(ZoneOffset.UTC));
         material.setIsActive(Boolean.TRUE);
 
+        // Asegurar valor por defecto seguro para reservedStock
+        if (material.getReservedStock() == null) {
+            material.setReservedStock(0.0);
+        }
+
         materialUnitVerification(material);
 
         Material savedMaterial = materialRepository.save(material);
