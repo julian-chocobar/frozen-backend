@@ -77,13 +77,16 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe originalRecipe = recipeRepository.findById(id)
                         .orElseThrow(()-> new ResourceNotFoundException("No se encontro receta con id "+ id));
 
-        Material material = materialRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Material no encontrado" + recipeUpdateDTO.getMaterialId()));
+        if (recipeUpdateDTO.getMaterialId() != null) {
+            Material material = materialRepository.findById(recipeUpdateDTO.getMaterialId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Material no encontrado" + recipeUpdateDTO.getMaterialId()));
+            originalRecipe.setMaterial(material);
+        }
         
-        originalRecipe.setMaterial(material);
-        originalRecipe.setQuantity(recipeUpdateDTO.getQuantity());
-        
+        if (recipeUpdateDTO.getQuantity() != null) {
+            originalRecipe.setQuantity(recipeUpdateDTO.getQuantity());
+        }
 
         Recipe savedRecipe = recipeRepository.save(originalRecipe);
 
