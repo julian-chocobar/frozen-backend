@@ -183,11 +183,11 @@ public class MaterialServiceImpl implements MaterialService {
         
         if (validMaterialTypes != null) {
             if (active == null) {
-                results = materialRepository.findTop10ByMaterialTypeInAndNameContainingIgnoreCase(validMaterialTypes, q);
+                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCase(validMaterialTypes, q);
             } else if (active) {
-                results = materialRepository.findTop10ByMaterialTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(validMaterialTypes, q);
+                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(validMaterialTypes, q);
             } else {
-                results = materialRepository.findTop10ByMaterialTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(validMaterialTypes, q);
+                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(validMaterialTypes, q);
             }
         } else {
             if (active == null) {

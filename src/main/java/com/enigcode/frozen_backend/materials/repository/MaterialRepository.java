@@ -31,10 +31,10 @@ public interface MaterialRepository extends JpaRepository<Material, Long>, JpaSp
 
   List<Material> findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(String name);
   
-  List<Material> findTop10ByMaterialTypeInAndNameContainingIgnoreCase(List<MaterialType> materialTypes, String name);
+  List<Material> findTop10ByTypeInAndNameContainingIgnoreCase(List<MaterialType> materialTypes, String name);
   
-  List<Material> findTop10ByMaterialTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(List<MaterialType> materialTypes, String name);
+  List<Material> findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(List<MaterialType> materialTypes, String name);
   
-  List<Material> findTop10ByMaterialTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(List<MaterialType> materialTypes, String name);
+  List<Material> findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(List<MaterialType> materialTypes, String name);
 
 }
