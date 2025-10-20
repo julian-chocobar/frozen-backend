@@ -84,7 +84,7 @@ public class PackagingController {
         summary = "Obtener lista simple de empaques",
         description = "Obtiene una lista simple con id y nombre de todos los empaques activos"
     )
-    @GetMapping("/list")
+    @GetMapping("/id-name-list")
     public ResponseEntity<List<PackagingSimpleResponseDTO>> getPackagingList(
             @RequestParam(required = false, defaultValue = "") String name,
             @RequestParam(required = false) Boolean active,
