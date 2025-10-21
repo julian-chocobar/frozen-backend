@@ -112,19 +112,19 @@ class ProductControllerTest {
 
         @Test
         void testMarkAsReady() throws Exception {
-                Mockito.when(productService.markAsReady(eq(1L)))
+                Mockito.when(productService.toggleReady(eq(1L)))
                                 .thenReturn(ProductResponseDTO.builder().id(1L).name("IPA").isReady(true).build());
 
-                mockMvc.perform(patch("/products/1/mark-ready"))
+                mockMvc.perform(patch("/products/1/toogle-ready"))
                                 .andExpect(status().isOk());
         }
 
         @Test
         void testMarkAsReady_NotFound_ShouldReturn404() throws Exception {
-                Mockito.when(productService.markAsReady(eq(999L)))
+                Mockito.when(productService.toggleReady(eq(999L)))
                                 .thenThrow(new ResourceNotFoundException("no encontrado"));
 
-                mockMvc.perform(patch("/products/999/mark-ready"))
+                mockMvc.perform(patch("/products/999/toogle-ready"))
                                 .andExpect(status().isNotFound());
         }
 

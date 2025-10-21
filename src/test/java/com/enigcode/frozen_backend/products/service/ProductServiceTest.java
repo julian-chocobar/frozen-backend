@@ -170,7 +170,7 @@ class ProductServiceTest {
 
                 when(productRepository.findById(5L)).thenReturn(Optional.of(product));
 
-                assertThatThrownBy(() -> service.markAsReady(5L))
+                assertThatThrownBy(() -> service.toggleReady(5L))
                                 .isInstanceOf(BadRequestException.class);
                 verify(productRepository, never()).save(any());
         }
@@ -195,7 +195,7 @@ class ProductServiceTest {
                 when(productRepository.findById(6L)).thenReturn(Optional.of(product));
                 when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
 
-                ProductResponseDTO resp = service.markAsReady(6L);
+                ProductResponseDTO resp = service.toggleReady(6L);
 
                 ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
                 verify(productRepository).save(captor.capture());
