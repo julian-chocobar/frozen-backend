@@ -27,8 +27,7 @@ public class ProductController {
 
     final ProductService productService;
 
-    @Operation(summary = "Crear un producto", 
-            description = "Crea un producto no listo para orden, se le asignan fases pero requieren completarse")
+    @Operation(summary = "Crear un producto", description = "Crea un producto no listo para orden, se le asignan fases pero requieren completarse")
     @PostMapping
     public ResponseEntity<ProductResponseDTO> createProduct(@Valid @RequestBody ProductCreateDTO productCreateDTO) {
         ProductResponseDTO productResponseDTO = productService.createProduct(productCreateDTO);
@@ -37,15 +36,14 @@ public class ProductController {
     }
 
     @Operation(summary = "Marcar producto como Listo", description = "Cambia el estado del producto como ready haciendo que este disponible para produccion")
-    @PatchMapping("/{id}/mark-ready")
-    public ResponseEntity<ProductResponseDTO> markAsReady(@PathVariable Long id) {
+    @PatchMapping("/{id}/toogle-ready")
+    public ResponseEntity<ProductResponseDTO> toogleReady(@PathVariable Long id) {
         ProductResponseDTO productResponseDTO = productService.markAsReady(id);
 
         return new ResponseEntity<>(productResponseDTO, HttpStatus.OK);
     }
 
-    @Operation(summary = "Alternar estado producto", 
-            description = "Alternar estado producto al contrario (activo, inactivo)")
+    @Operation(summary = "Alternar estado producto", description = "Alternar estado producto al contrario (activo, inactivo)")
     @PatchMapping("/{id}/toggle-active")
     public ResponseEntity<ProductResponseDTO> toggleProduct(@PathVariable Long id) {
         ProductResponseDTO productResponseDTO = productService.toggleActive(id);
@@ -53,8 +51,7 @@ public class ProductController {
         return new ResponseEntity<>(productResponseDTO, HttpStatus.OK);
     }
 
-    @Operation(summary = "Modificar producto", 
-            description = "Modificar ciertos cambios de un producto especifico")
+    @Operation(summary = "Modificar producto", description = "Modificar ciertos cambios de un producto especifico")
     @PatchMapping("/{id}")
     public ResponseEntity<ProductResponseDTO> updateProduct(@PathVariable Long id,
             @Valid @RequestBody ProductUpdateDTO productUpdateDTO) {
@@ -63,8 +60,7 @@ public class ProductController {
         return new ResponseEntity<>(productResponseDTO, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Obtener productos", 
-            description = "Obtiene todos los productos con paginación y filtros")
+    @Operation(summary = "Obtener productos", description = "Obtiene todos los productos con paginación y filtros")
     @GetMapping
     public ResponseEntity<Map<String, Object>> getProducts(
             ProductFilterDTO filterDTO,
@@ -84,9 +80,8 @@ public class ProductController {
         response.put("isLast", pageResponse.isLast());
         return ResponseEntity.ok(response);
     }
-    
-    @Operation(summary = "Lista de productos (id y nombre)", 
-            description = "Devuelve una lista con el id y nombre de todos los productos")
+
+    @Operation(summary = "Lista de productos (id y nombre)", description = "Devuelve una lista con el id y nombre de todos los productos")
     @GetMapping("/id-name-list")
     public ResponseEntity<List<ProductSimpleDTO>> getAllProductSimpleList(
             @RequestParam(required = false, defaultValue = "") String name,
@@ -97,12 +92,11 @@ public class ProductController {
         return ResponseEntity.ok(list);
     }
 
-    @Operation(summary = "Obtener producto por id",
-            description = "Obtiene una respuesta con la informacion de un producto en especifico")
+    @Operation(summary = "Obtener producto por id", description = "Obtiene una respuesta con la informacion de un producto en especifico")
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponseDTO> getProduct(@PathVariable Long id) {
         ProductResponseDTO productResponseDTO = productService.getProduct(id);
         return new ResponseEntity<>(productResponseDTO, HttpStatus.OK);
     }
-    
+
 }

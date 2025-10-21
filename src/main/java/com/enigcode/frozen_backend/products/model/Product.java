@@ -34,6 +34,7 @@ public class Product {
     private List<ProductPhase> phases;
 
     @NotNull
+    @Column(name = "standard_quantity")
     @DecimalMin(value = "0.0")
     private Double standardQuantity;
 
