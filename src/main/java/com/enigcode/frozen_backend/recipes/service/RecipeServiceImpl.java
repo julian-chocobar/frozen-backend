@@ -33,8 +33,9 @@ public class RecipeServiceImpl implements RecipeService {
     final ProductPhaseService productPhaseService;
     final RecipeMapper recipeMapper;
 
-     /**
+    /**
      * Crea una nueva receta en la base de datos segun DTO
+     * 
      * @param recipeCreateDTO
      * @return RecipeResponseDTO
      */
@@ -64,9 +65,9 @@ public class RecipeServiceImpl implements RecipeService {
         return recipeMapper.toResponseDTO(savedRecipe);
     }
 
-
-     /**
+    /**
      * Funcion que cambia ciertos parametros de una receta preexistente
+     * 
      * @param id
      * @param recipeUpdateDTO
      * @return RecipeResponseDTO
@@ -75,7 +76,7 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional
     public RecipeResponseDTO updateRecipe(Long id, RecipeUpdateDTO recipeUpdateDTO) {
         Recipe originalRecipe = recipeRepository.findById(id)
-                        .orElseThrow(()-> new ResourceNotFoundException("No se encontro receta con id "+ id));
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontro receta con id " + id));
 
         if (recipeUpdateDTO.getMaterialId() != null) {
             Material material = materialRepository.findById(recipeUpdateDTO.getMaterialId())
@@ -83,7 +84,7 @@ public class RecipeServiceImpl implements RecipeService {
                             "Material no encontrado" + recipeUpdateDTO.getMaterialId()));
             originalRecipe.setMaterial(material);
         }
-        
+
         if (recipeUpdateDTO.getQuantity() != null) {
             originalRecipe.setQuantity(recipeUpdateDTO.getQuantity());
         }
@@ -92,7 +93,6 @@ public class RecipeServiceImpl implements RecipeService {
 
         return recipeMapper.toResponseDTO(savedRecipe);
     }
-
 
     /**
      * Funcion para eliminar una receta especifico segun id
@@ -103,17 +103,25 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     @Transactional
     public RecipeResponseDTO deleteRecipe(Long id) {
-        Recipe recipe = recipeRepository.findById(id)   
-                .orElseThrow(()-> new ResourceNotFoundException("No se encontro receta con id "+ id));
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontro receta con id " + id));
 
         ProductPhase productPhaseAssociated = recipe.getProductPhase();
 
+        // crear DTO antes de borrar (seguro para devolver datos)
+        RecipeResponseDTO dto = recipeMapper.toResponseDTO(recipe);
+
+        // eliminar y asegurar que la operación se materialice en la BD
         recipeRepository.delete(recipe);
+        recipeRepository.flush();
 
-        if(productPhaseAssociated.getIsReady())
-            productPhaseService.reviewIsReady(recipe.getProductPhase());
+        // ahora re-evaluar la fase: si quedó sin recetas, reviewIsReady debe marcar
+        // isReady = false
+        if (productPhaseAssociated != null && productPhaseAssociated.getIsReady()) {
+            productPhaseService.reviewIsReady(productPhaseAssociated.getId());
+        }
 
-        return recipeMapper.toResponseDTO(recipe);
+        return dto;
     }
 
     /**
@@ -126,12 +134,12 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional
     public RecipeResponseDTO getRecipe(Long id) {
         Recipe recipe = recipeRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Receta no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Receta no encontrado con ID: " + id));
 
         return recipeMapper.toResponseDTO(recipe);
     }
 
-     /**
+    /**
      * Funcion para mostrar a todas las recetas activos
      *
      * @return Vista detallada de las recetas activos
@@ -140,7 +148,7 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional
     public List<RecipeResponseDTO> getRecipeList() {
         List<RecipeResponseDTO> activeRecipes = recipeRepository.findAll().stream()
-            .map(recipeMapper :: toResponseDTO).toList();
+                .map(recipeMapper::toResponseDTO).toList();
 
         return activeRecipes;
     }
@@ -153,39 +161,39 @@ public class RecipeServiceImpl implements RecipeService {
      */
     @Override
     @Transactional
-    public List<RecipeResponseDTO> getMaterialByPhase(Long id){
-        ProductPhase productPhase = productPhaseRepository.findById(id).orElseThrow(() ->
-                new ResourceNotFoundException("No se encontró Product Phase con id " + id ));
+    public List<RecipeResponseDTO> getMaterialByPhase(Long id) {
+        ProductPhase productPhase = productPhaseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró Product Phase con id " + id));
         List<Recipe> recipes = recipeRepository.findByProductPhase(productPhase);
 
-        List<RecipeResponseDTO> materialsByPhase =
-                recipes.stream()
-                        .map(recipeMapper::toResponseDTO)
-                        .toList();
+        List<RecipeResponseDTO> materialsByPhase = recipes.stream()
+                .map(recipeMapper::toResponseDTO)
+                .toList();
 
         return materialsByPhase;
     }
 
     /**
      * Funcion que busca todas las recetas de un producto en especifico
+     * 
      * @param id
      * @return Lista de recipeResponseDto
      */
     @Override
     @Transactional
-    public List<RecipeResponseDTO> getMaterialByProduct(Long id){
+    public List<RecipeResponseDTO> getMaterialByProduct(Long id) {
         List<Recipe> recipes = getRecipeByProduct(id);
 
-        List<RecipeResponseDTO> materialsByProduct =
-                recipes.stream()
-                        .map(recipeMapper::toResponseDTO)
-                        .toList();
+        List<RecipeResponseDTO> materialsByProduct = recipes.stream()
+                .map(recipeMapper::toResponseDTO)
+                .toList();
 
         return materialsByProduct;
     }
 
     /**
      * Funcion que busca todas las recetas de un producto en especifico
+     * 
      * @param id
      * @return lista de recetas
      */

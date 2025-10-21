@@ -31,6 +31,7 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
 
     /**
      * Funcion que modifica parcialmente un product phase
+     * 
      * @param id
      * @param productPhaseUpdateDTO
      * @return
@@ -49,6 +50,7 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
 
     /**
      * Funcion que busca y devuelve todas las productphases paginadas
+     * 
      * @param pageable
      * @return
      */
@@ -61,6 +63,7 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
 
     /**
      * Funcion que busca y devuelve product phase en especifico
+     * 
      * @param id
      * @return
      */
@@ -75,6 +78,7 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
 
     /**
      * Funcion que devuelve una lista de las fases segun el id del producto
+     * 
      * @param productId
      * @return
      */
@@ -93,11 +97,14 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
     }
 
     /**
-     * Funcion que marca como lista a una fase si tiene todos sus campos completos y los materiales minimos requeridos
+     * Funcion que marca como lista a una fase si tiene todos sus campos completos y
+     * los materiales minimos requeridos
+     * 
      * @param id
      * @return
      */
     @Override
+    @Transactional
     public ProductPhaseResponseDTO toggleReady(Long id) {
         ProductPhase productPhase = productPhaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ProductPhase no encontrado con ID: " + id));
@@ -107,17 +114,20 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
             productRepository.save(productPhase.getProduct());
             ProductPhase savedProductPhase = productPhaseRepository.save(productPhase);
             return productPhaseMapper.toResponseDto(savedProductPhase);
-        }else {
+        } else {
 
             if (!productPhase.isComplete())
-                throw new BadRequestException("La fase no puede estar listo debido a que tiene campos requeridos vacíos");
+                throw new BadRequestException(
+                        "La fase no puede estar listo debido a que tiene campos requeridos vacíos");
 
             List<MaterialType> requiredMaterials = productPhase.getRequiredMaterials();
 
-            // Se revisa que no falta ningun material o devuelve una lista con los materiales que faltan
+            // Se revisa que no falta ningun material o devuelve una lista con los
+            // materiales que faltan (comprobando recetas SOLO de esta fase)
             if (requiredMaterials != null && !requiredMaterials.isEmpty()) {
                 List<MaterialType> missingMaterials = requiredMaterials.stream()
-                        .filter(type -> !recipeRepository.existsByMaterial_Type(type))
+                        .filter(type -> !recipeRepository.existsByProductPhaseIdAndMaterial_Type(productPhase.getId(),
+                                type))
                         .toList();
                 if (!missingMaterials.isEmpty()) {
                     throw new BadRequestException("Faltan materiales requeridos en las recetas: " + missingMaterials);
@@ -127,33 +137,54 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
             productPhase.setIsReady(Boolean.TRUE);
             ProductPhase savedProductPhase = productPhaseRepository.save(productPhase);
 
+            // Si con esta fase lista todas las fases del producto quedan listas,
+            // marcar el producto como listo
+            Long productId = savedProductPhase.getProduct().getId();
+            boolean anyPhaseNotReady = productPhaseRepository.existsByProductIdAndIsReadyFalse(productId);
+            if (!anyPhaseNotReady) {
+                savedProductPhase.getProduct().setIsReady(Boolean.TRUE);
+                productRepository.save(savedProductPhase.getProduct());
+            }
+
             return productPhaseMapper.toResponseDto(savedProductPhase);
         }
     }
 
     /**
-     * Funcion que revisa si hay al menos un material del tipo necesario, sino desmarca el ready del productphase
+     * Funcion que revisa si hay al menos un material del tipo necesario, sino
+     * desmarca el ready del productphase
+     * 
      * @param productPhase
      */
     @Override
     @Transactional
-    public void reviewIsReady(ProductPhase productPhase) {
+    public void reviewIsReady(Long productPhaseId) {
+        ProductPhase productPhase = productPhaseRepository.findById(productPhaseId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("No se encontró Product Phase con id " + productPhaseId));
+
         List<MaterialType> requiredMaterials = productPhase.getRequiredMaterials();
-        if(requiredMaterials == null || requiredMaterials.isEmpty()) {
+
+        // Si no hay materiales requeridos, desmarcar ready
+        if (requiredMaterials == null || requiredMaterials.isEmpty()) {
             productPhase.setIsReady(Boolean.FALSE);
             productPhase.getProduct().setIsReady(Boolean.FALSE);
+            productRepository.save(productPhase.getProduct());
             productPhaseRepository.save(productPhase);
+            return;
         }
-        if (requiredMaterials != null && !requiredMaterials.isEmpty()) {
-            Boolean allMatch = requiredMaterials.stream()
-                    .allMatch(recipeRepository::existsByMaterial_Type);
-            if (!allMatch) {
+        // Para cada tipo requerido, comprobar si existe al menos una receta para esta
+        // fase y tipo
+        for (MaterialType type : requiredMaterials) {
+            boolean exists = recipeRepository.existsByProductPhaseIdAndMaterial_Type(productPhaseId, type);
+            if (!exists) {
                 productPhase.setIsReady(Boolean.FALSE);
                 productPhase.getProduct().setIsReady(Boolean.FALSE);
+                productRepository.save(productPhase.getProduct());
                 productPhaseRepository.save(productPhase);
+                return;
             }
         }
-        
     }
 
 }

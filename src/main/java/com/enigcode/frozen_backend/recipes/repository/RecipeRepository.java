@@ -11,6 +11,10 @@ import java.util.List;
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     boolean existsByMaterial_Type(MaterialType type);
+
     List<Recipe> findByProductPhase_ProductId(Long id);
+
     List<Recipe> findByProductPhase(ProductPhase productPhase);
+
+    boolean existsByProductPhaseIdAndMaterial_Type(Long productPhaseId, MaterialType type);
 }

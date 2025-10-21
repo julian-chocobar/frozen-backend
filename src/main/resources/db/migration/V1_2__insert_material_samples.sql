@@ -9,23 +9,23 @@ TRUNCATE TABLE recipes, product_phases, production_orders, batches, packagings, 
 -- Aumenté stocks para poder crear varias órdenes
 INSERT INTO materials (id, code, creation_date, is_active, last_update_date, name, reserved_stock, stock, supplier, threshold, type, unit_measurement, value)
 VALUES
-(1,'MALT-PALE', now()-interval '120 days', TRUE, now()-interval '2 days',  'Malta Pale',           0.0, 5000.0, 'Molino San Martín', 50.0, 0, 'KG', 0.0),
-(2,'MALT-CRYST',now()-interval '120 days', TRUE, now()-interval '2 days',  'Malta Crystal',        0.0, 1500.0, 'Molino San Martín', 10.0, 0, 'KG', 0.0),
-(3,'MALT-CHOC', now()-interval '120 days', TRUE, now()-interval '14 days', 'Malta Chocolate',      0.0,  800.0, 'Molino San Martín',  5.0, 0, 'KG', 0.0),
-(4,'HOPS-CITRA',now()-interval '90 days',  TRUE, now()-interval '1 day',   'Lúpulo Citra',         0.0,  200.0, 'HopsCo',            1.0, 1, 'KG', 0.0),
-(5,'HOPS-SIMCOE',now()-interval '90 days', TRUE, now()-interval '1 day',   'Lúpulo Simcoe',        0.0,  150.0, 'HopsCo',            1.0, 1, 'KG', 0.0),
-(6,'YEAST-ALE',  now()-interval '60 days',  TRUE, now()-interval '2 days',  'Levadura Ale',         0.0,  500.0, 'Fermentos AR',      0.2, 3, 'KG', 0.0),
-(7,'YEAST-LAGER',now()-interval '60 days',  TRUE, now()-interval '2 days',  'Levadura Lager',       0.0,  300.0, 'Fermentos AR',      0.2, 3, 'KG', 0.0),
-(8,'WATER',      now()-interval '365 days', TRUE, now()-interval '1 day',   'Agua potable',         0.0,250000.0, 'Acueducto Local',   500.0, 2, 'LT', 0.0),
-(9,'SUGAR',      now()-interval '300 days', TRUE, now()-interval '10 days',  'Azúcar',               0.0, 5000.0, 'Proveeduría',       10.0, 5, 'KG', 0.0),
-(10,'DEXTRIN',    now()-interval '200 days', TRUE, now()-interval '10 days',  'Dextrina / Adjuntos',  0.0, 2000.0, 'Proveeduría',        5.0, 5, 'KG', 0.0),
-(11,'WHIRLPOOL-CLAR', now()-interval '150 days', TRUE, now()-interval '20 days','Clarificante', 0.0, 1000.0, 'Química Brews',      2.0, 5, 'LT', 0.0),
-(12,'CO2',        now()-interval '200 days', TRUE, now()-interval '2 days',   'CO2',                  0.0, 10000.0,'Gases SRL',          5.0, 5, 'KG', 0.0),
-(13,'BOTTLE-330', now()-interval '400 days', TRUE, now()-interval '5 days',   'Botella 330ml',        0.0,150000.0,'Envases SA',        200.0, 4, 'UNIDAD', 0.0),
-(14,'CAP-330',    now()-interval '400 days', TRUE, now()-interval '5 days',   'Tapa 26mm',            0.0,150000.0,'Envases SA',        300.0, 4, 'UNIDAD', 0.0),
-(15,'LABEL-330',  now()-interval '400 days', TRUE, now()-interval '5 days',   'Etiqueta 330ml',       0.0,150000.0,'Imprenta Local',    200.0, 5, 'UNIDAD', 0.0),
-(16,'KEG-20L',    now()-interval '400 days', TRUE, now()-interval '5 days',   'Barril 20L',           0.0,  500.0, 'Envases SA',          5.0, 4, 'UNIDAD', 0.0),
-(17,'VACUUM-CHAR',now()-interval '200 days', TRUE, now()-interval '30 days', 'Adsorbente columna',   0.0,  200.0, 'Química Brews',      1.0, 5, 'KG', 0.0);
+(1,'MAL-1', now()-interval '120 days', TRUE, now()-interval '2 days',  'Malta Pale',           0.0, 5000.0, 'Molino San Martín', 50.0, 0, 'KG', 0.0),
+(2,'MAL-2',now()-interval '120 days', TRUE, now()-interval '2 days',  'Malta Crystal',        0.0, 1500.0, 'Molino San Martín', 10.0, 0, 'KG', 0.0),
+(3,'MAL-3', now()-interval '120 days', TRUE, now()-interval '14 days', 'Malta Chocolate',      0.0,  800.0, 'Molino San Martín',  5.0, 0, 'KG', 0.0),
+(4,'LUP-4',now()-interval '90 days',  TRUE, now()-interval '1 day',   'Lúpulo Citra',         0.0,  200.0, 'HopsCo',            1.0, 1, 'KG', 0.0),
+(5,'LUP-5',now()-interval '90 days', TRUE, now()-interval '1 day',   'Lúpulo Simcoe',        0.0,  150.0, 'HopsCo',            1.0, 1, 'KG', 0.0),
+(6,'LEV-6',  now()-interval '60 days',  TRUE, now()-interval '2 days',  'Levadura Ale',         0.0,  500.0, 'Fermentos AR',      0.2, 3, 'KG', 0.0),
+(7,'LEV-7',now()-interval '60 days',  TRUE, now()-interval '2 days',  'Levadura Lager',       0.0,  300.0, 'Fermentos AR',      0.2, 3, 'KG', 0.0),
+(8,'AGU-8',      now()-interval '365 days', TRUE, now()-interval '1 day',   'Agua potable',         0.0,250000.0, 'Acueducto Local',   500.0, 2, 'LT', 0.0),
+(9,'OTR-9',      now()-interval '300 days', TRUE, now()-interval '10 days',  'Azúcar',               0.0, 5000.0, 'Proveeduría',       10.0, 5, 'KG', 0.0),
+(10,'OTR-10',    now()-interval '200 days', TRUE, now()-interval '10 days',  'Dextrina / Adjuntos',  0.0, 2000.0, 'Proveeduría',        5.0, 5, 'KG', 0.0),
+(11,'OTR-11', now()-interval '150 days', TRUE, now()-interval '20 days','Clarificante', 0.0, 1000.0, 'Química Brews',      2.0, 5, 'LT', 0.0),
+(12,'OTR-12',        now()-interval '200 days', TRUE, now()-interval '2 days',   'CO2',                  0.0, 10000.0,'Gases SRL',          5.0, 5, 'KG', 0.0),
+(13,'ENV-13', now()-interval '400 days', TRUE, now()-interval '5 days',   'Botella 330ml',        0.0,150000.0,'Envases SA',        200.0, 4, 'UNIDAD', 0.0),
+(14,'OTR-14',    now()-interval '400 days', TRUE, now()-interval '5 days',   'Tapa 26mm',            0.0,150000.0,'Envases SA',        300.0, 4, 'UNIDAD', 0.0),
+(15,'OTR-15',  now()-interval '400 days', TRUE, now()-interval '5 days',   'Etiqueta 330ml',       0.0,150000.0,'Imprenta Local',    200.0, 5, 'UNIDAD', 0.0),
+(16,'ENV-16',    now()-interval '400 days', TRUE, now()-interval '5 days',   'Barril 20L',           0.0,  500.0, 'Envases SA',          5.0, 4, 'UNIDAD', 0.0),
+(17,'OTR-17',now()-interval '200 days', TRUE, now()-interval '30 days', 'Adsorbente columna',   0.0,  200.0, 'Química Brews',      1.0, 5, 'KG', 0.0);
 
 -- ===========================
 -- 2) PRODUCTS (3 productos: 2 alcohólicos y 1 no alcohólico)

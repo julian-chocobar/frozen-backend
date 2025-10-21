@@ -31,12 +31,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class RecipeServiceImplTest {
-    @Mock RecipeRepository recipeRepository;
-    @Mock MaterialRepository materialRepository;
-    @Mock ProductPhaseRepository productPhaseRepository;
-    @Mock ProductPhaseService productPhaseService;
-    @Mock RecipeMapper recipeMapper;
-    @InjectMocks RecipeServiceImpl service;
+    @Mock
+    RecipeRepository recipeRepository;
+    @Mock
+    MaterialRepository materialRepository;
+    @Mock
+    ProductPhaseRepository productPhaseRepository;
+    @Mock
+    ProductPhaseService productPhaseService;
+    @Mock
+    RecipeMapper recipeMapper;
+    @InjectMocks
+    RecipeServiceImpl service;
 
     @BeforeEach
     void setup() {
@@ -47,7 +53,7 @@ class RecipeServiceImplTest {
     void createRecipe_success() {
         RecipeCreateDTO dto = RecipeCreateDTO.builder().productPhaseId(1L).materialId(2L).quantity(5.0).build();
         Recipe recipe = new Recipe();
-    ProductPhase phase = ProductPhase.builder().id(1L).phase(Phase.MOLIENDA).build(); // MOLIENDA requiere MALTA
+        ProductPhase phase = ProductPhase.builder().id(1L).phase(Phase.MOLIENDA).build(); // MOLIENDA requiere MALTA
         Material material = Material.builder().id(2L).type(MaterialType.MALTA).build();
         Recipe saved = new Recipe();
         RecipeResponseDTO response = new RecipeResponseDTO();
@@ -67,7 +73,8 @@ class RecipeServiceImplTest {
     void createRecipe_materialNotAllowed_throwsBadRequest() {
         RecipeCreateDTO dto = RecipeCreateDTO.builder().productPhaseId(1L).materialId(2L).quantity(5.0).build();
         Recipe recipe = new Recipe();
-    ProductPhase phase = ProductPhase.builder().id(1L).phase(Phase.COCCION).build(); // COCCION requiere AGUA, LUPULO
+        ProductPhase phase = ProductPhase.builder().id(1L).phase(Phase.COCCION).build(); // COCCION requiere AGUA,
+                                                                                         // LUPULO
         Material material = Material.builder().id(2L).type(MaterialType.MALTA).build();
 
         when(recipeMapper.toEntity(dto)).thenReturn(recipe);
@@ -89,7 +96,7 @@ class RecipeServiceImplTest {
     void createRecipe_materialNotFound_throwsNotFound() {
         RecipeCreateDTO dto = RecipeCreateDTO.builder().productPhaseId(1L).materialId(2L).quantity(5.0).build();
         when(recipeMapper.toEntity(dto)).thenReturn(new Recipe());
-    ProductPhase phase = ProductPhase.builder().id(1L).phase(Phase.MOLIENDA).build();
+        ProductPhase phase = ProductPhase.builder().id(1L).phase(Phase.MOLIENDA).build();
         when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(phase));
         when(materialRepository.findById(2L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> service.createRecipe(dto));
@@ -97,26 +104,27 @@ class RecipeServiceImplTest {
 
     @Test
     void updateRecipe_success() {
-    RecipeUpdateDTO dto = RecipeUpdateDTO.builder().materialId(2L).quantity(10.0).build();
-    Recipe original = new Recipe();
-    Material material = Material.builder().id(2L).build();
-    Recipe saved = new Recipe();
-    RecipeResponseDTO response = new RecipeResponseDTO();
+        RecipeUpdateDTO dto = RecipeUpdateDTO.builder().materialId(2L).quantity(10.0).build();
+        Recipe original = new Recipe();
+        Material material = Material.builder().id(2L).build();
+        Recipe saved = new Recipe();
+        RecipeResponseDTO response = new RecipeResponseDTO();
 
-    when(recipeRepository.findById(1L)).thenReturn(Optional.of(original));
-    when(materialRepository.findById(2L)).thenReturn(Optional.of(material));
-    when(recipeRepository.save(original)).thenReturn(saved);
-    when(recipeMapper.toResponseDTO(saved)).thenReturn(response);
+        when(recipeRepository.findById(1L)).thenReturn(Optional.of(original));
+        when(materialRepository.findById(2L)).thenReturn(Optional.of(material));
+        when(recipeRepository.save(original)).thenReturn(saved);
+        when(recipeMapper.toResponseDTO(saved)).thenReturn(response);
 
-    RecipeResponseDTO result = service.updateRecipe(1L, dto);
-    assertSame(response, result);
-    verify(recipeRepository).save(original);
+        RecipeResponseDTO result = service.updateRecipe(1L, dto);
+        assertSame(response, result);
+        verify(recipeRepository).save(original);
     }
 
     @Test
     void updateRecipe_notFound_throws() {
         when(recipeRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> service.updateRecipe(1L, RecipeUpdateDTO.builder().build()));
+        assertThrows(ResourceNotFoundException.class,
+                () -> service.updateRecipe(1L, RecipeUpdateDTO.builder().build()));
     }
 
     @Test
@@ -130,7 +138,7 @@ class RecipeServiceImplTest {
         RecipeResponseDTO result = service.deleteRecipe(1L);
         assertSame(response, result);
         verify(recipeRepository).delete(recipe);
-        verify(productPhaseService).reviewIsReady(phase);
+        verify(productPhaseService).reviewIsReady(phase.getId());
     }
 
     @Test
@@ -174,11 +182,11 @@ class RecipeServiceImplTest {
                 .id(phaseId)
                 .phase(Phase.MOLIENDA)
                 .build();
-        
+
         Recipe recipe1 = new Recipe();
         Recipe recipe2 = new Recipe();
         List<Recipe> recipes = List.of(recipe1, recipe2);
-        
+
         RecipeResponseDTO response1 = new RecipeResponseDTO();
         RecipeResponseDTO response2 = new RecipeResponseDTO();
 
@@ -217,7 +225,7 @@ class RecipeServiceImplTest {
         Recipe recipe1 = new Recipe();
         Recipe recipe2 = new Recipe();
         List<Recipe> recipes = List.of(recipe1, recipe2);
-        
+
         RecipeResponseDTO response1 = new RecipeResponseDTO();
         RecipeResponseDTO response2 = new RecipeResponseDTO();
 

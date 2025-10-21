@@ -2,7 +2,6 @@ package com.enigcode.frozen_backend.product_phases.service;
 
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseResponseDTO;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseUpdateDTO;
-import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +20,6 @@ public interface ProductPhaseService {
 
     ProductPhaseResponseDTO toggleReady(Long id);
 
-    void reviewIsReady(@NotNull ProductPhase productPhase);
+    void reviewIsReady(@NotNull Long productPhaseId);
 
 }
