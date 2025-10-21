@@ -19,7 +19,7 @@ public interface ProductPhaseService {
 
     List<ProductPhaseResponseDTO> getByProduct(Long productId);
 
-    ProductPhaseResponseDTO markAsReady(Long id);
+    ProductPhaseResponseDTO toggleReady(Long id);
 
     void reviewIsReady(@NotNull ProductPhase productPhase);
 

@@ -98,29 +98,37 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
      * @return
      */
     @Override
-    public ProductPhaseResponseDTO markAsReady(Long id) {
+    public ProductPhaseResponseDTO toggleReady(Long id) {
         ProductPhase productPhase = productPhaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ProductPhase no encontrado con ID: " + id));
+        if (productPhase.getIsReady()) {
+            productPhase.setIsReady(false);
+            productPhase.getProduct().setIsReady(false);
+            productRepository.save(productPhase.getProduct());
+            ProductPhase savedProductPhase = productPhaseRepository.save(productPhase);
+            return productPhaseMapper.toResponseDto(savedProductPhase);
+        }else {
 
-        if (!productPhase.isComplete())
-            throw new BadRequestException("La fase no puede estar listo debido a que tiene campos requeridos vacíos");
+            if (!productPhase.isComplete())
+                throw new BadRequestException("La fase no puede estar listo debido a que tiene campos requeridos vacíos");
 
-        List<MaterialType> requiredMaterials = productPhase.getRequiredMaterials();
+            List<MaterialType> requiredMaterials = productPhase.getRequiredMaterials();
 
-        // Se revisa que no falta ningun material o devuelve una lista con los materiales que faltan
-        if (requiredMaterials != null && !requiredMaterials.isEmpty()) {
-            List<MaterialType> missingMaterials = requiredMaterials.stream()
-                    .filter(type -> !recipeRepository.existsByMaterial_Type(type))
-                    .toList();
-            if (!missingMaterials.isEmpty()) {
-                throw new BadRequestException("Faltan materiales requeridos en las recetas: " + missingMaterials);
+            // Se revisa que no falta ningun material o devuelve una lista con los materiales que faltan
+            if (requiredMaterials != null && !requiredMaterials.isEmpty()) {
+                List<MaterialType> missingMaterials = requiredMaterials.stream()
+                        .filter(type -> !recipeRepository.existsByMaterial_Type(type))
+                        .toList();
+                if (!missingMaterials.isEmpty()) {
+                    throw new BadRequestException("Faltan materiales requeridos en las recetas: " + missingMaterials);
+                }
             }
+
+            productPhase.setIsReady(Boolean.TRUE);
+            ProductPhase savedProductPhase = productPhaseRepository.save(productPhase);
+
+            return productPhaseMapper.toResponseDto(savedProductPhase);
         }
-
-        productPhase.setIsReady(Boolean.TRUE);
-        ProductPhase savedProductPhase = productPhaseRepository.save(productPhase);
-
-        return productPhaseMapper.toResponseDto(savedProductPhase);
     }
 
     /**
@@ -131,6 +139,11 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
     @Transactional
     public void reviewIsReady(ProductPhase productPhase) {
         List<MaterialType> requiredMaterials = productPhase.getRequiredMaterials();
+        if(requiredMaterials == null || requiredMaterials.isEmpty()) {
+            productPhase.setIsReady(Boolean.FALSE);
+            productPhase.getProduct().setIsReady(Boolean.FALSE);
+            productPhaseRepository.save(productPhase);
+        }
         if (requiredMaterials != null && !requiredMaterials.isEmpty()) {
             Boolean allMatch = requiredMaterials.stream()
                     .allMatch(recipeRepository::existsByMaterial_Type);
@@ -138,7 +151,9 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
                 productPhase.setIsReady(Boolean.FALSE);
                 productPhase.getProduct().setIsReady(Boolean.FALSE);
                 productPhaseRepository.save(productPhase);
-            }};
+            }
+        }
+        
     }
 
 }

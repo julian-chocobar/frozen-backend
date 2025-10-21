@@ -137,7 +137,7 @@ class ProductPhaseServiceImplTest {
         when(productPhaseRepository.save(productPhase)).thenReturn(productPhase);
         when(productPhaseMapper.toResponseDto(productPhase)).thenReturn(responseDTO);
 
-        ProductPhaseResponseDTO result = productPhaseService.markAsReady(1L);
+        ProductPhaseResponseDTO result = productPhaseService.toggleReady(1L);
 
         assertNotNull(result);
         verify(productPhaseRepository).save(productPhase);
@@ -147,14 +147,14 @@ class ProductPhaseServiceImplTest {
     @Test
     void testMarkAsReady_NotFound() {
         when(productPhaseRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> productPhaseService.markAsReady(1L));
+        assertThrows(ResourceNotFoundException.class, () -> productPhaseService.toggleReady(1L));
     }
 
     @Test
-    void testMarkAsReady_IncompletePhase() {
+    void testToggleReady_IncompletePhase() {
         when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(productPhase));
         // Leave fields null so isComplete() returns false
-        assertThrows(BadRequestException.class, () -> productPhaseService.markAsReady(1L));
+        assertThrows(BadRequestException.class, () -> productPhaseService.toggleReady(1L));
     }
 
     @Test
@@ -171,6 +171,6 @@ class ProductPhaseServiceImplTest {
 
         when(recipeRepository.existsByMaterial_Type(MaterialType.AGUA)).thenReturn(false);
 
-        assertThrows(BadRequestException.class, () -> productPhaseService.markAsReady(1L));
+        assertThrows(BadRequestException.class, () -> productPhaseService.toggleReady(1L));
     }
 }
