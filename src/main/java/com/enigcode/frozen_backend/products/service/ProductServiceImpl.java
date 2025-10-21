@@ -82,22 +82,24 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     @Transactional
-    public ProductResponseDTO markAsReady(Long id) {
+    public ProductResponseDTO toggleReady(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No se encontró producto con id " + id));
-
-        boolean phases_ready = product.getPhases()
+        if (product.getIsReady()) {
+            product.markAsNotReady();
+            Product savedProduct = productRepository.save(product);
+            return productMapper.toResponseDto(savedProduct);
+        } else {
+            boolean phases_ready = product.getPhases()
                 .stream()
                 .allMatch(ProductPhase::getIsReady);
-
-        if (!phases_ready)
-            throw new BadRequestException("Se requieren completar las fases antes de que el producto este listo");
-
-        product.markAsReady();
-
-        Product savedProduct = productRepository.save(product);
-
-        return productMapper.toResponseDto(savedProduct);
+            if (!phases_ready) {
+                throw new BadRequestException("Se requieren completar las fases antes de que el producto este listo");
+            }
+            product.markAsReady();
+            Product savedProduct = productRepository.save(product);
+            return productMapper.toResponseDto(savedProduct);
+        }     
     }
 
     /**

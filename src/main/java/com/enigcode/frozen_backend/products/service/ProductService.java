@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface ProductService {
     ProductResponseDTO createProduct(ProductCreateDTO productCreateDTO);
-    ProductResponseDTO markAsReady(Long id);
+    ProductResponseDTO toggleReady(Long id);
     ProductResponseDTO updateProduct(Long id, ProductUpdateDTO productUpdateDTO);
     ProductResponseDTO toggleActive(Long id);
     Page<ProductResponseDTO> findAll(ProductFilterDTO filterDTO, Pageable pageable);

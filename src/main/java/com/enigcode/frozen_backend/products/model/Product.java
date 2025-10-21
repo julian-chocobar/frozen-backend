@@ -86,4 +86,8 @@ public class Product {
     public void markAsReady() {
         this.isReady = Boolean.TRUE;
     }
+
+    public void markAsNotReady() {
+        this.isReady = Boolean.FALSE;
+    }
 }

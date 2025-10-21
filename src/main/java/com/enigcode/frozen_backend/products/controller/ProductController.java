@@ -38,8 +38,7 @@ public class ProductController {
     @Operation(summary = "Marcar producto como Listo", description = "Cambia el estado del producto como ready haciendo que este disponible para produccion")
     @PatchMapping("/{id}/toogle-ready")
     public ResponseEntity<ProductResponseDTO> toogleReady(@PathVariable Long id) {
-        ProductResponseDTO productResponseDTO = productService.markAsReady(id);
-
+        ProductResponseDTO productResponseDTO = productService.toggleReady(id);
         return new ResponseEntity<>(productResponseDTO, HttpStatus.OK);
     }
 
