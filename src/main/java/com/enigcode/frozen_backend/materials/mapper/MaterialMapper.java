@@ -24,6 +24,7 @@ public interface MaterialMapper {
         @Mapping(target = "totalStock", expression = "java(material.getStock() + material.getReservedStock())")
         MaterialResponseDTO toResponseDto(Material material);
 
+        @Mapping(target = "stock", source = "stock", defaultValue = "0.0")
         Material toEntity(MaterialCreateDTO materialCreateDTO);
 
         @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

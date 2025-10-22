@@ -91,15 +91,15 @@ public class ProductServiceImpl implements ProductService {
             return productMapper.toResponseDto(savedProduct);
         } else {
             boolean phases_ready = product.getPhases()
-                .stream()
-                .allMatch(ProductPhase::getIsReady);
+                    .stream()
+                    .allMatch(ProductPhase::getIsReady);
             if (!phases_ready) {
                 throw new BadRequestException("Se requieren completar las fases antes de que el producto este listo");
             }
             product.markAsReady();
             Product savedProduct = productRepository.save(product);
             return productMapper.toResponseDto(savedProduct);
-        }     
+        }
     }
 
     /**
@@ -123,7 +123,7 @@ public class ProductServiceImpl implements ProductService {
 
         if (productUpdateDTO.getStandardQuantity() != null)
             product.setStandardQuantity(productUpdateDTO.getStandardQuantity());
-            
+
         if (productUpdateDTO.getUnitMeasurement() != null)
             product.setUnitMeasurement(productUpdateDTO.getUnitMeasurement());
 
@@ -211,15 +211,32 @@ public class ProductServiceImpl implements ProductService {
         }
         String q = name.trim();
         List<Product> results;
-        
-        if (active == null) {
+
+        if (active == null && ready == null) {
             results = productRepository.findTop10ByNameContainingIgnoreCase(q);
-        } else if (active) {
-            results = productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(q);
+        } else if (active == null) {
+            // active == null, ready != null
+            results = Boolean.TRUE.equals(ready)
+                    ? productRepository.findTop10ByNameContainingIgnoreCaseAndIsReadyTrue(q)
+                    : productRepository.findTop10ByNameContainingIgnoreCaseAndIsReadyFalse(q);
+        } else if (ready == null) {
+            // ready == null, active != null
+            results = Boolean.TRUE.equals(active)
+                    ? productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(q)
+                    : productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(q);
         } else {
-            results = productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(q);
+            // both filters present
+            if (Boolean.TRUE.equals(active) && Boolean.TRUE.equals(ready)) {
+                results = productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrueAndIsReadyTrue(q);
+            } else if (Boolean.TRUE.equals(active) && Boolean.FALSE.equals(ready)) {
+                results = productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrueAndIsReadyFalse(q);
+            } else if (Boolean.FALSE.equals(active) && Boolean.TRUE.equals(ready)) {
+                results = productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveFalseAndIsReadyTrue(q);
+            } else {
+                results = productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveFalseAndIsReadyFalse(q);
+            }
         }
-        
+
         return results.stream()
                 .map(m -> new ProductSimpleDTO(m.getId(), m.getName()))
                 .toList();
