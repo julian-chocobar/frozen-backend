@@ -2,79 +2,148 @@ package com.enigcode.frozen_backend.common;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.http.HttpMethod;
 
 import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // Habilitamos @PreAuthorize
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/api/swagger-ui/**",
-                                "/api/swagger-ui.html",
-                                "/webjars/**",
-                                "/swagger-resources/**"
-                        ).permitAll()
-                        .anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults());
+        @Bean
+        public SessionRegistry sessionRegistry() {
+                return new SessionRegistryImpl();
+        }
 
-        return http.build();
-    }
+        @Bean
+        public HttpSessionEventPublisher httpSessionEventPublisher() {
+                return new HttpSessionEventPublisher();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider)
+                        throws Exception {
+                http
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .csrf(csrf -> csrf.disable())
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(
+                                                                "/auth/login",
+                                                                "/auth/logout",
+                                                                "/v3/api-docs/**",
+                                                                "/swagger-ui/**",
+                                                                "/swagger-ui.html")
+                                                .permitAll()
+                                                .requestMatchers("/ws/**").permitAll()
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                                .anyRequest().authenticated() // Eliminar el matcher específico de
+                                                                              // /api/** y usar este catch-all
+                                )
+                                .formLogin(form -> form.disable())
+                                .httpBasic(basic -> basic.disable())
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                                                .maximumSessions(1)
+                                                .expiredUrl("/auth/login")
+                                                .sessionRegistry(sessionRegistry())
+                                                .maxSessionsPreventsLogin(true))
+                                .securityContext(securityContext -> securityContext // Añadir esto
+                                                .requireExplicitSave(false))
+                                .authenticationProvider(authenticationProvider)
+                                .exceptionHandling(exception -> exception
+                                                .authenticationEntryPoint((request, response, authException) -> {
+                                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                                        response.setContentType("application/json");
+                                                        response.getWriter().write(
+                                                                        "{\"error\":\"Unauthorized\",\"message\":\"Authentication failed: "
+                                                                                        +
+                                                                                        (authException != null
+                                                                                                        ? authException.getMessage()
+                                                                                                        : "Unknown error")
+                                                                                        +
+                                                                                        "\"}");
+                                                })
+                                                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                                                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                                        response.setContentType("application/json");
+                                                        response.getWriter().write(
+                                                                        "{\"error\":\"Forbidden\",\"message\":\"Access denied\"}");
+                                                }))
+                                .logout(logout -> logout
+                                                .logoutUrl("/auth/logout")
+                                                .deleteCookies("JSESSIONID")
+                                                .invalidateHttpSession(true)
+                                                .clearAuthentication(true)
+                                                .logoutSuccessHandler((request, response, authentication) -> {
+                                                        response.setStatus(200);
+                                                        response.setContentType("application/json");
+                                                        response.getWriter()
+                                                                        .write("{\"message\":\"Logout successful\"}");
+                                                }));
 
-        // Especifica los orígenes permitidos (solo localhost:3000 en desarrollo)
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000", // Desarrollo local
-                "http://127.0.0.1:3000", // Alternativa a localhost
-                "https://frozen-frontend-kappa.vercel.app" // Producción
-        ));
+                return http.build();
+        }
 
-        // Métodos HTTP permitidos
-        configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+                return config.getAuthenticationManager();
+        }
 
-        // Cabeceras permitidas
-        configuration.setAllowedHeaders(Arrays.asList(
-                "authorization",
-                "content-type",
-                "x-auth-token",
-                "x-requested-with"));
+        @Bean
+        public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
+                DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+                provider.setPasswordEncoder(passwordEncoder());
+                return provider;
+        }
 
-        // Cabeceras expuestas
-        configuration.setExposedHeaders(Arrays.asList(
-                "x-auth-token",
-                "x-total-count" // Útil para paginación
-        ));
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-        // Permitir credenciales (necesario si usas cookies/sesión)
-        configuration.setAllowCredentials(true);
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = new CorsConfiguration();
+                configuration.setAllowedOrigins(Arrays.asList(
+                                "http://localhost:3000",
+                                "http://localhost:3001"));
+                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+                configuration.setAllowedHeaders(Arrays.asList(
+                                "Authorization",
+                                "Content-Type",
+                                "X-Requested-With",
+                                "Accept",
+                                "Origin",
+                                "Access-Control-Request-Method",
+                                "Access-Control-Request-Headers"));
+                configuration.setAllowCredentials(true);
+                configuration.setMaxAge(3600L);
+                configuration.setExposedHeaders(Arrays.asList(
+                                "Access-Control-Allow-Origin",
+                                "Access-Control-Allow-Credentials"));
 
-        // Tiempo que la respuesta de pre-vuelo puede ser cacheada
-        configuration.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+                return source;
+        }
 }

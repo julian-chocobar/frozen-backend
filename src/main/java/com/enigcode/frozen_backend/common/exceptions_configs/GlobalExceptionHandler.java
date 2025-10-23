@@ -2,9 +2,15 @@ package com.enigcode.frozen_backend.common.exceptions_configs;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,10 +41,10 @@ public class GlobalExceptionHandler {
 
         Map<String, Object> response = createErrorResponse(
                 ex.getMessage(),
-                HttpStatus.BAD_REQUEST
-        );
+                HttpStatus.BAD_REQUEST);
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);}
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
 
     /**
      * Maneja las fallas de @Valid y devuelve HTTP 400 Bad Request.
@@ -50,8 +56,8 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
 
         // Mapea los errores de campo (ej: "name": "Se debe ingresar un nombre...")
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage()));
+        ex.getBindingResult().getFieldErrors()
+                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
 
         Map<String, Object> response = createErrorResponse(
                 "Error de validación de campos. Por favor, revisa los detalles.",
@@ -90,6 +96,47 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND);
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Maneja errores de credenciales inválidas
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex) {
+        Map<String, Object> response = createErrorResponse(
+                "Usuario o contraseña incorrectos",
+                HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Maneja errores de usuario deshabilitado
+     */
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<Object> handleDisabledUser(DisabledException ex) {
+        Map<String, Object> response = createErrorResponse(
+                "Usuario deshabilitado",
+                HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Maneja otros errores de autenticación
+     */
+    @Order(Ordered.HIGHEST_PRECEDENCE) // Añadir esta anotación
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Object> handleAuthentication(AuthenticationException ex) {
+        String message = "Error de autenticación";
+        if (ex instanceof BadCredentialsException) {
+            message = "Usuario o contraseña incorrectos";
+        } else if (ex instanceof DisabledException) {
+            message = "Usuario deshabilitado";
+        }
+
+        Map<String, Object> response = createErrorResponse(
+                message,
+                HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
     /**

@@ -10,6 +10,7 @@ TRUNCATE TABLE packagings RESTART IDENTITY CASCADE;
 TRUNCATE TABLE movements RESTART IDENTITY CASCADE;
 TRUNCATE TABLE production_orders RESTART IDENTITY CASCADE;
 TRUNCATE TABLE batches RESTART IDENTITY CASCADE;
+TRUNCATE TABLE users RESTART IDENTITY CASCADE;
 
 -- ===========================
 -- 1) MATERIALS (type mapping: 0=MALTA,1=LUPULO,2=AGUA,3=LEVADURA,4=ENVASE,5=OTROS)
@@ -254,7 +255,62 @@ VALUES
 (3,now(),1000.0, 'PENDIENTE', NULL, 3, (SELECT id FROM products WHERE name='Pale Sin Alcohol' LIMIT 1));
 
 -- ===========================
--- 10) Ajustar secuencias
+
+
+
+-- 11) Crear usuarios de ejemplo
+-- Crear usuarios con contraseñas encoded (BCrypt)
+-- Contraseñas sin encoded: admin123, super123, oper123
+INSERT INTO users (
+    id, 
+    username,
+    password,
+    name,
+    role,
+    enabled,
+    account_non_expired,
+    account_non_locked,
+    credentials_non_expired,
+    is_active,
+    creation_date,
+    email,
+    last_login_date,
+    phone_number
+) VALUES 
+-- ADMIN: username=admin, password=Admin1234
+(1, 'admin',
+ '$2a$10$Gt1H6KamR20sL40R51poSe1v/XO7uWaq5.oILk1gnSknVx37tgGYu',
+ 'Administrador',
+ 'ADMIN',
+ true, true, true, true, true,
+ now(),
+ 'admin@brewery.com',
+ NULL,
+ '+54911111111'),
+
+-- SUPERVISOR: username=supervisor, password=Super1234
+(2, 'supervisor',
+ '$2a$10$Oyt1mlRwP/LshbY6t01V0O6lXAfYxjpwGdO9V493VHrzLmEWg2bN2',
+ 'Supervisor General',
+ 'SUPERVISOR',
+ true, true, true, true, true,
+ now(),
+ 'supervisor@brewery.com',
+ NULL,
+ '+54922222222'),
+
+-- OPERATOR: username=operador, password=Oper1234
+(3, 'operador',
+ '$2a$10$Y.PC3knP7zC9blC3ChMYcu8f0bgGBO8QG5.bx016k0y/jmsXmyE06',
+ 'Operador Base',
+ 'OPERARIO',
+ true, true, true, true, true,
+ now(),
+ 'operator@brewery.com',
+ NULL,
+ '+54933333333');
+
+-- 11) Ajustar secuencias
 SELECT setval('materials_seq', (SELECT MAX(id) FROM materials));
 SELECT setval('products_seq',  (SELECT MAX(id) FROM products));
 SELECT setval('product_phases_seq', (SELECT MAX(id) FROM product_phases));
@@ -263,5 +319,8 @@ SELECT setval('packagings_seq',(SELECT MAX(id) FROM packagings));
 SELECT setval('movements_seq', (SELECT MAX(id) FROM movements));
 SELECT setval('production_orders_seq', (SELECT MAX(id) FROM production_orders));
 SELECT setval('batches_seq',   (SELECT MAX(id) FROM batches));
+SELECT setval('user_sequ', (SELECT MAX(id) FROM users));
+
+
 
 COMMIT;
