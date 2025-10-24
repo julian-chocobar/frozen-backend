@@ -1,7 +1,10 @@
 package com.enigcode.frozen_backend.common.exceptions_configs;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BlockedUserException;
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.InvalidCredentialsException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+import com.enigcode.frozen_backend.users.DTO.AuthResponseDTO;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -137,6 +140,33 @@ public class GlobalExceptionHandler {
                 message,
                 HttpStatus.UNAUTHORIZED);
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    // Manejar usuario bloqueado por rate limiting
+    @ExceptionHandler(BlockedUserException.class)
+    public ResponseEntity<AuthResponseDTO> handleBlockedUser(BlockedUserException ex) {
+        AuthResponseDTO response = AuthResponseDTO.builder()
+                .token("BLOCKED")
+                .username("")
+                .role(null)
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+    }
+
+    // Manejar credenciales inválidas
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<AuthResponseDTO> handleInvalidCredentials(InvalidCredentialsException ex) {
+        String message = String.format("%s. Intentos restantes: %d",
+                ex.getMessage(), ex.getRemainingAttempts());
+
+        AuthResponseDTO response = AuthResponseDTO.builder()
+                .token("ERROR")
+                .username("")
+                .role(null)
+                .message(message)
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     /**
