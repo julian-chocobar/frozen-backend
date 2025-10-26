@@ -235,3 +235,45 @@ CREATE TABLE IF NOT EXISTS "production_orders" (
 	CONSTRAINT "fk_production_orders_product_q" FOREIGN KEY ("id_product") REFERENCES "products"("id"),
 	CONSTRAINT "fk_production_orders_batch_q" FOREIGN KEY ("id_batch") REFERENCES "batches"("id")
 );
+
+-- Sequence for users
+CREATE SEQUENCE IF NOT EXISTS USER_SEQU START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS "user_sequ" START WITH 1 INCREMENT BY 1;
+
+-- Table for users as per JPA entity mapping
+CREATE TABLE IF NOT EXISTS users (
+	id BIGINT DEFAULT NEXT VALUE FOR USER_SEQU PRIMARY KEY,
+	username VARCHAR(255) NOT NULL UNIQUE,
+	password VARCHAR(255) NOT NULL,
+	name VARCHAR(255) NOT NULL,
+	email VARCHAR(255),
+	phone_number VARCHAR(50),
+	role VARCHAR(50) NOT NULL,
+	is_active BOOLEAN DEFAULT TRUE NOT NULL,
+	enabled BOOLEAN DEFAULT TRUE NOT NULL,
+	account_non_expired BOOLEAN DEFAULT TRUE NOT NULL,
+	account_non_locked BOOLEAN DEFAULT TRUE NOT NULL,
+	credentials_non_expired BOOLEAN DEFAULT TRUE NOT NULL,
+	creation_date TIMESTAMP WITH TIME ZONE NOT NULL,
+	last_login_date TIMESTAMP WITH TIME ZONE,
+	last_update_date TIMESTAMP WITH TIME ZONE
+);
+
+-- Quoted version for Hibernate globally quoted identifiers
+CREATE TABLE IF NOT EXISTS "users" (
+	"id" BIGINT DEFAULT NEXT VALUE FOR "user_sequ" PRIMARY KEY,
+	"username" VARCHAR(255) NOT NULL UNIQUE,
+	"password" VARCHAR(255) NOT NULL,
+	"name" VARCHAR(255) NOT NULL,
+	"email" VARCHAR(255),
+	"phone_number" VARCHAR(50),
+	"role" VARCHAR(50) NOT NULL,
+	"is_active" BOOLEAN DEFAULT TRUE NOT NULL,
+	"enabled" BOOLEAN DEFAULT TRUE NOT NULL,
+	"account_non_expired" BOOLEAN DEFAULT TRUE NOT NULL,
+	"account_non_locked" BOOLEAN DEFAULT TRUE NOT NULL,
+	"credentials_non_expired" BOOLEAN DEFAULT TRUE NOT NULL,
+	"creation_date" TIMESTAMP WITH TIME ZONE NOT NULL,
+	"last_login_date" TIMESTAMP WITH TIME ZONE,
+	"last_update_date" TIMESTAMP WITH TIME ZONE
+);
