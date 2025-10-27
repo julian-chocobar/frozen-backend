@@ -85,7 +85,7 @@ public class SecurityConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration c = new CorsConfiguration();
                 c.setAllowCredentials(true);
-                c.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
+                c.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001", "https://frozen-frontend-kappa.vercel.app"));
                 c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
                 c.setAllowedHeaders(List.of("*")); // Permitir todos los headers
                 c.setExposedHeaders(List.of("Set-Cookie", "Authorization")); // Exponer cookies
