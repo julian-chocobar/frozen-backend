@@ -66,7 +66,7 @@ public class AuthController {
             return ResponseEntity.ok(AuthResponseDTO.builder()
                     .token("SESSION")
                     .username(userDTO.getUsername())
-                    .role(userDTO.getRole())
+                    .roles(userDTO.getRoles())
                     .message("Login exitoso")
                     .build());
 
@@ -116,7 +116,7 @@ public class AuthController {
                 .body(java.util.Map.of(
                         "authenticated", true,
                         "username", user.getUsername(),
-                        "role", user.getRole()));
+                        "roles", user.getRoles()));
     }
 
     @GetMapping("/me")

@@ -3,7 +3,6 @@ package com.enigcode.frozen_backend.users.service;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionInformation;
@@ -16,10 +15,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Set;
+
 import com.enigcode.frozen_backend.users.model.User;
+import com.enigcode.frozen_backend.users.model.RoleEntity;
 import com.enigcode.frozen_backend.users.DTO.*;
 import com.enigcode.frozen_backend.users.mapper.UserMapper;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
+import com.enigcode.frozen_backend.users.repository.RoleRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -82,6 +86,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setCreationDate(OffsetDateTime.now(ZoneOffset.UTC));
         user.setIsActive(Boolean.TRUE);
 
+        // Convertir nombres de roles a entidades
+        Set<RoleEntity> roleEntities = roleRepository.findByNameIn(userCreateDTO.getRoles());
+        user.setRoles(roleEntities);
+
         userRepository.save(user);
         return userMapper.toResponseDto(user);
     }
@@ -126,9 +134,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public UserResponseDTO updateUserRole(Long id, UpdateRoleDTO updateRolDTO) {
-        User user = userMapper.updateUserRole(updateRolDTO.getRole(),
-                userRepository.findById(id)
-                        .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con ID: " + id)));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con ID: " + id));
+
+        // Convertir nombres de roles a entidades
+        Set<RoleEntity> roleEntities = roleRepository.findByNameIn(updateRolDTO.getRoles());
+        user = userMapper.updateUserRoles(roleEntities, user);
         userRepository.save(user);
         return userMapper.toResponseDto(user);
     }

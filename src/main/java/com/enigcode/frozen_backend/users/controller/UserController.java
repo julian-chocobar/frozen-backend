@@ -56,8 +56,8 @@ public class UserController {
         return new ResponseEntity<>(userResponseDTO, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Modificar el rol", description = "Modificar el rol de un usuario especifico")
-    @PatchMapping("/{id}/role")
+    @Operation(summary = "Modificar los roles", description = "Modificar los roles de un usuario especifico")
+    @PatchMapping("/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDTO> updateUserRole(@PathVariable Long id,
             @Valid @RequestBody UpdateRoleDTO updateRolDTO) {

@@ -4,7 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import com.enigcode.frozen_backend.users.model.Role;
+
+import java.util.Set;
 
 @Data
 @Builder
@@ -13,6 +14,6 @@ import com.enigcode.frozen_backend.users.model.Role;
 public class AuthResponseDTO {
     private String token;
     private String username;
-    private Role role;
+    private Set<String> roles;
     private String message;
 }

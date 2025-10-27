@@ -1,8 +1,9 @@
 package com.enigcode.frozen_backend.users.DTO;
 
-import com.enigcode.frozen_backend.users.model.Role;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
+import java.util.Set;
 
 @Data
 @Builder
@@ -10,7 +11,8 @@ import lombok.*;
 @NoArgsConstructor
 public class UpdateRoleDTO {
 
-    @NotNull(message = "El rol es obligatorio")
-    private Role role;
+    @NotNull(message = "Los roles son obligatorios")
+    @Size(min = 1, message = "El usuario debe tener al menos un rol")
+    private Set<String> roles;
 
 }

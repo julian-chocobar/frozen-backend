@@ -18,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -30,266 +31,266 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(UserSecurity.class)
 class UserControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockBean
-    private UserService userService;
+        @MockBean
+        private UserService userService;
 
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    void testCreateUser_success() throws Exception {
-        UserCreateDTO createDTO = UserCreateDTO.builder()
-                .username("newuser")
-                .password("NewPass123")
-                .name("New User")
-                .role(Role.OPERARIO)
-                .email("newuser@example.com")
-                .build();
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void testCreateUser_success() throws Exception {
+                UserCreateDTO createDTO = UserCreateDTO.builder()
+                                .username("newuser")
+                                .password("NewPass123")
+                                .name("New User")
+                                .roles(Set.of(Role.OPERARIO_DE_CALIDAD.name()))
+                                .email("newuser@example.com")
+                                .build();
 
-        UserResponseDTO responseDTO = UserResponseDTO.builder()
-                .id(1L)
-                .username("newuser")
-                .name("New User")
-                .role(Role.OPERARIO)
-                .isActive(true)
-                .build();
+                UserResponseDTO responseDTO = UserResponseDTO.builder()
+                                .id(1L)
+                                .username("newuser")
+                                .name("New User")
+                                .roles(Set.of(Role.OPERARIO_DE_CALIDAD.name()))
+                                .isActive(true)
+                                .build();
 
-        when(userService.createUser(any(UserCreateDTO.class))).thenReturn(responseDTO);
+                when(userService.createUser(any(UserCreateDTO.class))).thenReturn(responseDTO);
 
-        mockMvc.perform(post("/users")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createDTO)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.username").value("newuser"))
-                .andExpect(jsonPath("$.isActive").value(true));
-    }
-
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    void testCreateUser_missingUsername_returns400() throws Exception {
-        String invalidJson = """
-        {
-            "password": "password123",
-            "name": "New User",
-            "role": "OPERARIO"
+                mockMvc.perform(post("/users")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createDTO)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.username").value("newuser"))
+                                .andExpect(jsonPath("$.isActive").value(true));
         }
-        """;
 
-        mockMvc.perform(post("/users")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJson))
-                .andExpect(status().isBadRequest());
-    }
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void testCreateUser_missingUsername_returns400() throws Exception {
+                String invalidJson = """
+                                {
+                                    "password": "password123",
+                                    "name": "New User",
+                                    "role": "OPERARIO_DE_CALIDAD"
+                                }
+                                """;
 
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    void testCreateUser_missingPassword_returns400() throws Exception {
-        String invalidJson = """
-        {
-            "username": "newuser",
-            "name": "New User",
-            "role": "OPERARIO"
+                mockMvc.perform(post("/users")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(invalidJson))
+                                .andExpect(status().isBadRequest());
         }
-        """;
 
-        mockMvc.perform(post("/users")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJson))
-                .andExpect(status().isBadRequest());
-    }
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void testCreateUser_missingPassword_returns400() throws Exception {
+                String invalidJson = """
+                                {
+                                    "username": "newuser",
+                                    "name": "New User",
+                                    "role": "OPERARIO_DE_CALIDAD"
+                                }
+                                """;
 
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    void testCreateUser_missingRole_returns400() throws Exception {
-        String invalidJson = """
-        {
-            "username": "newuser",
-            "password": "password123",
-            "name": "New User"
+                mockMvc.perform(post("/users")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(invalidJson))
+                                .andExpect(status().isBadRequest());
         }
-        """;
 
-        mockMvc.perform(post("/users")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJson))
-                .andExpect(status().isBadRequest());
-    }
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void testCreateUser_missingRole_returns400() throws Exception {
+                String invalidJson = """
+                                {
+                                    "username": "newuser",
+                                    "password": "password123",
+                                    "name": "New User"
+                                }
+                                """;
 
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    void testToggleActive_success() throws Exception {
-        UserResponseDTO responseDTO = UserResponseDTO.builder()
-                .id(1L)
-                .username("user1")
-                .name("User One")
-                .role(Role.OPERARIO)
-                .isActive(false)
-                .build();
+                mockMvc.perform(post("/users")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(invalidJson))
+                                .andExpect(status().isBadRequest());
+        }
 
-        when(userService.toggleActive(1L)).thenReturn(responseDTO);
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void testToggleActive_success() throws Exception {
+                UserResponseDTO responseDTO = UserResponseDTO.builder()
+                                .id(1L)
+                                .username("user1")
+                                .name("User One")
+                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN.name()))
+                                .isActive(false)
+                                .build();
 
-        mockMvc.perform(patch("/users/1/toggle-active")
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.isActive").value(false));
-    }
+                when(userService.toggleActive(1L)).thenReturn(responseDTO);
 
-    @Test
-    @WithMockUser(username = "user1", roles = "OPERARIO")
-    void testUpdateUser_success() throws Exception {
-        UserUpdateDTO updateDTO = UserUpdateDTO.builder()
-                .name("Updated Name")
-                .email("updated@example.com")
-                .build();
+                mockMvc.perform(patch("/users/1/toggle-active")
+                                .with(csrf()))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.isActive").value(false));
+        }
 
-        UserResponseDTO responseDTO = UserResponseDTO.builder()
-                .id(1L)
-                .username("user1")
-                .name("Updated Name")
-                .role(Role.OPERARIO)
-                .isActive(true)
-                .build();
+        @Test
+        @WithMockUser(username = "user1", roles = "OPERARIO_DE_CALIDAD")
+        void testUpdateUser_success() throws Exception {
+                UserUpdateDTO updateDTO = UserUpdateDTO.builder()
+                                .name("Updated Name")
+                                .email("updated@example.com")
+                                .build();
 
-        when(userService.updateUser(eq(1L), any(UserUpdateDTO.class))).thenReturn(responseDTO);
+                UserResponseDTO responseDTO = UserResponseDTO.builder()
+                                .id(1L)
+                                .username("user1")
+                                .name("Updated Name")
+                                .roles(Set.of(Role.OPERARIO_DE_PRODUCCION.name()))
+                                .isActive(true)
+                                .build();
 
-        mockMvc.perform(patch("/users/1")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDTO)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Updated Name"));
-    }
+                when(userService.updateUser(eq(1L), any(UserUpdateDTO.class))).thenReturn(responseDTO);
 
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    void testUpdateUserRole_success() throws Exception {
-        UpdateRoleDTO updateRoleDTO = UpdateRoleDTO.builder()
-                .role(Role.SUPERVISOR)
-                .build();
+                mockMvc.perform(patch("/users/1")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateDTO)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.name").value("Updated Name"));
+        }
 
-        UserResponseDTO responseDTO = UserResponseDTO.builder()
-                .id(1L)
-                .username("user1")
-                .name("User One")
-                .role(Role.SUPERVISOR)
-                .isActive(true)
-                .build();
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void testUpdateUserRole_success() throws Exception {
+                UpdateRoleDTO updateRoleDTO = UpdateRoleDTO.builder()
+                                .roles(Set.of(Role.SUPERVISOR_DE_ALMACEN.name()))
+                                .build();
 
-        when(userService.updateUserRole(eq(1L), any(UpdateRoleDTO.class))).thenReturn(responseDTO);
+                UserResponseDTO responseDTO = UserResponseDTO.builder()
+                                .id(1L)
+                                .username("user1")
+                                .name("User One")
+                                .roles(Set.of(Role.SUPERVISOR_DE_ALMACEN.name()))
+                                .isActive(true)
+                                .build();
 
-        mockMvc.perform(patch("/users/1/role")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateRoleDTO)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.role").value("SUPERVISOR"));
-    }
+                when(userService.updateUserRole(eq(1L), any(UpdateRoleDTO.class))).thenReturn(responseDTO);
 
-    @Test
-    @WithMockUser(username = "user1", roles = "OPERARIO")
-    void testUpdateUserPassword_success() throws Exception {
-        UpdatePasswordDTO updatePasswordDTO = UpdatePasswordDTO.builder()
-                .password("NewPassword123")
-                .passwordConfirmacion("NewPassword123")
-                .build();
+                mockMvc.perform(patch("/users/1/roles")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateRoleDTO)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.roles[0]").value("SUPERVISOR_DE_ALMACEN"));
+        }
 
-        UserResponseDTO responseDTO = UserResponseDTO.builder()
-                .id(1L)
-                .username("user1")
-                .name("User One")
-                .role(Role.OPERARIO)
-                .isActive(true)
-                .build();
+        @Test
+        @WithMockUser(username = "user1", roles = "OPERARIO")
+        void testUpdateUserPassword_success() throws Exception {
+                UpdatePasswordDTO updatePasswordDTO = UpdatePasswordDTO.builder()
+                                .password("NewPassword123")
+                                .passwordConfirmacion("NewPassword123")
+                                .build();
 
-        when(userService.updateUserPassword(eq(1L), any(UpdatePasswordDTO.class))).thenReturn(responseDTO);
+                UserResponseDTO responseDTO = UserResponseDTO.builder()
+                                .id(1L)
+                                .username("user1")
+                                .name("User One")
+                                .roles(Set.of(Role.OPERARIO_DE_PRODUCCION.name()))
+                                .isActive(true)
+                                .build();
 
-        mockMvc.perform(patch("/users/1/password")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updatePasswordDTO)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1));
-    }
+                when(userService.updateUserPassword(eq(1L), any(UpdatePasswordDTO.class))).thenReturn(responseDTO);
 
-    @Test
-    @WithMockUser(username = "user1", roles = "OPERARIO")
-    void testUpdateUserPassword_mismatch_returns400() throws Exception {
-        UpdatePasswordDTO updatePasswordDTO = UpdatePasswordDTO.builder()
-                .password("NewPassword123")
-                .passwordConfirmacion("DifferentPass123")
-                .build();
+                mockMvc.perform(patch("/users/1/password")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updatePasswordDTO)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.id").value(1));
+        }
 
-        mockMvc.perform(patch("/users/1/password")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updatePasswordDTO)))
-                .andExpect(status().isBadRequest());
-    }
+        @Test
+        @WithMockUser(username = "user1", roles = "OPERARIO")
+        void testUpdateUserPassword_mismatch_returns400() throws Exception {
+                UpdatePasswordDTO updatePasswordDTO = UpdatePasswordDTO.builder()
+                                .password("NewPassword123")
+                                .passwordConfirmacion("DifferentPass123")
+                                .build();
 
-    @Test
-    @WithMockUser(username = "user1", roles = "OPERARIO")
-    void testGetUserById_success() throws Exception {
-        UserDetailDTO detailDTO = UserDetailDTO.builder()
-                .id(1L)
-                .username("user1")
-                .name("User One")
-                .role(Role.OPERARIO)
-                .email("user1@example.com")
-                .phoneNumber("123456789")
-                .isActive(true)
-                .build();
+                mockMvc.perform(patch("/users/1/password")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updatePasswordDTO)))
+                                .andExpect(status().isBadRequest());
+        }
 
-        when(userService.getUserById(1L)).thenReturn(detailDTO);
+        @Test
+        @WithMockUser(username = "user1", roles = "OPERARIO")
+        void testGetUserById_success() throws Exception {
+                UserDetailDTO detailDTO = UserDetailDTO.builder()
+                                .id(1L)
+                                .username("user1")
+                                .name("User One")
+                                .roles(Set.of(Role.OPERARIO_DE_PRODUCCION.name()))
+                                .email("user1@example.com")
+                                .phoneNumber("123456789")
+                                .isActive(true)
+                                .build();
 
-        mockMvc.perform(get("/users/1")
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.username").value("user1"))
-                .andExpect(jsonPath("$.email").value("user1@example.com"));
-    }
+                when(userService.getUserById(1L)).thenReturn(detailDTO);
 
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    void testFindAll_withPagination() throws Exception {
-        UserResponseDTO user1 = UserResponseDTO.builder()
-                .id(1L)
-                .username("user1")
-                .name("User One")
-                .role(Role.OPERARIO)
-                .isActive(true)
-                .build();
+                mockMvc.perform(get("/users/1")
+                                .with(csrf()))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.username").value("user1"))
+                                .andExpect(jsonPath("$.email").value("user1@example.com"));
+        }
 
-        UserResponseDTO user2 = UserResponseDTO.builder()
-                .id(2L)
-                .username("user2")
-                .name("User Two")
-                .role(Role.ADMIN)
-                .isActive(true)
-                .build();
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void testFindAll_withPagination() throws Exception {
+                UserResponseDTO user1 = UserResponseDTO.builder()
+                                .id(1L)
+                                .username("user1")
+                                .name("User One")
+                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN.name()))
+                                .isActive(true)
+                                .build();
 
-        Page<UserResponseDTO> page = new PageImpl<>(List.of(user1, user2), PageRequest.of(0, 10), 2);
-        when(userService.findAll(any(PageRequest.class))).thenReturn(page);
+                UserResponseDTO user2 = UserResponseDTO.builder()
+                                .id(2L)
+                                .username("user2")
+                                .name("User Two")
+                                .roles(Set.of(Role.ADMIN.name()))
+                                .isActive(true)
+                                .build();
 
-        mockMvc.perform(get("/users")
-                        .with(csrf())
-                        .param("page", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content[0].username").value("user1"))
-                .andExpect(jsonPath("$.totalItems").value(2))
-                .andExpect(jsonPath("$.totalPages").value(1))
-                .andExpect(jsonPath("$.currentPage").value(0));
-    }
+                Page<UserResponseDTO> page = new PageImpl<>(List.of(user1, user2), PageRequest.of(0, 10), 2);
+                when(userService.findAll(any(PageRequest.class))).thenReturn(page);
+
+                mockMvc.perform(get("/users")
+                                .with(csrf())
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content").isArray())
+                                .andExpect(jsonPath("$.content[0].username").value("user1"))
+                                .andExpect(jsonPath("$.totalItems").value(2))
+                                .andExpect(jsonPath("$.totalPages").value(1))
+                                .andExpect(jsonPath("$.currentPage").value(0));
+        }
 }

@@ -148,7 +148,7 @@ public class GlobalExceptionHandler {
         AuthResponseDTO response = AuthResponseDTO.builder()
                 .token("BLOCKED")
                 .username("")
-                .role(null)
+                .roles(null)
                 .message(ex.getMessage())
                 .build();
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
@@ -163,7 +163,7 @@ public class GlobalExceptionHandler {
         AuthResponseDTO response = AuthResponseDTO.builder()
                 .token("ERROR")
                 .username("")
-                .role(null)
+                .roles(null)
                 .message(message)
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);

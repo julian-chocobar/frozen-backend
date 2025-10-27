@@ -10,6 +10,7 @@ TRUNCATE TABLE packagings RESTART IDENTITY CASCADE;
 TRUNCATE TABLE movements RESTART IDENTITY CASCADE;
 TRUNCATE TABLE production_orders RESTART IDENTITY CASCADE;
 TRUNCATE TABLE batches RESTART IDENTITY CASCADE;
+-- Limpiar usuarios y roles (user_roles se limpia automáticamente por CASCADE)
 TRUNCATE TABLE users RESTART IDENTITY CASCADE;
 
 -- ===========================
@@ -258,59 +259,100 @@ VALUES
 
 
 
--- 11) Crear usuarios de ejemplo
+-- 11) Crear usuarios de ejemplo con roles asignados
 -- Crear usuarios con contraseñas encoded (BCrypt)
--- Contraseñas sin encoded: admin123, super123, oper123
+-- Contraseñas: Admin123, Operario123, Supervisor123, GerenteG123, GerenteP123
+
+-- Usuario 1: ADMIN
 INSERT INTO users (
-    id, 
-    username,
-    password,
-    name,
-    role,
-    enabled,
-    account_non_expired,
-    account_non_locked,
-    credentials_non_expired,
-    is_active,
-    creation_date,
-    email,
-    last_login_date,
-    phone_number
-) VALUES 
--- ADMIN: username=admin, password=Admin1234
-(1, 'admin',
- '$2a$10$Gt1H6KamR20sL40R51poSe1v/XO7uWaq5.oILk1gnSknVx37tgGYu',
- 'Administrador',
- 'ADMIN',
- true, true, true, true, true,
- now(),
- 'admin@brewery.com',
- NULL,
- '+54911111111'),
+    id, username, password, name, enabled, account_non_expired, 
+    account_non_locked, credentials_non_expired, is_active, 
+    creation_date, email, last_login_date, phone_number
+) VALUES (
+    1, 'admin',
+    '$2a$10$Gt1H6KamR20sL40R51poSe1v/XO7uWaq5.oILk1gnSknVx37tgGYu',
+    'Administrador del Sistema',
+    true, true, true, true, true,
+    now(), 'admin@brewery.com', NULL, '+54911111111'
+);
 
--- SUPERVISOR: username=supervisor, password=Super1234
-(2, 'supervisor',
- '$2a$10$Oyt1mlRwP/LshbY6t01V0O6lXAfYxjpwGdO9V493VHrzLmEWg2bN2',
- 'Supervisor General',
- 'SUPERVISOR',
- true, true, true, true, true,
- now(),
- 'supervisor@brewery.com',
- NULL,
- '+54922222222'),
+-- Asignar rol ADMIN al usuario admin
+INSERT INTO user_roles (user_id, role_id) VALUES
+(1, (SELECT id FROM roles WHERE name = 'ADMIN'));
 
--- OPERATOR: username=operador, password=Oper1234
-(3, 'operador',
- '$2a$10$Y.PC3knP7zC9blC3ChMYcu8f0bgGBO8QG5.bx016k0y/jmsXmyE06',
- 'Operador Base',
- 'OPERARIO',
- true, true, true, true, true,
- now(),
- 'operator@brewery.com',
- NULL,
- '+54933333333');
+-- Usuario 2: OPERARIO
+INSERT INTO users (
+    id, username, password, name, enabled, account_non_expired, 
+    account_non_locked, credentials_non_expired, is_active, 
+    creation_date, email, last_login_date, phone_number
+) VALUES (
+    2, 'operario',
+    '$2a$10$Mx3I8NamT32tN52T63rpUe3x/ZQ9wYcs7.qKNm3inUmpXz59viIau',
+    'Operario General',
+    true, true, true, true, true,
+    now(), 'operario@brewery.com', NULL, '+54922222222'
+);
 
--- 11) Ajustar secuencias
+-- Asignar todos los roles OPERARIO_* al usuario operario
+INSERT INTO user_roles (user_id, role_id) VALUES
+(2, (SELECT id FROM roles WHERE name = 'OPERARIO_DE_CALIDAD')),
+(2, (SELECT id FROM roles WHERE name = 'OPERARIO_DE_ALMACEN')),
+(2, (SELECT id FROM roles WHERE name = 'OPERARIO_DE_PRODUCCION'));
+
+-- Usuario 3: SUPERVISOR
+INSERT INTO users (
+    id, username, password, name, enabled, account_non_expired, 
+    account_non_locked, credentials_non_expired, is_active, 
+    creation_date, email, last_login_date, phone_number
+) VALUES (
+    3, 'supervisor',
+    '$2a$10$Kx2H7LamS21sM41S52qpTe2w/YP8vXbr6.pJMl2hmTloWy48uhHZu',
+    'Supervisor General',
+    true, true, true, true, true,
+    now(), 'supervisor@brewery.com', NULL, '+54933333333'
+);
+
+-- Asignar todos los roles SUPERVISOR_* al usuario supervisor
+INSERT INTO user_roles (user_id, role_id) VALUES
+(3, (SELECT id FROM roles WHERE name = 'SUPERVISOR_DE_CALIDAD')),
+(3, (SELECT id FROM roles WHERE name = 'SUPERVISOR_DE_ALMACEN')),
+(3, (SELECT id FROM roles WHERE name = 'SUPERVISOR_DE_PRODUCCION'));
+
+-- Usuario 4: GERENTE GENERAL
+INSERT INTO users (
+    id, username, password, name, enabled, account_non_expired, 
+    account_non_locked, credentials_non_expired, is_active, 
+    creation_date, email, last_login_date, phone_number
+) VALUES (
+    4, 'gerente_general',
+    '$2a$10$Nx4J9OanU43uO63U74sqVf4y/ZR0xYdt8.rLOo4joVnqYa60wjJbv',
+    'Gerente General',
+    true, true, true, true, true,
+    now(), 'gerente.general@brewery.com', NULL, '+54944444444'
+);
+
+-- Asignar rol GERENTE_GENERAL al usuario gerente_general
+INSERT INTO user_roles (user_id, role_id) VALUES
+(4, (SELECT id FROM roles WHERE name = 'GERENTE_GENERAL'));
+
+-- Usuario 5: GERENTE DE PLANTA
+INSERT INTO users (
+    id, username, password, name, enabled, account_non_expired, 
+    account_non_locked, credentials_non_expired, is_active, 
+    creation_date, email, last_login_date, phone_number
+) VALUES (
+    5, 'gerente_planta',
+    '$2a$10$Ox5K0PboV54vP74V85trWg5z/AS1yZeu9.sMLp5kpWorZb71xkKcw',
+    'Gerente de Planta',
+    true, true, true, true, true,
+    now(), 'gerente.planta@brewery.com', NULL, '+54955555555'
+);
+
+-- Asignar rol GERENTE_DE_PLANTA al usuario gerente_planta
+INSERT INTO user_roles (user_id, role_id) VALUES
+(5, (SELECT id FROM roles WHERE name = 'GERENTE_DE_PLANTA'));
+
+-- 12) Ajustar secuencias
 SELECT setval('materials_seq', (SELECT MAX(id) FROM materials));
 SELECT setval('products_seq',  (SELECT MAX(id) FROM products));
 SELECT setval('product_phases_seq', (SELECT MAX(id) FROM product_phases));
@@ -319,8 +361,7 @@ SELECT setval('packagings_seq',(SELECT MAX(id) FROM packagings));
 SELECT setval('movements_seq', (SELECT MAX(id) FROM movements));
 SELECT setval('production_orders_seq', (SELECT MAX(id) FROM production_orders));
 SELECT setval('batches_seq',   (SELECT MAX(id) FROM batches));
-SELECT setval('user_sequ', (SELECT MAX(id) FROM users));
-
+SELECT setval('user_seq', (SELECT MAX(id) FROM users));
 
 
 COMMIT;

@@ -1,11 +1,11 @@
 package com.enigcode.frozen_backend.users.DTO;
 
 import java.time.OffsetDateTime;
-import com.enigcode.frozen_backend.users.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.Set;
 
 @Data
 @Builder
@@ -17,7 +17,7 @@ public class UserDetailDTO {
     private String name;
     private String email;
     private String phoneNumber;
-    private Role role;
+    private Set<String> roles;
     private OffsetDateTime creationDate;
     private OffsetDateTime lastLoginDate;
     private Boolean isActive;

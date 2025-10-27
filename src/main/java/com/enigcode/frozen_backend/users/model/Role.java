@@ -2,6 +2,14 @@ package com.enigcode.frozen_backend.users.model;
 
 public enum Role {
     ADMIN,
-    SUPERVISOR,
-    OPERARIO
+    GERENTE_GENERAL,
+    GERENTE_DE_PLANTA,
+
+    SUPERVISOR_DE_CALIDAD,
+    SUPERVISOR_DE_ALMACEN,
+    SUPERVISOR_DE_PRODUCCION,
+
+    OPERARIO_DE_CALIDAD,
+    OPERARIO_DE_ALMACEN,
+    OPERARIO_DE_PRODUCCION
 }
