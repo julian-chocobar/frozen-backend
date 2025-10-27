@@ -13,7 +13,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -32,8 +31,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private ApplicationContext applicationContext;
+    private final SessionRegistry sessionRegistry;
 
     /*
      * @Autowired
@@ -97,7 +95,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             user.setEnabled(false);
 
             // Invalidar sus sesiones activas
-            SessionRegistry sessionRegistry = applicationContext.getBean(SessionRegistry.class);
+            SessionRegistry sessionRegistry = this.sessionRegistry;
             for (Object principal : sessionRegistry.getAllPrincipals()) {
                 if (principal instanceof UserDetails) {
                     UserDetails userDetails = (UserDetails) principal;

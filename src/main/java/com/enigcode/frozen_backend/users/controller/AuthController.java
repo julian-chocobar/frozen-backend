@@ -6,6 +6,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +21,10 @@ import com.enigcode.frozen_backend.users.DTO.AuthResponseDTO;
 import com.enigcode.frozen_backend.users.DTO.LoginRequestDTO;
 import com.enigcode.frozen_backend.users.DTO.UserDetailDTO;
 import com.enigcode.frozen_backend.users.service.UserService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.context.SecurityContext;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,25 +39,29 @@ public class AuthController {
     private final LoginAttemptService loginAttemptService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
+    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO requestBody,
+            HttpServletRequest request,
+            HttpServletResponse response) {
 
-        // Verificar si el usuario está bloqueado por demasiados intentos
-        if (loginAttemptService.isBlocked(request.getUsername())) {
-            throw new BlockedUserException(loginAttemptService.getBlockedMessage(request.getUsername()));
+        if (loginAttemptService.isBlocked(requestBody.getUsername())) {
+            throw new BlockedUserException(loginAttemptService.getBlockedMessage(requestBody.getUsername()));
         }
 
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            request.getUsername(),
-                            request.getPassword()));
+                            requestBody.getUsername(),
+                            requestBody.getPassword()));
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // Crear sesión y guardar SecurityContext explícitamente
+            request.getSession(true);
+            SecurityContext context = new SecurityContextImpl(authentication);
+            SecurityContextHolder.setContext(context);
+            new HttpSessionSecurityContextRepository().saveContext(context, request, response); // ← AÑADE ESTA LÍNEA
 
-            // Login exitoso - resetear intentos
-            loginAttemptService.loginSuccess(request.getUsername());
+            loginAttemptService.loginSuccess(requestBody.getUsername());
 
-            UserDetailDTO userDTO = userService.getUserByUsername(request.getUsername());
+            UserDetailDTO userDTO = userService.getUserByUsername(requestBody.getUsername());
 
             return ResponseEntity.ok(AuthResponseDTO.builder()
                     .token("SESSION")
@@ -60,26 +71,64 @@ public class AuthController {
                     .build());
 
         } catch (BadCredentialsException e) {
-            // Login fallido - registrar intento
-            loginAttemptService.loginFailed(request.getUsername());
-
-            // DELEGAR la excepción al GlobalExceptionHandler
+            loginAttemptService.loginFailed(requestBody.getUsername());
             throw new InvalidCredentialsException(
                     "Credenciales incorrectas",
-                    loginAttemptService.getRemainingAttempts(request.getUsername()));
+                    loginAttemptService.getRemainingAttempts(requestBody.getUsername()));
         }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         // Obtener la autenticación actual
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null) {
             // Limpiar el contexto de seguridad
             SecurityContextHolder.clearContext();
+
+            // Invalidar la sesión HTTP
+            if (request.getSession(false) != null) {
+                request.getSession().invalidate();
+            }
         }
 
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/validate")
+    public ResponseEntity<?> validate(Authentication auth) {
+        boolean authenticated = auth != null && auth.isAuthenticated()
+                && !"anonymousUser".equals(String.valueOf(auth.getPrincipal()));
+
+        if (!authenticated) {
+            return ResponseEntity.status(401).build();
+        }
+
+        // Additional null check to ensure auth is not null before calling getName()
+        if (auth == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        UserDetailDTO user = userService.getUserByUsername(auth.getName());
+        return ResponseEntity.ok()
+                .header("Cache-Control", "no-store")
+                .body(java.util.Map.of(
+                        "authenticated", true,
+                        "username", user.getUsername(),
+                        "role", user.getRole()));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDetailDTO> me(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()
+                || "anonymousUser".equals(String.valueOf(auth.getPrincipal()))) {
+            return ResponseEntity.status(401).build();
+        }
+        UserDetailDTO user = userService.getUserByUsername(auth.getName());
+        return ResponseEntity.ok()
+                .header("Cache-Control", "no-store")
+                .body(user);
+    }
+
 }

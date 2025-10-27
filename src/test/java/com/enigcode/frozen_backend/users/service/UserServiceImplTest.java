@@ -143,10 +143,6 @@ class UserServiceImplTest {
         assertThat(saved.getCreationDate()).isNotNull();
     }
 
-    // TODO: Este test falla porque el código de producción usa anti-pattern
-    // UserServiceImpl.toggleActive() usa applicationContext.getBean() (línea 100)
-    // Solución: Inyectar SessionRegistry directamente en el constructor
-    // Asignado a: [Nombre del compañero]
     @Test
     void toggleActive_whenActive_disablesAndInvalidatesSessions() {
         User user = User.builder()
@@ -162,7 +158,6 @@ class UserServiceImplTest {
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
         
         // Configurar mocks para SessionRegistry
-        when(applicationContext.getBean(SessionRegistry.class)).thenReturn(sessionRegistry);
         when(sessionRegistry.getAllPrincipals()).thenReturn(List.of());
 
         UserResponseDTO result = service.toggleActive(1L);

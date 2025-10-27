@@ -26,20 +26,25 @@ public class HttpsRedirectFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // Solo redirigir en producción y si está habilitado
-        if (securityProperties.getEnableHttpsRedirect() &&
-                !httpRequest.isSecure() &&
-                !isLocalEnvironment(httpRequest)) {
+        // En local o si está deshabilitado: no redirigir
+        if (!securityProperties.getEnableHttpsRedirect() || isLocalEnvironment(httpRequest)) {
+            chain.doFilter(request, response);
+            return;
+        }
 
-            String httpsUrl = "https://" + httpRequest.getServerName() +
-                    (httpRequest.getServerPort() != 80 ? ":" + 443 : "") +
-                    httpRequest.getRequestURI();
+        // Respeta proxies (X-Forwarded-Proto/Forwarded)
+        String forwardedProto = httpRequest.getHeader("X-Forwarded-Proto");
+        boolean alreadyHttps = "https".equalsIgnoreCase(forwardedProto) || httpRequest.isSecure();
 
+        if (!alreadyHttps) {
+            StringBuilder httpsUrl = new StringBuilder();
+            httpsUrl.append("https://").append(httpRequest.getServerName());
+            // Normalmente no necesitas puerto explícito en 443
+            httpsUrl.append(httpRequest.getRequestURI());
             if (httpRequest.getQueryString() != null) {
-                httpsUrl += "?" + httpRequest.getQueryString();
+                httpsUrl.append("?").append(httpRequest.getQueryString());
             }
-
-            httpResponse.sendRedirect(httpsUrl);
+            httpResponse.sendRedirect(httpsUrl.toString());
             return;
         }
 
@@ -47,7 +52,9 @@ public class HttpsRedirectFilter implements Filter {
     }
 
     private boolean isLocalEnvironment(HttpServletRequest request) {
-        return request.getServerName().contains("localhost") ||
-                request.getServerName().contains("127.0.0.1");
+        String host = request.getServerName();
+        return "localhost".equalsIgnoreCase(host)
+                || "127.0.0.1".equals(host)
+                || "::1".equals(host);
     }
 }
