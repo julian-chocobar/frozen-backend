@@ -261,7 +261,7 @@ VALUES
 
 -- 11) Crear usuarios de ejemplo con roles asignados
 -- Crear usuarios con contraseñas encoded (BCrypt)
--- Contraseñas: Admin123, Operario123, Supervisor123, GerenteG123, GerenteP123
+-- Contraseñas: Admin1234, Operario123, Supervisor123, GerenteG123, GerenteP123
 
 -- Usuario 1: ADMIN
 INSERT INTO users (
@@ -270,7 +270,7 @@ INSERT INTO users (
     creation_date, email, last_login_date, phone_number
 ) VALUES (
     1, 'admin',
-    '$2a$10$Gt1H6KamR20sL40R51poSe1v/XO7uWaq5.oILk1gnSknVx37tgGYu',
+    '$2a$10$6Ze1fILsxzJ2by6KAKTeSO4AFvbHjOndEc0WyTKlMIXPlhBbEammm',
     'Administrador del Sistema',
     true, true, true, true, true,
     now(), 'admin@brewery.com', NULL, '+54911111111'
@@ -287,7 +287,7 @@ INSERT INTO users (
     creation_date, email, last_login_date, phone_number
 ) VALUES (
     2, 'operario',
-    '$2a$10$Mx3I8NamT32tN52T63rpUe3x/ZQ9wYcs7.qKNm3inUmpXz59viIau',
+    '$2a$10$UgL2q08c0PeLC2tJi65QM.kdC1AWFIj6QjTpTb3x1D69GNhAp9Af.',
     'Operario General',
     true, true, true, true, true,
     now(), 'operario@brewery.com', NULL, '+54922222222'
@@ -306,7 +306,7 @@ INSERT INTO users (
     creation_date, email, last_login_date, phone_number
 ) VALUES (
     3, 'supervisor',
-    '$2a$10$Kx2H7LamS21sM41S52qpTe2w/YP8vXbr6.pJMl2hmTloWy48uhHZu',
+    '$2a$10$3lQYpGCqm3xPRN3AjRSkbuuXBdKMWsbhATgrF8iGMUwKEw1FlfqXq',
     'Supervisor General',
     true, true, true, true, true,
     now(), 'supervisor@brewery.com', NULL, '+54933333333'
@@ -325,7 +325,7 @@ INSERT INTO users (
     creation_date, email, last_login_date, phone_number
 ) VALUES (
     4, 'gerente_general',
-    '$2a$10$Nx4J9OanU43uO63U74sqVf4y/ZR0xYdt8.rLOo4joVnqYa60wjJbv',
+    '$2a$10$uznmY2P8cFGO4TD2iB9qj.1JKc2/7DATKgEabLD1F.RTPpWdpM1fG',
     'Gerente General',
     true, true, true, true, true,
     now(), 'gerente.general@brewery.com', NULL, '+54944444444'
@@ -342,7 +342,7 @@ INSERT INTO users (
     creation_date, email, last_login_date, phone_number
 ) VALUES (
     5, 'gerente_planta',
-    '$2a$10$Ox5K0PboV54vP74V85trWg5z/AS1yZeu9.sMLp5kpWorZb71xkKcw',
+    '$2a$10$OmhOZYXAT43.Ex3.HcxbuuBC9Ew5Qz2ME2WgFOnclR.urWtCUF8vi',
     'Gerente de Planta',
     true, true, true, true, true,
     now(), 'gerente.planta@brewery.com', NULL, '+54955555555'
