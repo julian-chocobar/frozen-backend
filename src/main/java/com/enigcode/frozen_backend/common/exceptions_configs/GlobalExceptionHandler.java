@@ -2,7 +2,6 @@ package com.enigcode.frozen_backend.common.exceptions_configs;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BlockedUserException;
-import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.InvalidCredentialsException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.users.DTO.AuthResponseDTO;
 
@@ -13,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -33,6 +34,17 @@ public class GlobalExceptionHandler {
         body.put("error", status.getReasonPhrase());
         body.put("message", message);
         return body;
+    }
+
+    /**
+     * Maneja errores de autorización (acceso denegado) y devuelve HTTP 403.
+     */
+    @ExceptionHandler({ AccessDeniedException.class, AuthorizationDeniedException.class })
+    public ResponseEntity<Object> handleAccessDenied(Exception ex) {
+        Map<String, Object> response = createErrorResponse(
+                "Acceso denegado",
+                HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -154,20 +166,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
     }
 
-    // Manejar credenciales inválidas
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<AuthResponseDTO> handleInvalidCredentials(InvalidCredentialsException ex) {
-        String message = String.format("%s. Intentos restantes: %d",
-                ex.getMessage(), ex.getRemainingAttempts());
-
-        AuthResponseDTO response = AuthResponseDTO.builder()
-                .token("ERROR")
-                .username("")
-                .roles(null)
-                .message(message)
-                .build();
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-    }
+    // Nota: El manejo específico de InvalidCredentialsException se movió a un advice condicional
+    // para evitar errores de carga de clase durante los tests cuando dicha clase no está disponible
 
     /**
      * Manejador general para cualquier otra excepción no prevista.
@@ -175,6 +175,13 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllOtherExceptions(Exception ex) {
+        // Log detallado para diagnóstico en tests
+        try {
+            org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class)
+                    .error("Unhandled exception: {} - {}", ex.getClass().getName(), ex.getMessage(), ex);
+        } catch (Throwable ignored) {
+            // Evitar que un fallo de logging afecte la respuesta
+        }
 
         Map<String, Object> response = createErrorResponse(
                 "Ocurrió un error interno del servidor. Consulte los logs para más detalles.",

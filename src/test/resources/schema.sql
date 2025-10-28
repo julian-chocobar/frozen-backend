@@ -236,44 +236,80 @@ CREATE TABLE IF NOT EXISTS "production_orders" (
 	CONSTRAINT "fk_production_orders_batch_q" FOREIGN KEY ("id_batch") REFERENCES "batches"("id")
 );
 
--- Sequence for users
-CREATE SEQUENCE IF NOT EXISTS USER_SEQU START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE IF NOT EXISTS "user_sequ" START WITH 1 INCREMENT BY 1;
+-- Sequence for users (aligned with JPA: user_seq)
+CREATE SEQUENCE IF NOT EXISTS USER_SEQ START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS "user_seq" START WITH 1 INCREMENT BY 1;
 
--- Table for users as per JPA entity mapping
+-- Sequence for roles (aligned with JPA: role_seq)
+CREATE SEQUENCE IF NOT EXISTS ROLE_SEQ START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS "role_seq" START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS users (
-	id BIGINT DEFAULT NEXT VALUE FOR USER_SEQU PRIMARY KEY,
-	username VARCHAR(255) NOT NULL UNIQUE,
+	id BIGINT DEFAULT NEXT VALUE FOR USER_SEQ PRIMARY KEY,
+	username VARCHAR(255) NOT NULL,
 	password VARCHAR(255) NOT NULL,
 	name VARCHAR(255) NOT NULL,
 	email VARCHAR(255),
 	phone_number VARCHAR(50),
-	role VARCHAR(50) NOT NULL,
-	is_active BOOLEAN DEFAULT TRUE NOT NULL,
 	enabled BOOLEAN DEFAULT TRUE NOT NULL,
 	account_non_expired BOOLEAN DEFAULT TRUE NOT NULL,
 	account_non_locked BOOLEAN DEFAULT TRUE NOT NULL,
 	credentials_non_expired BOOLEAN DEFAULT TRUE NOT NULL,
+	is_active BOOLEAN DEFAULT TRUE NOT NULL,
 	creation_date TIMESTAMP WITH TIME ZONE NOT NULL,
 	last_login_date TIMESTAMP WITH TIME ZONE,
-	last_update_date TIMESTAMP WITH TIME ZONE
+	last_update_date TIMESTAMP WITH TIME ZONE,
+	CONSTRAINT UK_users_username UNIQUE (username),
+	CONSTRAINT UK_users_email UNIQUE (email)
 );
 
--- Quoted version for Hibernate globally quoted identifiers
 CREATE TABLE IF NOT EXISTS "users" (
-	"id" BIGINT DEFAULT NEXT VALUE FOR "user_sequ" PRIMARY KEY,
-	"username" VARCHAR(255) NOT NULL UNIQUE,
+	"id" BIGINT DEFAULT NEXT VALUE FOR "user_seq" PRIMARY KEY,
+	"username" VARCHAR(255) NOT NULL,
 	"password" VARCHAR(255) NOT NULL,
 	"name" VARCHAR(255) NOT NULL,
 	"email" VARCHAR(255),
 	"phone_number" VARCHAR(50),
-	"role" VARCHAR(50) NOT NULL,
-	"is_active" BOOLEAN DEFAULT TRUE NOT NULL,
 	"enabled" BOOLEAN DEFAULT TRUE NOT NULL,
 	"account_non_expired" BOOLEAN DEFAULT TRUE NOT NULL,
 	"account_non_locked" BOOLEAN DEFAULT TRUE NOT NULL,
 	"credentials_non_expired" BOOLEAN DEFAULT TRUE NOT NULL,
+	"is_active" BOOLEAN DEFAULT TRUE NOT NULL,
 	"creation_date" TIMESTAMP WITH TIME ZONE NOT NULL,
 	"last_login_date" TIMESTAMP WITH TIME ZONE,
-	"last_update_date" TIMESTAMP WITH TIME ZONE
+	"last_update_date" TIMESTAMP WITH TIME ZONE,
+	CONSTRAINT "UK_users_username_q" UNIQUE ("username"),
+	CONSTRAINT "UK_users_email_q" UNIQUE ("email")
+);
+
+-- Table for roles as per JPA entity mapping
+CREATE TABLE IF NOT EXISTS roles (
+	id BIGINT DEFAULT NEXT VALUE FOR ROLE_SEQ PRIMARY KEY,
+	name VARCHAR(255) NOT NULL UNIQUE,
+	description VARCHAR(500)
+);
+
+-- Quoted version for roles
+CREATE TABLE IF NOT EXISTS "roles" (
+	"id" BIGINT DEFAULT NEXT VALUE FOR "role_seq" PRIMARY KEY,
+	"name" VARCHAR(255) NOT NULL UNIQUE,
+	"description" VARCHAR(500)
+);
+
+-- Join table for users and roles (ManyToMany)
+CREATE TABLE IF NOT EXISTS user_roles (
+	user_id BIGINT NOT NULL,
+	role_id BIGINT NOT NULL,
+	CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id) REFERENCES users(id),
+	CONSTRAINT fk_user_roles_role FOREIGN KEY (role_id) REFERENCES roles(id),
+	CONSTRAINT UK_user_role UNIQUE (user_id, role_id)
+);
+
+-- Quoted version for join table
+CREATE TABLE IF NOT EXISTS "user_roles" (
+	"user_id" BIGINT NOT NULL,
+	"role_id" BIGINT NOT NULL,
+	CONSTRAINT "fk_user_roles_user_q" FOREIGN KEY ("user_id") REFERENCES "users"("id"),
+	CONSTRAINT "fk_user_roles_role_q" FOREIGN KEY ("role_id") REFERENCES "roles"("id"),
+	CONSTRAINT "UK_user_role_q" UNIQUE ("user_id", "role_id")
 );
