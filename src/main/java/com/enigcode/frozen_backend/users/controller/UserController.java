@@ -41,7 +41,7 @@ public class UserController {
 
     @Operation(summary = "Alternar estado usuario", description = "Alternar estado producto al contrario (activo, inactivo)")
     @PatchMapping("/{id}/toggle-active")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') and @userSecurity.canDeactivateUser(#id)")
     public ResponseEntity<UserResponseDTO> toggleUser(@PathVariable Long id) {
         UserResponseDTO userResponseDTO = userService.toggleActive(id);
         return new ResponseEntity<>(userResponseDTO, HttpStatus.OK);
