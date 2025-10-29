@@ -35,17 +35,14 @@ public class Sector {
     private SectorType type;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
     private Phase phase;
 
     @Column(name = "production_capacity")
-    @NotNull
     private Double productionCapacity;
 
     @NotNull
     private Boolean isActive;
 
-    @NotNull
     private Boolean isTimeActive;
 
     @Column(name = "creation_date")

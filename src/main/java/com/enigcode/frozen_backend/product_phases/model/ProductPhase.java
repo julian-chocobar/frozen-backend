@@ -34,7 +34,7 @@ public class ProductPhase {
         map.put(Phase.FERMENTACION, List.of(MaterialType.LEVADURA));
         map.put(Phase.MADURACION, List.of());
         map.put(Phase.GASIFICACION, List.of());
-        map.put(Phase.ENVASADO, List.of(MaterialType.ENVASE));
+        map.put(Phase.ENVASADO, List.of());
 
         REQUIRED_MATERIALS = map;
     }
