@@ -54,7 +54,7 @@ class PackagingServiceImplTest {
     void testCreatePackaging_Success() {
         PackagingCreateDTO createDTO = new PackagingCreateDTO();
         createDTO.setName("Caja mediana");
-        createDTO.setMaterialId(1L);
+        createDTO.setPackagingMaterialId(1L);
     createDTO.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.KG);
         createDTO.setQuantity(1.0);
 

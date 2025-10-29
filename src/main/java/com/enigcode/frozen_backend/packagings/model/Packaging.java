@@ -27,9 +27,14 @@ public class Packaging {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_material")
+    @JoinColumn(name = "id_packaging_material")
     @NotNull
-    private Material material;
+    private Material packagingMaterial;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_labeling_material")
+    @NotNull
+    private Material labelingMaterial;
 
     @NotNull
     @DecimalMin(value = "0.0")

@@ -74,14 +74,21 @@ public class MaterialServiceImpl implements MaterialService {
      * @param material
      */
     private static void materialUnitVerification(Material material) {
-        if (material.getType().equals(MaterialType.ENVASE) &&
-                !material.getUnitMeasurement().equals(UnitMeasurement.UNIDAD))
-            throw new BadRequestException("El material de tipo ENVASE debe tener como unidad de medida UNIDAD");
+        MaterialType type = material.getType();
+        UnitMeasurement unit = material.getUnitMeasurement();
 
-        if (material.getUnitMeasurement().equals(UnitMeasurement.UNIDAD) &&
-                (!material.getType().equals(MaterialType.ENVASE) &&
-                        !material.getType().equals(MaterialType.OTROS)))
-            throw new BadRequestException("La unida de medida UNIDAD debe tener como material un tipo ENVASE o OTROS");
+        // Si es ENVASE o ETIQUETADO → debe ser UNIDAD
+        if ((type == MaterialType.ENVASE || type == MaterialType.ETIQUETADO) && unit != UnitMeasurement.UNIDAD)
+            throw new BadRequestException("El material de tipo: " + type + " debe tener como unidad de medida UNIDAD");
+
+        //Si la unidad es UNIDAD → solo se permite ENVASE, OTROS o ETIQUETADO
+        boolean isUnitAllowedType = type == MaterialType.ENVASE ||
+                type == MaterialType.OTROS ||
+                type == MaterialType.ETIQUETADO;
+
+        if (unit == UnitMeasurement.UNIDAD && !isUnitAllowedType)
+            throw new BadRequestException("La unidad de medida UNIDAD solo se permite con materiales de tipo ENVASE, OTROS o ETIQUETADO");
+
     }
 
     /**

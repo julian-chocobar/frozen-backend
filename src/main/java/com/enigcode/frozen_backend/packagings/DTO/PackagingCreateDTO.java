@@ -15,7 +15,10 @@ public class PackagingCreateDTO {
     private String name;
 
     @NotNull
-    private Long materialId;
+    private Long packagingMaterialId;
+
+    @NotNull
+    private Long labelingMaterialId;
 
     @NotNull
     private UnitMeasurement unitMeasurement;

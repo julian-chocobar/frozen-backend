@@ -65,7 +65,7 @@ class BatchIntegrationTest {
 
         Packaging packaging = Packaging.builder()
                 .name("Caja 1L")
-                .material(material)
+                .packagingMaterial(material)
                 .quantity(1.0)
                 .unitMeasurement(UnitMeasurement.UNIDAD)
                 .isActive(true)
@@ -114,7 +114,7 @@ class BatchIntegrationTest {
         // Crear packaging
         Packaging packaging = Packaging.builder()
                 .name("Pote 500ml")
-                .material(material)
+                .packagingMaterial(material)
                 .quantity(1.0)
                 .unitMeasurement(UnitMeasurement.UNIDAD)
                 .isActive(true)
@@ -175,7 +175,7 @@ class BatchIntegrationTest {
 
         Packaging packaging = Packaging.builder()
                 .name("Balde 5L")
-                .material(material)
+                .packagingMaterial(material)
                 .quantity(1.0)
                 .unitMeasurement(UnitMeasurement.UNIDAD)
                 .isActive(true)

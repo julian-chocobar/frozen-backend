@@ -6,5 +6,6 @@ public enum MaterialType {
     AGUA,
     LEVADURA,
     ENVASE,
+    ETIQUETADO,
     OTROS
 }

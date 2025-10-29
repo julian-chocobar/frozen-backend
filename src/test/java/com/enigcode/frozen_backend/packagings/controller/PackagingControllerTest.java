@@ -41,7 +41,7 @@ class PackagingControllerTest {
     void setup() throws Exception {
         PackagingCreateDTO dto = PackagingCreateDTO.builder()
             .name("Caja de cartón")
-            .materialId(1L)
+            .packagingMaterialId(1L)
             .unitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.UNIDAD)
             .quantity(20.0)
             .build();

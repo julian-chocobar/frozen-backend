@@ -43,18 +43,28 @@ public class PackagingServiceImpl implements PackagingService{
     @Override
     @Transactional
     public PackagingResponseDTO createPackaging(@Valid PackagingCreateDTO packagingCreateDTO) {
-        Material material = materialRepository.findById(packagingCreateDTO.getMaterialId())
+        Material packagingMaterial = materialRepository.findById(packagingCreateDTO.getPackagingMaterialId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Material no encontrado con id " + packagingCreateDTO.getMaterialId()));
+                        new ResourceNotFoundException("Material no encontrado con id "
+                                + packagingCreateDTO.getPackagingMaterialId()));
 
-        if (!material.getType().equals(MaterialType.ENVASE))
-            throw new BadRequestException("El tipo de material debe ser " + MaterialType.ENVASE);
+        Material labelingMaterial = materialRepository.findById(packagingCreateDTO.getLabelingMaterialId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Material no encontrado con id "
+                                + packagingCreateDTO.getLabelingMaterialId()));
+
+        if (!packagingMaterial.getType().equals(MaterialType.ENVASE))
+            throw new BadRequestException("El tipo de material packaging debe ser " + MaterialType.ENVASE);
+
+        if (!labelingMaterial.getType().equals(MaterialType.ETIQUETADO))
+            throw new BadRequestException("El tipo de material etiquetado debe ser " + MaterialType.ETIQUETADO);
 
         if (packagingCreateDTO.getUnitMeasurement().equals(UnitMeasurement.UNIDAD))
             throw new BadRequestException("La unidad de medida no puede ser " + UnitMeasurement.UNIDAD);
 
         Packaging packaging = packagingMapper.toEntity(packagingCreateDTO);
-        packaging.setMaterial(material);
+        packaging.setPackagingMaterial(packagingMaterial);
+        packaging.setLabelingMaterial(labelingMaterial);
         packaging.setCreationDate(OffsetDateTime.now());
         packaging.setIsActive(Boolean.TRUE);
 
@@ -121,15 +131,25 @@ public class PackagingServiceImpl implements PackagingService{
                         .orElseThrow(()-> new ResourceNotFoundException("No se encontró packaging con id "+ id));
         Packaging updatedPackaging = packagingMapper.partialUpdate(packagingUpdateDTO, originalPackaging);
 
-        if(packagingUpdateDTO.getMaterialId() != null
-                && !packagingUpdateDTO.getMaterialId().equals(originalPackaging.getMaterial().getId())) {
-            Material material = materialRepository.findById(packagingUpdateDTO.getMaterialId())
+        if(packagingUpdateDTO.getPackagingMaterialId() != null
+                && !packagingUpdateDTO.getPackagingMaterialId().equals(originalPackaging.getPackagingMaterial().getId())) {
+            Material material = materialRepository.findById(packagingUpdateDTO.getPackagingMaterialId())
                     .orElseThrow(() ->
-                            new ResourceNotFoundException("Material no encontrado con id " + packagingUpdateDTO.getMaterialId()));
+                            new ResourceNotFoundException("Material no encontrado con id "
+                                    + packagingUpdateDTO.getPackagingMaterialId()));
             if (!material.getType().equals(MaterialType.ENVASE))
                 throw new BadRequestException("El tipo de material debe ser un envase " + MaterialType.ENVASE);
-            originalPackaging.setMaterial(material);
-        }
+            originalPackaging.setPackagingMaterial(material);}
+
+        if(packagingUpdateDTO.getLabelingMaterialId() != null
+                && !packagingUpdateDTO.getLabelingMaterialId().equals(originalPackaging.getLabelingMaterial().getId())) {
+            Material material = materialRepository.findById(packagingUpdateDTO.getLabelingMaterialId())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Material no encontrado con id "
+                                    + packagingUpdateDTO.getLabelingMaterialId()));
+            if (!material.getType().equals(MaterialType.ETIQUETADO))
+                throw new BadRequestException("El tipo de material debe ser un envase " + MaterialType.ETIQUETADO);
+            originalPackaging.setPackagingMaterial(material);}
 
         if (packagingUpdateDTO.getUnitMeasurement() != null &&
                 packagingUpdateDTO.getUnitMeasurement().equals(UnitMeasurement.UNIDAD))

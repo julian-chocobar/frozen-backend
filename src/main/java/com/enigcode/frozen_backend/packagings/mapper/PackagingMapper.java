@@ -14,7 +14,8 @@ public interface PackagingMapper {
 
     Packaging toEntity(PackagingCreateDTO packagingCreateDTO);
 
-    @Mapping(source = "material.name", target = "materialName")
+    @Mapping(source = "packagingMaterial.name", target = "packagingMaterialName")
+    @Mapping(source = "labelingMaterial.name", target = "labelingMaterialName")
     PackagingResponseDTO toResponseDto(Packaging packaging);
 
     PackagingSimpleResponseDTO toSimpleResponseDTO(Packaging packaging);

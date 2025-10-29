@@ -38,14 +38,14 @@ class PackagingMapperTest {
         packaging.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.UNIDAD);
         Material material = new Material();
         material.setName("Polietileno");
-        packaging.setMaterial(material);
+        packaging.setPackagingMaterial(material);
 
         PackagingResponseDTO dto = mapper.toResponseDto(packaging);
 
         assertNotNull(dto);
         assertEquals("Bolsa plástica", dto.getName());
     assertEquals(10, dto.getQuantity());
-    assertEquals("Polietileno", dto.getMaterialName());
+    assertEquals("Polietileno", dto.getPackagingMaterialName());
     }
 
     @Test
