@@ -11,7 +11,6 @@ import com.enigcode.frozen_backend.system_configurations.model.WorkingDay;
 import com.enigcode.frozen_backend.system_configurations.repository.SystemConfigurationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
