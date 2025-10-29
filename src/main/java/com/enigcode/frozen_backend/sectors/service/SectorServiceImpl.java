@@ -9,6 +9,7 @@ import com.enigcode.frozen_backend.sectors.mapper.SectorMapper;
 import com.enigcode.frozen_backend.sectors.model.Sector;
 import com.enigcode.frozen_backend.sectors.model.SectorType;
 import com.enigcode.frozen_backend.sectors.repository.SectorRepository;
+import com.enigcode.frozen_backend.users.model.Role;
 import com.enigcode.frozen_backend.users.model.RoleEntity;
 import com.enigcode.frozen_backend.users.model.User;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
@@ -120,7 +121,12 @@ public class SectorServiceImpl implements SectorService{
     }
 
     private boolean rolPhaseValidation(Set<RoleEntity> supervisorRoles, SectorType type) {
-        boolean isValidRol = false;
-        return isValidRol;
+        return supervisorRoles.stream().anyMatch(rol ->
+                (rol.getName().equals(Role.SUPERVISOR_DE_PRODUCCION.toString())
+                        && type.equals(SectorType.PRODUCCION)) ||
+                        (rol.getName().equals(Role.SUPERVISOR_DE_ALMACEN.toString())
+                                && type.equals(SectorType.ALMACEN)) ||
+                        (rol.getName().equals(Role.SUPERVISOR_DE_CALIDAD.toString())
+                                && type.equals(SectorType.CALIDAD)));
     }
 }
