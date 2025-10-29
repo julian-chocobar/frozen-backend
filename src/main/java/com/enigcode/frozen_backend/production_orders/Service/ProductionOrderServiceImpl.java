@@ -7,6 +7,7 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.Resource
 import com.enigcode.frozen_backend.movements.DTO.MovementSimpleCreateDTO;
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import com.enigcode.frozen_backend.movements.service.MovementService;
+import com.enigcode.frozen_backend.notifications.service.NotificationService;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderFilterDTO;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderResponseDTO;
@@ -20,6 +21,7 @@ import com.enigcode.frozen_backend.products.repository.ProductRepository;
 import com.enigcode.frozen_backend.recipes.service.RecipeService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +33,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductionOrderServiceImpl implements ProductionOrderService {
 
     final ProductionOrderMapper productionOrderMapper;
@@ -39,6 +42,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
     final RecipeService recipeService;
     final MovementService movementService;
     final ProductionOrderRepository productionOrderRepository;
+    final NotificationService notificationService;
 
     /**
      * Funcion que crea una nueva orden de produccion en estado pendiente junto al
@@ -78,6 +82,12 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
                 .build();
 
         ProductionOrder savedProductionOrder = productionOrderRepository.saveAndFlush(productionOrder);
+
+        // Crear notificación para gerentes de planta sobre la nueva orden pendiente
+        notificationService.createProductionOrderNotification(savedProductionOrder.getId(), product.getName());
+
+        log.info("Orden de producción {} creada para producto: {}", savedProductionOrder.getId(), product.getName());
+
         return productionOrderMapper.toResponseDTO(savedProductionOrder);
     }
 
