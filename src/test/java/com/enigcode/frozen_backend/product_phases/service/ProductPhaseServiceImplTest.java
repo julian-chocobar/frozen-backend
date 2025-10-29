@@ -10,6 +10,7 @@ import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseUpdateDTO;
 import com.enigcode.frozen_backend.product_phases.mapper.ProductPhaseMapper;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.product_phases.repository.ProductPhaseRepository;
+import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
 import com.enigcode.frozen_backend.recipes.repository.RecipeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,19 +105,20 @@ class ProductPhaseServiceImplTest {
 
     @Test
     void testGetByProduct_Success() {
-        when(productPhaseRepository.findByProductIdOrderByCreationDateAsc(10L))
+        when(productPhaseRepository.findByProductIdOrderByIdAsc(10L))
                 .thenReturn(List.of(productPhase));
+        when(productRepository.existsById(10L)).thenReturn(true);
         when(productPhaseMapper.toResponseDto(any(ProductPhase.class))).thenReturn(responseDTO);
 
         List<ProductPhaseResponseDTO> result = productPhaseService.getByProduct(10L);
 
         assertEquals(1, result.size());
-        verify(productPhaseRepository).findByProductIdOrderByCreationDateAsc(10L);
+        verify(productPhaseRepository).findByProductIdOrderByIdAsc(10L);
     }
 
     @Test
     void testGetByProduct_EmptyAndProductNotExists() {
-        when(productPhaseRepository.findByProductIdOrderByCreationDateAsc(10L))
+        when(productPhaseRepository.findByProductIdOrderByIdAsc(10L))
                 .thenReturn(Collections.emptyList());
         when(productRepository.existsById(10L)).thenReturn(false);
 
@@ -125,7 +127,13 @@ class ProductPhaseServiceImplTest {
 
     @Test
     void testMarkAsReady_Success() {
+        // Create a mock product with ID
+        Product mockProduct = new Product();
+        mockProduct.setId(5L);
+        mockProduct.setIsReady(false);
+        
         productPhase.setIsReady(false);
+        productPhase.setProduct(mockProduct);
         // Set fields to make phase complete and with no required materials
         productPhase.setPhase(Phase.FILTRACION); // no required materials
         productPhase.setInput(1.0);
@@ -135,6 +143,8 @@ class ProductPhaseServiceImplTest {
 
         when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(productPhase));
         when(productPhaseRepository.save(productPhase)).thenReturn(productPhase);
+        when(productPhaseRepository.existsByProductIdAndIsReadyFalse(5L)).thenReturn(false);
+        when(productRepository.save(mockProduct)).thenReturn(mockProduct);
         when(productPhaseMapper.toResponseDto(productPhase)).thenReturn(responseDTO);
 
         ProductPhaseResponseDTO result = productPhaseService.toggleReady(1L);
@@ -142,6 +152,7 @@ class ProductPhaseServiceImplTest {
         assertNotNull(result);
         verify(productPhaseRepository).save(productPhase);
         assertTrue(productPhase.getIsReady());
+        verify(productRepository).save(mockProduct);
     }
 
     @Test

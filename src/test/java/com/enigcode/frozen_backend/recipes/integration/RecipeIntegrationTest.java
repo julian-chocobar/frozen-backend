@@ -11,13 +11,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@WithMockUser
 class RecipeIntegrationTest {
     
     @Autowired
@@ -43,8 +44,7 @@ class RecipeIntegrationTest {
         
         MvcResult materialResult = mockMvc.perform(post("/materials")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(materialBody)
-                .with(httpBasic("test", "test")))
+                .content(materialBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -63,8 +63,7 @@ class RecipeIntegrationTest {
         
         MvcResult productResult = mockMvc.perform(post("/products")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(productBody)
-                .with(httpBasic("test", "test")))
+                .content(productBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -72,8 +71,7 @@ class RecipeIntegrationTest {
                 .get("id").asLong();
 
         // Usar una fase existente creada automáticamente en el producto: obtener lista y elegir una válida para MALTA (MOLIENDA)
-        MvcResult phasesResult = mockMvc.perform(get("/product-phases/by-product/" + productId)
-                .with(httpBasic("test", "test")))
+        MvcResult phasesResult = mockMvc.perform(get("/product-phases/by-product/" + productId))
                 .andExpect(status().isOk())
                 .andReturn();
         var phasesJson = objectMapper.readTree(phasesResult.getResponse().getContentAsString());
@@ -99,8 +97,7 @@ class RecipeIntegrationTest {
         
         MvcResult recipeResult = mockMvc.perform(post("/recipes")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(recipeBody)
-                .with(httpBasic("test", "test")))
+                .content(recipeBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -109,8 +106,7 @@ class RecipeIntegrationTest {
         assertThat(recipeId).isNotNull();
 
         // Obtener receta por id
-        MvcResult getResult = mockMvc.perform(get("/recipes/" + recipeId)
-                .with(httpBasic("test", "test")))
+        MvcResult getResult = mockMvc.perform(get("/recipes/" + recipeId))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -135,8 +131,7 @@ class RecipeIntegrationTest {
         
         MvcResult materialResult = mockMvc.perform(post("/materials")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(materialBody)
-                .with(httpBasic("test", "test")))
+                .content(materialBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -155,8 +150,7 @@ class RecipeIntegrationTest {
         
         MvcResult productResult = mockMvc.perform(post("/products")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(productBody)
-                .with(httpBasic("test", "test")))
+                .content(productBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -164,8 +158,7 @@ class RecipeIntegrationTest {
                 .get("id").asLong();
 
         // Obtener una fase existente del producto y elegir una válida para AGUA (MACERACION o COCCION)
-        MvcResult phasesResult = mockMvc.perform(get("/product-phases/by-product/" + productId)
-                .with(httpBasic("test", "test")))
+        MvcResult phasesResult = mockMvc.perform(get("/product-phases/by-product/" + productId))
                 .andExpect(status().isOk())
                 .andReturn();
         var phasesJson = objectMapper.readTree(phasesResult.getResponse().getContentAsString());
@@ -194,8 +187,7 @@ class RecipeIntegrationTest {
         
         MvcResult recipeResult = mockMvc.perform(post("/recipes")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(recipeBody)
-                .with(httpBasic("test", "test")))
+                .content(recipeBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -211,13 +203,11 @@ class RecipeIntegrationTest {
         
         mockMvc.perform(patch("/recipes/" + recipeId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(updateBody)
-                .with(httpBasic("test", "test")))
+                .content(updateBody))
                 .andExpect(status().isOk());
 
         // Verificar cambios
-        MvcResult getResult = mockMvc.perform(get("/recipes/" + recipeId)
-                .with(httpBasic("test", "test")))
+        MvcResult getResult = mockMvc.perform(get("/recipes/" + recipeId))
                 .andExpect(status().isOk())
                 .andReturn();
         
@@ -242,8 +232,7 @@ class RecipeIntegrationTest {
         
         MvcResult materialResult = mockMvc.perform(post("/materials")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(materialBody)
-                .with(httpBasic("test", "test")))
+                .content(materialBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -262,8 +251,7 @@ class RecipeIntegrationTest {
         
         MvcResult productResult = mockMvc.perform(post("/products")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(productBody)
-                .with(httpBasic("test", "test")))
+                .content(productBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -271,8 +259,7 @@ class RecipeIntegrationTest {
                 .get("id").asLong();
 
         // Obtener una fase existente del producto y elegir una válida para LEVADURA (FERMENTACION)
-        MvcResult phasesResult = mockMvc.perform(get("/product-phases/by-product/" + productId)
-                .with(httpBasic("test", "test")))
+        MvcResult phasesResult = mockMvc.perform(get("/product-phases/by-product/" + productId))
                 .andExpect(status().isOk())
                 .andReturn();
         var phasesJson = objectMapper.readTree(phasesResult.getResponse().getContentAsString());
@@ -298,13 +285,11 @@ class RecipeIntegrationTest {
         
         mockMvc.perform(post("/recipes")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(recipeBody)
-                .with(httpBasic("test", "test")))
+                .content(recipeBody))
                 .andExpect(status().isCreated());
 
         // Obtener recetas por fase
-        MvcResult listResult = mockMvc.perform(get("/recipes/by-product-phase/" + phaseId)
-                .with(httpBasic("test", "test")))
+        MvcResult listResult = mockMvc.perform(get("/recipes/by-product-phase/" + phaseId))
                 .andExpect(status().isOk())
                 .andReturn();
         
@@ -313,3 +298,4 @@ class RecipeIntegrationTest {
         assertThat(listResponse).contains("Levadura");
     }
 }
+

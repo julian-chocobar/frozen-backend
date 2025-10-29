@@ -9,12 +9,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser
 class ProductIntegrationTest {
 
     @Autowired
@@ -37,7 +38,6 @@ class ProductIntegrationTest {
                 "}";
 
         String createResponse = mockMvc.perform(post("/products")
-                        .with(httpBasic(USER, PASS))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createJson))
                 .andExpect(status().isCreated())
@@ -52,8 +52,7 @@ class ProductIntegrationTest {
 
         Long id = objectMapper.readTree(createResponse).get("id").asLong();
 
-        mockMvc.perform(get("/products")
-                        .with(httpBasic(USER, PASS)))
+        mockMvc.perform(get("/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].id").exists());
@@ -66,15 +65,14 @@ class ProductIntegrationTest {
                 "}";
 
         mockMvc.perform(patch("/products/{id}", id)
-                        .with(httpBasic(USER, PASS))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updateJson))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Cerveza Roja"));
 
-        mockMvc.perform(patch("/products/{id}/toggle-active", id)
-                        .with(httpBasic(USER, PASS)))
+        mockMvc.perform(patch("/products/{id}/toggle-active", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isActive").value(false));
     }
 }
+

@@ -195,7 +195,7 @@ class ProductionOrderControllerTest {
 
                 mockMvc.perform(patch("/production-orders/1/approve"))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value("APROBADO"));
+                                .andExpect(jsonPath("$.status").value("APROBADA"));
         }
 
         @Test
@@ -259,7 +259,7 @@ class ProductionOrderControllerTest {
 
                 mockMvc.perform(patch("/production-orders/1/reject"))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value("RECHAZADO"));
+                                .andExpect(jsonPath("$.status").value("RECHAZADA"));
         }
 
         @Test

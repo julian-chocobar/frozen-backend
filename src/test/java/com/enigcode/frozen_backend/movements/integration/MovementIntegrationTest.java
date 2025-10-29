@@ -11,14 +11,15 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@WithMockUser
 class MovementIntegrationTest {
     
     @Autowired
@@ -44,8 +45,7 @@ class MovementIntegrationTest {
         
         MvcResult materialResult = mockMvc.perform(post("/materials")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(materialBody)
-                .with(httpBasic("test", "test")))
+                .content(materialBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -64,8 +64,7 @@ class MovementIntegrationTest {
         
         MvcResult movementResult = mockMvc.perform(post("/movements")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(movementBody)
-                .with(httpBasic("test", "test")))
+                .content(movementBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -74,8 +73,7 @@ class MovementIntegrationTest {
         assertThat(movementId).isNotNull();
 
         // Obtener el movimiento por id
-        MvcResult getResult = mockMvc.perform(get("/movements/" + movementId)
-                .with(httpBasic("test", "test")))
+        MvcResult getResult = mockMvc.perform(get("/movements/" + movementId))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -102,8 +100,7 @@ class MovementIntegrationTest {
         
         MvcResult materialResult = mockMvc.perform(post("/materials")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(materialBody)
-                .with(httpBasic("test", "test")))
+                .content(materialBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -122,14 +119,12 @@ class MovementIntegrationTest {
         
         mockMvc.perform(post("/movements")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(movementBody)
-                .with(httpBasic("test", "test")))
+                .content(movementBody))
                 .andExpect(status().isCreated());
 
         // Verificar que el stock del material se actualizó correctamente
         // Stock debería ser 500 - 100 = 400
-        MvcResult materialGetResult = mockMvc.perform(get("/materials/" + materialId)
-                .with(httpBasic("test", "test")))
+        MvcResult materialGetResult = mockMvc.perform(get("/materials/" + materialId))
                 .andExpect(status().isOk())
                 .andReturn();
         
@@ -155,8 +150,7 @@ class MovementIntegrationTest {
         
         MvcResult materialResult = mockMvc.perform(post("/materials")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(materialBody)
-                .with(httpBasic("test", "test")))
+                .content(materialBody))
                 .andExpect(status().isCreated())
                 .andReturn();
         
@@ -184,19 +178,16 @@ class MovementIntegrationTest {
         
         mockMvc.perform(post("/movements")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(movement1)
-                .with(httpBasic("test", "test")))
+                .content(movement1))
                 .andExpect(status().isCreated());
         
         mockMvc.perform(post("/movements")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(movement2)
-                .with(httpBasic("test", "test")))
+                .content(movement2))
                 .andExpect(status().isCreated());
 
         // Listar movimientos
-        MvcResult listResult = mockMvc.perform(get("/movements")
-                .with(httpBasic("test", "test")))
+        MvcResult listResult = mockMvc.perform(get("/movements"))
                 .andExpect(status().isOk())
                 .andReturn();
         
@@ -208,3 +199,4 @@ class MovementIntegrationTest {
         // assertThat(listResponse).contains("Producción batch 001");
     }
 }
+

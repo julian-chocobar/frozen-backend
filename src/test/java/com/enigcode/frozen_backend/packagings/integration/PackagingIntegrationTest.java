@@ -16,12 +16,14 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.OffsetDateTime;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser
 class PackagingIntegrationTest {
 
     @Autowired
@@ -69,9 +71,9 @@ class PackagingIntegrationTest {
                 "}";
 
         String created = mockMvc.perform(post("/packagings")
-                        .with(httpBasic(USER, PASS))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createJson))
+                        .content(createJson)
+                        .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.name").value("Pack Botella 6x1L"))
@@ -85,14 +87,12 @@ class PackagingIntegrationTest {
         Long id = objectMapper.readTree(created).get("id").asLong();
 
         // 2) List packagings
-        mockMvc.perform(get("/packagings")
-                        .with(httpBasic(USER, PASS)))
+        mockMvc.perform(get("/packagings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray());
 
         // 3) Get by id
-        mockMvc.perform(get("/packagings/{id}", id)
-                        .with(httpBasic(USER, PASS)))
+        mockMvc.perform(get("/packagings/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id));
 
@@ -104,9 +104,9 @@ class PackagingIntegrationTest {
                 "}";
 
         mockMvc.perform(patch("/packagings/{id}", id)
-                        .with(httpBasic(USER, PASS))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateJson))
+                        .content(updateJson)
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Pack Botella 6x1L Premium"))
                 .andExpect(jsonPath("$.unitMeasurement").value("LT"))
@@ -114,15 +114,16 @@ class PackagingIntegrationTest {
 
         // 5) Toggle active
         mockMvc.perform(patch("/packagings/{id}/toggle-active", id)
-                        .with(httpBasic(USER, PASS)))
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isActive").value(false));
 
         // 6) Simple list of active packagings (should exclude toggled one if only item)
-        mockMvc.perform(get("/packagings/list")
-                        .with(httpBasic(USER, PASS)))
+        mockMvc.perform(get("/packagings/id-name-list")
+                        .param("active", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
     }
 }
+

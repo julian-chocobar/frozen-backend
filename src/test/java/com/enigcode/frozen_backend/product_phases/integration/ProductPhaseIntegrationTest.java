@@ -11,12 +11,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser
 class ProductPhaseIntegrationTest {
 
     @Autowired
@@ -29,7 +31,7 @@ class ProductPhaseIntegrationTest {
     private static final String PASS = "test";
 
     @Test
-    @DisplayName("Product phases happy path: create product -> list phases -> update phase -> get phase -> mark-ready")
+    @DisplayName("Product phases happy path: create product -> list phases -> update phase -> get phase -> toggle-ready")
     void productPhasesHappyPath() throws Exception {
         // 1) Create a product to seed its phases
         String createProductJson = "{" +
@@ -40,9 +42,9 @@ class ProductPhaseIntegrationTest {
                 "}";
 
         String productResponse = mockMvc.perform(post("/products")
-                        .with(httpBasic(USER, PASS))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createProductJson))
+                        .content(createProductJson)
+                        .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andReturn()
@@ -52,8 +54,7 @@ class ProductPhaseIntegrationTest {
         long productId = objectMapper.readTree(productResponse).get("id").asLong();
 
         // 2) Fetch phases by product and pick one with no required materials (FILTRACION)
-        String byProductJson = mockMvc.perform(get("/product-phases/by-product/{productId}", productId)
-                        .with(httpBasic(USER, PASS)))
+        String byProductJson = mockMvc.perform(get("/product-phases/by-product/{productId}", productId))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -84,9 +85,9 @@ class ProductPhaseIntegrationTest {
                 "}";
 
         mockMvc.perform(patch("/product-phases/{id}", phaseId)
-                        .with(httpBasic(USER, PASS))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(updatePhaseJson))
+                        .content(updatePhaseJson)
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.input").value(1.5))
                 .andExpect(jsonPath("$.output").value(1.0))
@@ -94,8 +95,7 @@ class ProductPhaseIntegrationTest {
                 .andExpect(jsonPath("$.estimatedHours").value(2.0));
 
         // 4) Get the phase by id and verify fields
-        mockMvc.perform(get("/product-phases/{id}", phaseId)
-                        .with(httpBasic(USER, PASS)))
+        mockMvc.perform(get("/product-phases/{id}", phaseId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(phaseId))
                 .andExpect(jsonPath("$.input").value(1.5))
@@ -103,9 +103,10 @@ class ProductPhaseIntegrationTest {
                 .andExpect(jsonPath("$.outputUnit").value("KG"))
                 .andExpect(jsonPath("$.estimatedHours").value(2.0));
 
-        // 5) Mark the phase as ready (happy path)
-        mockMvc.perform(patch("/product-phases/{id}/mark-ready", phaseId)
-                        .with(httpBasic(USER, PASS)))
+        // 5) Toggle the phase as ready (happy path)
+        mockMvc.perform(patch("/product-phases/{id}/toggle-ready", phaseId)
+                        .with(csrf()))
                 .andExpect(status().isOk());
     }
 }
+

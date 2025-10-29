@@ -21,13 +21,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@WithMockUser
 class BatchIntegrationTest {
     
     @Autowired
@@ -83,8 +84,7 @@ class BatchIntegrationTest {
         batch = batchRepository.save(batch);
 
         // Obtener batch por ID
-        MvcResult result = mockMvc.perform(get("/batches/" + batch.getId())
-                .with(httpBasic("test", "test")))
+        MvcResult result = mockMvc.perform(get("/batches/" + batch.getId()))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -147,8 +147,7 @@ class BatchIntegrationTest {
         // Listar batches - Usar parámetros explícitos para evitar validaciones
         MvcResult result = mockMvc.perform(get("/batches")
                 .param("page", "0")
-                .param("size", "10")
-                .with(httpBasic("test", "test")))
+                .param("size", "10"))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -200,8 +199,7 @@ class BatchIntegrationTest {
         // Obtener primera página (size=3) con parámetros explícitos
         MvcResult result = mockMvc.perform(get("/batches")
                 .param("page", "0")
-                .param("size", "3")
-                .with(httpBasic("test", "test")))
+                .param("size", "3"))
                 .andExpect(status().isOk())
                 .andReturn();
 

@@ -17,10 +17,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@WithMockUser
 class MaterialIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
@@ -45,8 +47,7 @@ class MaterialIntegrationTest {
 
     MvcResult result = mockMvc.perform(post("/materials")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(requestBody)
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+        .content(requestBody))
         .andExpect(status().isCreated())
         .andReturn();
 
@@ -56,8 +57,7 @@ class MaterialIntegrationTest {
         assertThat(materialId).isNotNull();
 
         // Obtener el material por id
-    MvcResult getResult = mockMvc.perform(get("/materials/" + materialId)
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+    MvcResult getResult = mockMvc.perform(get("/materials/" + materialId))
         .andExpect(status().isOk())
         .andReturn();
 
@@ -93,18 +93,15 @@ class MaterialIntegrationTest {
             """;
     mockMvc.perform(post("/materials")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(requestBody1)
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+        .content(requestBody1))
         .andExpect(status().isCreated());
     mockMvc.perform(post("/materials")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(requestBody2)
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+        .content(requestBody2))
         .andExpect(status().isCreated());
 
         // Listar materiales
-    MvcResult listResult = mockMvc.perform(get("/materials")
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+    MvcResult listResult = mockMvc.perform(get("/materials"))
         .andExpect(status().isOk())
         .andReturn();
         String listResponse = listResult.getResponse().getContentAsString();
@@ -128,8 +125,7 @@ class MaterialIntegrationTest {
         """;
     MvcResult result = mockMvc.perform(post("/materials")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(requestBody)
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+        .content(requestBody))
         .andExpect(status().isCreated())
         .andReturn();
     Long materialId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
@@ -148,13 +144,11 @@ class MaterialIntegrationTest {
         """;
     mockMvc.perform(patch("/materials/" + materialId)
         .contentType(MediaType.APPLICATION_JSON)
-        .content(updateBody)
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+        .content(updateBody))
         .andExpect(status().isOk());
 
         // Obtener y verificar cambios
-    MvcResult getResult = mockMvc.perform(get("/materials/" + materialId)
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+    MvcResult getResult = mockMvc.perform(get("/materials/" + materialId))
         .andExpect(status().isOk())
         .andReturn();
         String getResponse = getResult.getResponse().getContentAsString();
@@ -178,20 +172,18 @@ class MaterialIntegrationTest {
         """;
     MvcResult result = mockMvc.perform(post("/materials")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(requestBody)
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+        .content(requestBody))
         .andExpect(status().isCreated())
         .andReturn();
         Long materialId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
 
         // Toggle active material
-    mockMvc.perform(patch("/materials/" + materialId + "/toggle-active")
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+    mockMvc.perform(patch("/materials/" + materialId + "/toggle-active"))
         .andExpect(status().isOk());
 
         // Verificar cambio de estado
-    mockMvc.perform(get("/materials/" + materialId)
-        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("test", "test")))
+    mockMvc.perform(get("/materials/" + materialId))
         .andExpect(status().isOk());
     }
 }
+
