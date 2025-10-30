@@ -20,5 +20,7 @@ public class MaterialResponseDTO {
     private UnitMeasurement unitMeasurement;
     private Double threshold;
     private Boolean isBelowThreshold;
+    private Double stock;
+    private Double reservedStock;
     private Boolean isActive;
 }

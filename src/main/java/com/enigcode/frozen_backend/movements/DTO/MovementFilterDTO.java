@@ -1,5 +1,6 @@
 package com.enigcode.frozen_backend.movements.DTO;
 
+import com.enigcode.frozen_backend.movements.model.MovementStatus;
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import lombok.*;
 
@@ -15,4 +16,5 @@ public class MovementFilterDTO {
     private OffsetDateTime startDate;
     private OffsetDateTime endDate;
     private Long materialId;
+    private MovementStatus status;
 }

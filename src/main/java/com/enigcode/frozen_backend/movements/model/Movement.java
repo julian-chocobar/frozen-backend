@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -32,6 +33,15 @@ public class Movement {
      */
     @Column(name = "created_by_user_id")
     private Long createdByUserId;
+
+    /**
+     * Usuario que está ejecutando el movimiento (solo para movimientos en proceso)
+     */
+    @Column(name = "in_progress_by_user_id")
+    private Long inProgressByUserId;
+
+    @Column(name = "taken_at")
+    private LocalDateTime takenAt; // Cuándo se tomó la tarea
 
     /**
      * Usuario que completó/ejecutó el movimiento (solo para movimientos

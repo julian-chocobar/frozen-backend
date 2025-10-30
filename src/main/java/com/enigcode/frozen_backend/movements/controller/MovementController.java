@@ -48,7 +48,7 @@ public class MovementController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getMovements(
             MovementFilterDTO filterDTO,
-            @PageableDefault(size = 10, sort = "realizationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 10, sort = "creationDate", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<MovementResponseDTO> pageResponse = movementService.findAll(filterDTO, pageable);
 
         // Metadata de la página para el frontend
@@ -65,6 +65,13 @@ public class MovementController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Marcar movimiento como en proceso", description = "Marca un movimiento pendiente como en proceso. Solo para operarios de almacén.")
+    @PatchMapping("/{id}/in-progress")
+    public ResponseEntity<MovementResponseDTO> toggleInProgressPending(@PathVariable Long id) {
+        MovementResponseDTO inProgressMovement = movementService.toggleInProgressPending(id);
+        return ResponseEntity.ok(inProgressMovement);
+    }
+
     @Operation(summary = "Completar movimiento pendiente", description = "Completa un movimiento pendiente ejecutando el cambio de stock. Solo para operarios de almacén.")
     @PatchMapping("/{id}/complete")
     public ResponseEntity<MovementResponseDTO> completeMovement(@PathVariable Long id) {
@@ -72,23 +79,4 @@ public class MovementController {
         return ResponseEntity.ok(completedMovement);
     }
 
-    @Operation(summary = "Obtener movimientos pendientes", description = "Obtiene todos los movimientos en estado pendiente")
-    @GetMapping("/pending")
-    public ResponseEntity<Map<String, Object>> getPendingMovements(
-            @PageableDefault(size = 10, sort = "creationDate", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<MovementResponseDTO> pageResponse = movementService.getPendingMovements(pageable);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", pageResponse.getContent());
-        response.put("currentPage", pageResponse.getNumber());
-        response.put("totalItems", pageResponse.getTotalElements());
-        response.put("totalPages", pageResponse.getTotalPages());
-        response.put("size", pageResponse.getSize());
-        response.put("hasNext", pageResponse.hasNext());
-        response.put("hasPrevious", pageResponse.hasPrevious());
-        response.put("isFirst", pageResponse.isFirst());
-        response.put("isLast", pageResponse.isLast());
-
-        return ResponseEntity.ok(response);
-    }
 }

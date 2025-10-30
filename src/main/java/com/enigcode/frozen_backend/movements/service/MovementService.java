@@ -28,7 +28,9 @@ public interface MovementService {
     MovementResponseDTO completeMovement(Long movementId);
 
     /**
-     * Obtiene todos los movimientos pendientes
+     * Marca un movimiento pendiente como en proceso
+     * Solo disponible para operarios de almacén
      */
-    Page<MovementResponseDTO> getPendingMovements(Pageable pageable);
+    MovementResponseDTO toggleInProgressPending(Long movementId);
+
 }

@@ -70,6 +70,7 @@ public class MovementServiceImpl implements MovementService {
                                 .createdByUserId(userService.getCurrentUser().getId())
                                 .status(MovementStatus.PENDIENTE)
                                 .material(material)
+                                .creationDate(OffsetDateTime.now(ZoneOffset.UTC))
                                 .build();
 
                 Movement savedMovement = movementRepository.saveAndFlush(movement);
@@ -231,6 +232,7 @@ public class MovementServiceImpl implements MovementService {
 
                 // Marcar movimiento como completado
                 movement.completeMovement(userService.getCurrentUser().getId());
+                movement.setRealizationDate(OffsetDateTime.now(ZoneOffset.UTC));
 
                 // Guardar cambios
                 materialRepository.save(material);
@@ -243,19 +245,43 @@ public class MovementServiceImpl implements MovementService {
                 return movementMapper.toResponseDto(savedMovement);
         }
 
-        /**
-         * Obtiene todos los movimientos en estado pendiente
-         */
         @Override
-        public Page<MovementResponseDTO> getPendingMovements(Pageable pageable) {
-                Pageable pageRequest = PageRequest.of(
-                                pageable.getPageNumber(),
-                                pageable.getPageSize(),
-                                pageable.getSort());
+        @Transactional
+        public MovementResponseDTO toggleInProgressPending(Long movementId) {
+                Movement movement = movementRepository.findById(movementId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Movimiento no encontrado con ID: " + movementId));
 
-                Page<Movement> pendingMovements = movementRepository.findByStatusOrderByCreationDateAsc(
-                                MovementStatus.PENDIENTE, pageRequest);
+                if (movement.getStatus() == MovementStatus.COMPLETADO) {
+                        throw new BadRequestException("Los movimientos completados no pueden cambiar de estado");
 
-                return pendingMovements.map(movementMapper::toResponseDto);
+                } else if (movement.getStatus() == MovementStatus.EN_PROCESO) {
+                        movement.setStatus(MovementStatus.PENDIENTE);
+                        movement.setInProgressByUserId(null);
+                        movement.setTakenAt(null);
+
+                        Movement savedMovement = movementRepository.save(movement);
+
+                        log.info("Movimiento {} revertido a PENDIENTE por usuario: {}",
+                                        savedMovement.getId(), userService.getCurrentUser().getUsername());
+
+                        return movementMapper.toResponseDto(savedMovement);
+
+                } else if (movement.getStatus() == MovementStatus.PENDIENTE) {
+                        movement.setStatus(MovementStatus.EN_PROCESO);
+                        movement.setInProgressByUserId(userService.getCurrentUser().getId());
+                        movement.setTakenAt(OffsetDateTime.now(ZoneOffset.UTC).toLocalDateTime());
+
+                        Movement savedMovement = movementRepository.save(movement);
+
+                        log.info("Movimiento {} marcado como EN_PROCESO por usuario: {}",
+                                        savedMovement.getId(), userService.getCurrentUser().getUsername());
+
+                        return movementMapper.toResponseDto(savedMovement);
+                } else {
+                        throw new BadRequestException("Estado de movimiento no válido");
+                }
+
         }
+
 }
