@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class SystemConfigurationServiceImpl implements SystemConfigurationService{
+public class SystemConfigurationServiceImpl implements SystemConfigurationService {
 
     final SystemConfigurationRepository systemConfigurationRepository;
     final SystemConfigurationMapper systemConfigurationMapper;
@@ -27,32 +27,39 @@ public class SystemConfigurationServiceImpl implements SystemConfigurationServic
 
     /**
      * Devuelve la ultima configuracion activa y si no existe crea una default
+     * 
      * @return
      */
     @Override
     @Transactional
-    public SystemConfigurationResponseDTO getSystemConfiguration(){
+    public SystemConfigurationResponseDTO getSystemConfiguration() {
         SystemConfiguration systemConfiguration = systemConfigurationRepository.findFirstByIsActiveTrueOrderByIdDesc()
                 .orElseGet(this::createSystemConfiguration);
         return systemConfigurationMapper.toResponseDto(systemConfiguration);
     }
 
     private SystemConfiguration createSystemConfiguration() {
-        List<WorkingDay> workingDayList = Arrays.stream(DayOfWeek.values()).map( day -> {
-                return WorkingDay.builder()
-                        .dayOfWeek(day)
-                        .build();}).toList();
 
         SystemConfiguration systemConfiguration = SystemConfiguration.builder()
-                .workingDays(workingDayList)
                 .isActive(Boolean.TRUE)
                 .build();
+
+        List<WorkingDay> workingDayList = Arrays.stream(DayOfWeek.values()).map(day -> {
+            return WorkingDay.builder()
+                    .dayOfWeek(day)
+                    .systemConfiguration(systemConfiguration)
+                    .build();
+        }).toList();
+
+        systemConfiguration.setWorkingDays(workingDayList);
 
         return systemConfigurationRepository.saveAndFlush(systemConfiguration);
     }
 
     /**
-     * Update de los dias de trabajo, cambiando unicamente sus parametros de la configuracion
+     * Update de los dias de trabajo, cambiando unicamente sus parametros de la
+     * configuracion
+     * 
      * @param dtos
      * @param id
      * @return
@@ -60,15 +67,15 @@ public class SystemConfigurationServiceImpl implements SystemConfigurationServic
     @Override
     @Transactional
     public SystemConfigurationResponseDTO updateWorkingDays(List<WorkingDayUpdateDTO> dtos) {
-        SystemConfiguration systemConfiguration = systemConfigurationRepository.findFirstByIsActiveTrueOrderByIdDesc().
-                orElseThrow(() -> new ResourceNotFoundException("No existe configuración activa"));
+        SystemConfiguration systemConfiguration = systemConfigurationRepository.findFirstByIsActiveTrueOrderByIdDesc()
+                .orElseThrow(() -> new ResourceNotFoundException("No existe configuración activa"));
 
         dtos.forEach(dto -> {
             Optional<WorkingDay> workingDay = findWorkingDay(dto.getDayOfWeek(), systemConfiguration);
             workingDay.ifPresent(day -> workingDayMapper.partialUpdate(dto, day));
         });
 
-         SystemConfiguration savedSystemConfiguration = systemConfigurationRepository.save(systemConfiguration);
+        SystemConfiguration savedSystemConfiguration = systemConfigurationRepository.save(systemConfiguration);
 
         return systemConfigurationMapper.toResponseDto(savedSystemConfiguration);
     }

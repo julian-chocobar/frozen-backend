@@ -17,7 +17,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 
 /**
- * Handles InvalidCredentialsException if present on the classpath, without creating
+ * Handles InvalidCredentialsException if present on the classpath, without
+ * creating
  * a hard compile-time dependency in the main GlobalExceptionHandler.
  */
 @ControllerAdvice
@@ -28,7 +29,8 @@ public class InvalidCredentialsExceptionAdvice implements HandlerExceptionResolv
     private static final String TARGET_CLASS = "com.enigcode.frozen_backend.common.exceptions_configs.exceptions.InvalidCredentialsException";
 
     @Override
-    public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler,
+            Exception ex) {
         if (!isTargetException(ex)) {
             return null; // Not handled here; let other resolvers/advice manage it
         }
@@ -63,7 +65,8 @@ public class InvalidCredentialsExceptionAdvice implements HandlerExceptionResolv
         try {
             Method m = ex.getClass().getMethod("getRemainingAttempts");
             Object val = m.invoke(ex);
-            if (val instanceof Integer i) return i;
+            if (val instanceof Integer i)
+                return i;
         } catch (Exception ignored) {
         }
         return null;

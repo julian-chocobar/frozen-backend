@@ -6,6 +6,8 @@ import lombok.*;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "system_configurations")
 @Getter
@@ -22,6 +24,7 @@ public class SystemConfiguration {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "id_system_configuration")
+    @JsonManagedReference("system-config-workingdays") // ← LADO PADRE (se serializa)
     private List<WorkingDay> workingDays;
 
     @NotNull

@@ -6,6 +6,8 @@ import lombok.*;
 
 import java.time.LocalTime;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 @Entity
 @Table(name = "working_days")
 @Getter
@@ -23,6 +25,7 @@ public class WorkingDay {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_system_configuration")
     @NotNull
+    @JsonBackReference("system-config-workingdays") // ← LADO HIJO (NO se serializa)
     private SystemConfiguration systemConfiguration;
 
     @Enumerated(EnumType.STRING)
