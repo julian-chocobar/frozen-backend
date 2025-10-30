@@ -198,7 +198,8 @@ public class MovementServiceImpl implements MovementService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Movimiento no encontrado con ID: " + movementId));
 
-                if (movement.getStatus() != MovementStatus.PENDIENTE) {
+                if (movement.getStatus() != MovementStatus.PENDIENTE &&
+                                movement.getStatus() != MovementStatus.EN_PROCESO) {
                         throw new BadRequestException("El movimiento ya está completado o no es válido");
                 }
 

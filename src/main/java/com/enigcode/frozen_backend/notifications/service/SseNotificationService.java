@@ -1,10 +1,12 @@
 package com.enigcode.frozen_backend.notifications.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,15 +15,51 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * Servicio para manejar conexiones Server-Sent Events (SSE)
  * Permite enviar notificaciones en tiempo real a usuarios conectados
+ * IMPORTANTE: NO realiza queries a la BD para evitar connection leaks
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class SseNotificationService {
 
     private static final Long SSE_TIMEOUT = 30 * 60 * 1000L; // 30 minutos
 
     // Map para almacenar conexiones SSE por usuario
     private final Map<Long, Set<SseEmitter>> userConnections = new ConcurrentHashMap<>();
+    // Cache en memoria username -> userId para evitar queries desde SSE
+    private final Map<String, Long> usernameToUserIdCache = new ConcurrentHashMap<>();
+
+    /**
+     * Crea una nueva conexión SSE para un usuario por username (SIN consulta DB)
+     * Usa el cache en memoria para evitar connection leaks
+     */
+    public SseEmitter createConnectionByUsername(String username) {
+        // Buscar userId en cache (sin consultas DB)
+        Long userId = usernameToUserIdCache.get(username);
+        if (userId == null) {
+            log.error("Usuario {} no encontrado en cache. Debe hacer login primero.", username);
+            throw new RuntimeException("Usuario no encontrado en cache: " + username);
+        }
+        return createConnection(userId);
+    }
+
+    /**
+     * Registra un usuario en el cache cuando hace login (llamar desde UserService)
+     */
+    public void registerUserInCache(String username, Long userId) {
+        usernameToUserIdCache.put(username, userId);
+        log.debug("Usuario {} registrado en cache SSE con ID {}", username, userId);
+    }
+
+    /**
+     * Remueve un usuario del cache cuando hace logout (llamar desde logout)
+     */
+    public void removeUserFromCache(String username) {
+        Long removedUserId = usernameToUserIdCache.remove(username);
+        if (removedUserId != null) {
+            log.debug("Usuario {} removido del cache SSE", username);
+        }
+    }
 
     /**
      * Crea una nueva conexión SSE para un usuario
@@ -178,6 +216,31 @@ public class SseNotificationService {
         return userConnections.values().stream()
                 .mapToInt(Set::size)
                 .sum();
+    }
+
+    /**
+     * Obtiene el número total de conexiones SSE activas
+     */
+    public int getTotalConnections() {
+        return userConnections.values().stream()
+                .mapToInt(Set::size)
+                .sum();
+    }
+
+    /**
+     * Obtiene el número de usuarios únicos conectados
+     */
+    public int getConnectedUsersCount() {
+        return userConnections.size();
+    }
+
+    /**
+     * Obtiene información detallada de conexiones por usuario
+     */
+    public Map<Long, Integer> getConnectionsPerUser() {
+        Map<Long, Integer> result = new HashMap<>();
+        userConnections.forEach((userId, connections) -> result.put(userId, connections.size()));
+        return result;
     }
 
     /**

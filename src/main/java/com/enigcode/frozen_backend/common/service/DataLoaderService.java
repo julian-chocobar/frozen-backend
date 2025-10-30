@@ -54,7 +54,6 @@ public class DataLoaderService {
         private final RecipeService recipeService;
         private final PackagingService packagingService;
         private final SectorService sectorService;
-        
 
         // IDs de materiales creados para usar en recipes
         private Long maltaPaleId;

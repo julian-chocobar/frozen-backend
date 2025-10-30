@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -135,51 +134,65 @@ public class NotificationController {
         return request.getRemoteAddr();
     }
 
+    /**
+     * Obtiene el username del contexto de seguridad SIN consultas a DB
+     */
+    private String getCurrentUsername() {
+        try {
+            org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated()
+                    && !authentication.getName().equals("anonymousUser")) {
+                return authentication.getName();
+            }
+        } catch (Exception e) {
+            log.warn("Error obteniendo username del SecurityContext: {}", e.getMessage());
+        }
+        return null;
+    }
+
     @Operation(summary = "Conectar a notificaciones en tiempo real", description = "Establece una conexión Server-Sent Events para recibir notificaciones en tiempo real")
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> streamNotifications(HttpServletRequest request) {
-        User currentUser = userService.getCurrentUser();
-
-        log.info("Nueva conexión SSE solicitada por usuario: {} desde IP: {}",
-                currentUser.getUsername(), getClientIpAddress(request));
-
-        // Crear conexión SSE
-        SseEmitter emitter = sseNotificationService.createConnection(currentUser.getId());
-
-        // Enviar datos iniciales después de establecer la conexión
-        try {
-            // Cargar notificaciones existentes (últimas 10)
-            Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "createdAt");
-            Page<NotificationResponseDTO> existingNotifications = notificationService
-                    .getUserNotifications(currentUser.getId(), pageable);
-
-            // Cargar estadísticas actuales
-            NotificationStatsDTO stats = notificationService.getUserNotificationStats(currentUser.getId());
-
-            // Enviar datos iniciales
-            sseNotificationService.sendInitialData(currentUser.getId(),
-                    existingNotifications.getContent(), stats);
-
-        } catch (Exception e) {
-            log.error("Error enviando datos iniciales para usuario: {}", currentUser.getUsername(), e);
+        // Obtener username desde SecurityContext SIN CONSULTA DB
+        String username = getCurrentUsername();
+        if (username == null) {
+            log.error("Usuario no autenticado intentando crear conexión SSE");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+        String clientIp = getClientIpAddress(request);
+        log.info("Nueva conexión SSE solicitada por usuario: {} desde IP: {}", username, clientIp);
+
+        // Crear SseEmitter inmediatamente SIN transacciones DB
+        SseEmitter emitter = sseNotificationService.createConnectionByUsername(username);
 
         return ResponseEntity.ok()
                 .header("Cache-Control", "no-cache")
                 .header("Connection", "keep-alive")
                 .header("Content-Type", "text/event-stream; charset=UTF-8")
-                .header("X-Accel-Buffering", "no") // Nginx directive para streaming
+                .header("X-Accel-Buffering", "no")
                 .body(emitter);
     }
 
     @Operation(summary = "Obtener información de conexiones SSE", description = "Obtiene información sobre las conexiones activas del usuario")
     @GetMapping("/connections")
     public ResponseEntity<Map<String, Object>> getConnectionInfo() {
-        User currentUser = userService.getCurrentUser();
+        // Obtener ID de usuario sin mantener transacción abierta
+        Long currentUserId;
+        try {
+            User currentUser = userService.getCurrentUser();
+            currentUserId = currentUser.getId();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         Map<String, Object> connectionInfo = new HashMap<>();
-        connectionInfo.put("activeConnections", sseNotificationService.getActiveConnectionsCount(currentUser.getId()));
-        connectionInfo.put("totalSystemConnections", sseNotificationService.getTotalActiveConnections());
+        Map<Long, Integer> connectionsPerUser = sseNotificationService.getConnectionsPerUser();
+
+        connectionInfo.put("userConnections", connectionsPerUser.getOrDefault(currentUserId, 0));
+        connectionInfo.put("totalSystemConnections", sseNotificationService.getTotalConnections());
+        connectionInfo.put("totalUsers", sseNotificationService.getConnectedUsersCount());
 
         return ResponseEntity.ok(connectionInfo);
     }

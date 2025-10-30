@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -23,7 +24,9 @@ import com.enigcode.frozen_backend.users.DTO.*;
 import com.enigcode.frozen_backend.users.mapper.UserMapper;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
 import com.enigcode.frozen_backend.users.repository.RoleRepository;
+import com.enigcode.frozen_backend.notifications.service.SseNotificationService;
 
+import org.springframework.context.annotation.Lazy;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -36,6 +39,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final PasswordEncoder passwordEncoder;
 
     private final SessionRegistry sessionRegistry;
+    @Lazy
+    private final SseNotificationService sseNotificationService;
 
     /*
      * @Autowired
@@ -47,6 +52,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         try {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado o ha sido eliminado"));
+
+            // Registrar usuario en cache SSE para evitar queries desde endpoints SSE
+            try {
+                sseNotificationService.registerUserInCache(username, user.getId());
+            } catch (Exception e) {
+                // Si el cache falla, solo log pero no bloquear la autenticación
+                System.out.println("Warning: No se pudo registrar usuario en SSE cache: " + e.getMessage());
+            }
+
             return user;
         } catch (Exception e) {
             // Cualquier excepción se convierte en UsernameNotFoundException para que Spring
@@ -80,6 +94,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
+    @Transactional
     public UserResponseDTO createUser(UserCreateDTO userCreateDTO) {
         User user = userMapper.toEntity(userCreateDTO);
         user.setPassword(passwordEncoder.encode(userCreateDTO.getPassword()));
@@ -95,6 +110,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
+    @Transactional
     public UserResponseDTO toggleActive(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con ID: " + id));
@@ -124,6 +140,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
+    @Transactional
     public UserResponseDTO updateUser(Long id, UserUpdateDTO userUpdateDTO) {
         User user = userMapper.partialUpdate(userUpdateDTO,
                 userRepository.findById(id)
@@ -133,6 +150,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
+    @Transactional
     public UserResponseDTO updateUserRole(Long id, UpdateRoleDTO updateRolDTO) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con ID: " + id));
