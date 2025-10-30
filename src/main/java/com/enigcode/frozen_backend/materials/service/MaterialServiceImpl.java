@@ -81,13 +81,14 @@ public class MaterialServiceImpl implements MaterialService {
         if ((type == MaterialType.ENVASE || type == MaterialType.ETIQUETADO) && unit != UnitMeasurement.UNIDAD)
             throw new BadRequestException("El material de tipo: " + type + " debe tener como unidad de medida UNIDAD");
 
-        //Si la unidad es UNIDAD → solo se permite ENVASE, OTROS o ETIQUETADO
+        // Si la unidad es UNIDAD → solo se permite ENVASE, OTROS o ETIQUETADO
         boolean isUnitAllowedType = type == MaterialType.ENVASE ||
                 type == MaterialType.OTROS ||
                 type == MaterialType.ETIQUETADO;
 
         if (unit == UnitMeasurement.UNIDAD && !isUnitAllowedType)
-            throw new BadRequestException("La unidad de medida UNIDAD solo se permite con materiales de tipo ENVASE, OTROS o ETIQUETADO");
+            throw new BadRequestException(
+                    "La unidad de medida UNIDAD solo se permite con materiales de tipo ENVASE, OTROS o ETIQUETADO");
 
     }
 
@@ -178,32 +179,37 @@ public class MaterialServiceImpl implements MaterialService {
      * @return Lista con id y nombre de todos los materiales
      */
     @Override
-    public List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active, Phase phase, MaterialType type) {
+    public List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active, Phase phase,
+            MaterialType type) {
         if (name == null || name.trim().isEmpty()) {
             return List.of();
         }
         String q = name.trim();
         List<Material> results;
-        
+
         // Handle Phase filter (takes precedence over type if both are provided)
         if (phase != null) {
             List<MaterialType> validMaterialTypes = getValidMaterialTypesForPhase(phase);
             if (active == null) {
                 results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCase(validMaterialTypes, q);
             } else if (active) {
-                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(validMaterialTypes, q);
+                results = materialRepository
+                        .findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(validMaterialTypes, q);
             } else {
-                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(validMaterialTypes, q);
+                results = materialRepository
+                        .findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(validMaterialTypes, q);
             }
-        } 
+        }
         // Handle MaterialType filter (only if phase is not provided)
         else if (type != null) {
             if (active == null) {
                 results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCase(List.of(type), q);
             } else if (active) {
-                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(List.of(type), q);
+                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(List.of(type),
+                        q);
             } else {
-                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(List.of(type), q);
+                results = materialRepository.findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(List.of(type),
+                        q);
             }
         }
         // No type or phase filter
@@ -216,22 +222,24 @@ public class MaterialServiceImpl implements MaterialService {
                 results = materialRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(q);
             }
         }
-        
+
         return results.stream()
                 .map(m -> new MaterialSimpleResponseDTO(m.getId(), m.getCode(), m.getName()))
                 .collect(Collectors.toList());
     }
-    
+
     /**
      * Returns the list of valid material types for a given phase
+     * 
      * @param phase The phase to get valid material types for
-     * @return List of valid MaterialType for the phase, or null if phase is null or no restrictions
+     * @return List of valid MaterialType for the phase, or null if phase is null or
+     *         no restrictions
      */
     private List<MaterialType> getValidMaterialTypesForPhase(Phase phase) {
         if (phase == null) {
             return null;
         }
-        
+
         Map<Phase, List<MaterialType>> phaseMaterialMap = new EnumMap<>(Phase.class);
         phaseMaterialMap.put(Phase.MOLIENDA, List.of(MaterialType.MALTA));
         phaseMaterialMap.put(Phase.MACERACION, List.of(MaterialType.AGUA));
@@ -242,7 +250,7 @@ public class MaterialServiceImpl implements MaterialService {
         phaseMaterialMap.put(Phase.GASIFICACION, List.of());
         phaseMaterialMap.put(Phase.ENVASADO, List.of(MaterialType.ENVASE));
         phaseMaterialMap.put(Phase.DESALCOHOLIZACION, List.of());
-        
+
         return phaseMaterialMap.get(phase);
     }
 

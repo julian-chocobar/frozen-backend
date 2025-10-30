@@ -65,4 +65,30 @@ public class MovementController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Completar movimiento pendiente", description = "Completa un movimiento pendiente ejecutando el cambio de stock. Solo para operarios de almacén.")
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<MovementResponseDTO> completeMovement(@PathVariable Long id) {
+        MovementResponseDTO completedMovement = movementService.completeMovement(id);
+        return ResponseEntity.ok(completedMovement);
+    }
+
+    @Operation(summary = "Obtener movimientos pendientes", description = "Obtiene todos los movimientos en estado pendiente")
+    @GetMapping("/pending")
+    public ResponseEntity<Map<String, Object>> getPendingMovements(
+            @PageableDefault(size = 10, sort = "creationDate", direction = Sort.Direction.ASC) Pageable pageable) {
+        Page<MovementResponseDTO> pageResponse = movementService.getPendingMovements(pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pageResponse.getContent());
+        response.put("currentPage", pageResponse.getNumber());
+        response.put("totalItems", pageResponse.getTotalElements());
+        response.put("totalPages", pageResponse.getTotalPages());
+        response.put("size", pageResponse.getSize());
+        response.put("hasNext", pageResponse.hasNext());
+        response.put("hasPrevious", pageResponse.hasPrevious());
+        response.put("isFirst", pageResponse.isFirst());
+        response.put("isLast", pageResponse.isLast());
+
+        return ResponseEntity.ok(response);
+    }
 }

@@ -2,32 +2,32 @@ package com.enigcode.frozen_backend.notifications.controller;
 
 import com.enigcode.frozen_backend.notifications.dto.NotificationResponseDTO;
 import com.enigcode.frozen_backend.notifications.dto.NotificationStatsDTO;
-import com.enigcode.frozen_backend.notifications.dto.PollingWindowDTO;
 import com.enigcode.frozen_backend.notifications.service.NotificationService;
+import com.enigcode.frozen_backend.notifications.service.SseNotificationService;
 import com.enigcode.frozen_backend.users.model.User;
 import com.enigcode.frozen_backend.users.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.LocalTime;
-import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Controlador REST para el manejo de notificaciones
- * Optimizado para polling en ventanas específicas (09:00-10:00 y 17:00-18:00)
- * Incluye cache, rate limiting y logging para cargas puntuales predecibles
+ * Soporta notificaciones en tiempo real vía Server-Sent Events (SSE)
+ * Incluye logging y gestión completa de notificaciones persistidas
  */
 @RestController
 @RequestMapping("/notifications")
@@ -37,10 +37,10 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final UserService userService;
+    private final SseNotificationService sseNotificationService;
 
-    @Operation(summary = "Obtener notificaciones del usuario", description = "Obtiene todas las notificaciones del usuario actual con paginación. Optimizado para ventanas de polling específicas.")
+    @Operation(summary = "Obtener notificaciones del usuario", description = "Obtiene todas las notificaciones del usuario actual con paginación.")
     @GetMapping
-    @Cacheable(value = "notifications", key = "#root.target.getUserCacheKey(#unreadOnly, #pageable)", condition = "!#unreadOnly", unless = "#result.body.get('totalItems') == 0")
     public ResponseEntity<Map<String, Object>> getUserNotifications(
             @RequestParam(defaultValue = "false") boolean unreadOnly,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
@@ -48,7 +48,7 @@ public class NotificationController {
 
         User currentUser = userService.getCurrentUser();
 
-        // Log para monitorear las ventanas de polling
+        // Log para monitoreo de solicitudes
         log.info("Solicitud de notificaciones - Usuario: {}, UnreadOnly: {}, IP: {}, UserAgent: {}",
                 currentUser.getUsername(), unreadOnly,
                 getClientIpAddress(request), request.getHeader("User-Agent"));
@@ -92,7 +92,6 @@ public class NotificationController {
 
     @Operation(summary = "Obtener estadísticas de notificaciones", description = "Obtiene el conteo de notificaciones leídas y no leídas del usuario")
     @GetMapping("/stats")
-    @Cacheable(value = "notificationStats", key = "#root.target.getStatsKey()", unless = "#result.body.unreadCount == 0")
     public ResponseEntity<NotificationStatsDTO> getNotificationStats(HttpServletRequest request) {
         User currentUser = userService.getCurrentUser();
 
@@ -104,54 +103,8 @@ public class NotificationController {
     }
 
     /**
-     * Métodos auxiliares para optimización y logging
+     * Métodos auxiliares para logging y utilidades
      */
-
-    /**
-     * Genera clave de cache para notificaciones por usuario
-     */
-    public String getUserCacheKey(boolean unreadOnly, Pageable pageable) {
-        User currentUser = userService.getCurrentUser();
-        return String.format("user_%d_unread_%b_page_%d_size_%d",
-                currentUser.getId(), unreadOnly, pageable.getPageNumber(), pageable.getPageSize());
-    }
-
-    /**
-     * Genera clave de cache para estadísticas por usuario
-     */
-    public String getStatsKey() {
-        User currentUser = userService.getCurrentUser();
-        return String.format("stats_user_%d", currentUser.getId());
-    }
-
-    /**
-     * Endpoint para obtener configuración de ventanas de polling
-     */
-    @Operation(summary = "Obtener ventanas de polling", description = "Devuelve la configuración de ventanas de polling con estado actual")
-    @GetMapping("/polling-windows")
-    @Cacheable(value = "pollingWindows")
-    public ResponseEntity<List<PollingWindowDTO>> getPollingWindows(HttpServletRequest request) {
-
-        String clientIp = getClientIpAddress(request);
-        log.debug("Solicitud de ventanas de polling desde IP: {}", clientIp);
-
-        List<PollingWindowDTO> windows = PollingWindowDTO.getDefaultWindows();
-
-        // Verificar qué ventanas están activas actualmente
-        LocalTime currentTime = LocalTime.now();
-        windows.forEach(window -> {
-            boolean isActive = !currentTime.isBefore(window.getStartTime()) &&
-                    !currentTime.isAfter(window.getEndTime());
-            window.setIsActive(isActive);
-
-            if (isActive) {
-                log.info("Ventana de polling activa: {} ({}–{})",
-                        window.getName(), window.getStartTime(), window.getEndTime());
-            }
-        });
-
-        return ResponseEntity.ok(windows);
-    }
 
     /**
      * Extrae la IP real del cliente considerando proxies
@@ -180,5 +133,96 @@ public class NotificationController {
         }
 
         return request.getRemoteAddr();
+    }
+
+    @Operation(summary = "Conectar a notificaciones en tiempo real", description = "Establece una conexión Server-Sent Events para recibir notificaciones en tiempo real")
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<SseEmitter> streamNotifications(HttpServletRequest request) {
+        User currentUser = userService.getCurrentUser();
+
+        log.info("Nueva conexión SSE solicitada por usuario: {} desde IP: {}",
+                currentUser.getUsername(), getClientIpAddress(request));
+
+        // Crear conexión SSE
+        SseEmitter emitter = sseNotificationService.createConnection(currentUser.getId());
+
+        // Enviar datos iniciales después de establecer la conexión
+        try {
+            // Cargar notificaciones existentes (últimas 10)
+            Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "createdAt");
+            Page<NotificationResponseDTO> existingNotifications = notificationService
+                    .getUserNotifications(currentUser.getId(), pageable);
+
+            // Cargar estadísticas actuales
+            NotificationStatsDTO stats = notificationService.getUserNotificationStats(currentUser.getId());
+
+            // Enviar datos iniciales
+            sseNotificationService.sendInitialData(currentUser.getId(),
+                    existingNotifications.getContent(), stats);
+
+        } catch (Exception e) {
+            log.error("Error enviando datos iniciales para usuario: {}", currentUser.getUsername(), e);
+        }
+
+        return ResponseEntity.ok()
+                .header("Cache-Control", "no-cache")
+                .header("Connection", "keep-alive")
+                .header("Content-Type", "text/event-stream; charset=UTF-8")
+                .header("X-Accel-Buffering", "no") // Nginx directive para streaming
+                .body(emitter);
+    }
+
+    @Operation(summary = "Obtener información de conexiones SSE", description = "Obtiene información sobre las conexiones activas del usuario")
+    @GetMapping("/connections")
+    public ResponseEntity<Map<String, Object>> getConnectionInfo() {
+        User currentUser = userService.getCurrentUser();
+
+        Map<String, Object> connectionInfo = new HashMap<>();
+        connectionInfo.put("activeConnections", sseNotificationService.getActiveConnectionsCount(currentUser.getId()));
+        connectionInfo.put("totalSystemConnections", sseNotificationService.getTotalActiveConnections());
+
+        return ResponseEntity.ok(connectionInfo);
+    }
+
+    @Operation(summary = "Endpoint de prueba SSE", description = "Prueba la conectividad SSE")
+    @GetMapping("/test")
+    public ResponseEntity<Map<String, Object>> testConnectivity(HttpServletRequest request) {
+        User currentUser = userService.getCurrentUser();
+
+        Map<String, Object> testInfo = new HashMap<>();
+        testInfo.put("userId", currentUser.getId());
+        testInfo.put("username", currentUser.getUsername());
+        testInfo.put("timestamp", System.currentTimeMillis());
+        testInfo.put("clientIP", getClientIpAddress(request));
+        testInfo.put("sseConnections", sseNotificationService.getActiveConnectionsCount(currentUser.getId()));
+        testInfo.put("origin", request.getHeader("Origin"));
+        testInfo.put("userAgent", request.getHeader("User-Agent"));
+        testInfo.put("cookies", request.getHeader("Cookie") != null ? "Present" : "None");
+
+        log.info("🧪 Test de conectividad SSE para usuario: {} desde IP: {} - Origin: {}",
+                currentUser.getUsername(), getClientIpAddress(request), request.getHeader("Origin"));
+
+        return ResponseEntity.ok(testInfo);
+    }
+
+    @Operation(summary = "Diagnóstico CORS", description = "Verifica configuración CORS")
+    @GetMapping("/cors-test")
+    public ResponseEntity<Map<String, Object>> corsTest(HttpServletRequest request) {
+        Map<String, Object> corsInfo = new HashMap<>();
+        corsInfo.put("origin", request.getHeader("Origin"));
+        corsInfo.put("method", request.getMethod());
+        corsInfo.put("timestamp", System.currentTimeMillis());
+
+        // Listar headers importantes para CORS
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Origin", request.getHeader("Origin"));
+        headers.put("Access-Control-Request-Method", request.getHeader("Access-Control-Request-Method"));
+        headers.put("Access-Control-Request-Headers", request.getHeader("Access-Control-Request-Headers"));
+        corsInfo.put("corsHeaders", headers);
+
+        log.info("🌐 CORS Test - Origin: {}, Method: {}",
+                request.getHeader("Origin"), request.getMethod());
+
+        return ResponseEntity.ok(corsInfo);
     }
 }

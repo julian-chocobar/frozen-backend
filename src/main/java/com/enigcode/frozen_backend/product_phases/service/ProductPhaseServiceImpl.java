@@ -6,6 +6,7 @@ import com.enigcode.frozen_backend.materials.model.MaterialType;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseResponseDTO;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseUpdateDTO;
 import com.enigcode.frozen_backend.product_phases.mapper.ProductPhaseMapper;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.product_phases.repository.ProductPhaseRepository;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
@@ -124,7 +125,8 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
 
             // Se revisa que no falta ningun material o devuelve una lista con los
             // materiales que faltan (comprobando recetas SOLO de esta fase)
-            if (requiredMaterials != null && !requiredMaterials.isEmpty()) {
+            if ((requiredMaterials != null && !requiredMaterials.isEmpty())
+                    && productPhase.getPhase() != Phase.ENVASADO) {
                 List<MaterialType> missingMaterials = requiredMaterials.stream()
                         .filter(type -> !recipeRepository.existsByProductPhaseIdAndMaterial_Type(productPhase.getId(),
                                 type))

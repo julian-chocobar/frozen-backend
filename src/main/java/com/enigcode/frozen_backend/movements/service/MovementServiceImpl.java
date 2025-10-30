@@ -9,11 +9,15 @@ import com.enigcode.frozen_backend.movements.specification.MovementSpecification
 import com.enigcode.frozen_backend.movements.mapper.MovementMapper;
 import com.enigcode.frozen_backend.movements.model.Movement;
 import com.enigcode.frozen_backend.movements.model.MovementType;
+import com.enigcode.frozen_backend.movements.model.MovementStatus;
 import com.enigcode.frozen_backend.movements.repository.MovementRepository;
+import com.enigcode.frozen_backend.notifications.service.NotificationService;
+import com.enigcode.frozen_backend.users.service.UserService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,18 +31,20 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MovementServiceImpl implements MovementService {
 
         final MovementRepository movementRepository;
         final MaterialRepository materialRepository;
         final MovementMapper movementMapper;
+        final NotificationService notificationService;
+        final UserService userService;
 
         /**
-         * Funcion que genera un movimiento nuevo que afecta al stock disponible de un material (ingreso-egreso)
-         * y cambia el stock del material según el mismo
-         * Genera Error en caso de que el stock no sea suficiente para abastecer el
-         * movimiento o si el material
-         * no existe
+         * Funcion que genera un movimiento nuevo en estado PENDIENTE
+         * Los movimientos ahora se crean como pendientes y deben ser completados por un
+         * operario
+         * Genera notificación para operarios de almacén
          * 
          * @param movementCreateDTO
          * @return movementResponseDTO
@@ -50,27 +56,32 @@ public class MovementServiceImpl implements MovementService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Material no encontrado con ID: " + movementCreateDTO.getMaterialId()));
 
+                // Validar que hay stock suficiente para egresos (aunque aún no se ejecute)
                 if (movementCreateDTO.getType().equals(MovementType.EGRESO) &&
                                 movementCreateDTO.getStock() > material.getStock())
                         throw new BadRequestException("El stock actual (" + material.getStock() +
                                         ") es insuficiente para egresar " + movementCreateDTO.getStock());
 
-                if (movementCreateDTO.getType().equals(MovementType.EGRESO))
-                        material.reduceStock(movementCreateDTO.getStock());
-                else if (movementCreateDTO.getType().equals(MovementType.INGRESO))
-                        material.increaseStock(movementCreateDTO.getStock());
-                else throw new BadRequestException("El tipo de movimiento " + movementCreateDTO.getType()
-                                + "no es soportado en esta función");
-
+                // Crear movimiento en estado PENDIENTE
                 Movement movement = Movement.builder()
                                 .type(movementCreateDTO.getType())
                                 .stock(movementCreateDTO.getStock())
                                 .reason(movementCreateDTO.getReason())
-                                .realizationDate(OffsetDateTime.now(ZoneOffset.UTC))
-                                .material(material).build();
+                                .createdByUserId(userService.getCurrentUser().getId())
+                                .status(MovementStatus.PENDIENTE)
+                                .material(material)
+                                .build();
 
-                materialRepository.save(material);
                 Movement savedMovement = movementRepository.saveAndFlush(movement);
+
+                // Crear notificación para operarios de almacén
+                notificationService.createPendingMovementNotification(
+                                savedMovement.getId(),
+                                material.getName(),
+                                movementCreateDTO.getType().toString());
+
+                log.info("Movimiento {} creado en estado PENDIENTE para material: {}",
+                                savedMovement.getId(), material.getName());
 
                 return movementMapper.toResponseDto(savedMovement);
         }
@@ -78,32 +89,37 @@ public class MovementServiceImpl implements MovementService {
         /**
          * Funcion que crea nuevos movimientos de reserva o devuelto de stock debe
          * llamarse en el contexto de un transaccional
-         * @param type Tiene que ser RESERVA o DEVUELTO
-         * @param materials es una List<MovementSimpleCreateDTO> donde tiene material y stock
+         * 
+         * @param type      Tiene que ser RESERVA o DEVUELTO
+         * @param materials es una List<MovementSimpleCreateDTO> donde tiene material y
+         *                  stock
          */
         @Override
-        public void createReserveOrReturn (@NotNull MovementType type,@Valid List<MovementSimpleCreateDTO> materials){
+        public void createReserveOrReturn(@NotNull MovementType type, @Valid List<MovementSimpleCreateDTO> materials) {
                 List<Movement> movements = new ArrayList<>();
 
                 materials.forEach(dto -> {
                         if (type.equals(MovementType.RESERVA) && dto.getMaterial().getStock() < dto.getStock())
-                                throw new BadRequestException("Stock: "+dto.getMaterial().getStock()
-                                        + "insuficiente para reservar " + dto.getStock());
+                                throw new BadRequestException("Stock: " + dto.getMaterial().getStock()
+                                                + "insuficiente para reservar " + dto.getStock());
 
                         if (type.equals(MovementType.DEVUELTO) && dto.getMaterial().getReservedStock() < dto.getStock())
-                                throw new BadRequestException("Stock reservado: "+dto.getMaterial().getStock()
-                                        + "insuficiente para devolver " + dto.getStock());
+                                throw new BadRequestException("Stock reservado: " + dto.getMaterial().getStock()
+                                                + "insuficiente para devolver " + dto.getStock());
 
-                        if (type.equals(MovementType.RESERVA)) dto.getMaterial().reserveStock(dto.getStock());
-                        else if (type.equals(MovementType.DEVUELTO)) dto.getMaterial().returnStock(dto.getStock());
-                        else throw new BadRequestException("Esta función no acepta movimientos del tipo " + type);
+                        if (type.equals(MovementType.RESERVA))
+                                dto.getMaterial().reserveStock(dto.getStock());
+                        else if (type.equals(MovementType.DEVUELTO))
+                                dto.getMaterial().returnStock(dto.getStock());
+                        else
+                                throw new BadRequestException("Esta función no acepta movimientos del tipo " + type);
 
                         Movement movement = Movement.builder()
-                                .type(type)
-                                .stock(dto.getStock())
-                                .reason("El stock se fue :" + type)
-                                .realizationDate(OffsetDateTime.now(ZoneOffset.UTC))
-                                .material(dto.getMaterial()).build();
+                                        .type(type)
+                                        .stock(dto.getStock())
+                                        .reason("El stock se fue :" + type)
+                                        .realizationDate(OffsetDateTime.now(ZoneOffset.UTC))
+                                        .material(dto.getMaterial()).build();
 
                         movements.add(movement);
                 });
@@ -112,27 +128,30 @@ public class MovementServiceImpl implements MovementService {
         }
 
         /**
-         * Funcion utilizada para crear los movimientos de egreso a partir del stock reservado de un producto
+         * Funcion utilizada para crear los movimientos de egreso a partir del stock
+         * reservado de un producto
          * se debe en contexto de transaccional
-         * @param materials es una List<MovementSimpleCreateDTO> donde tiene material y stock
+         * 
+         * @param materials es una List<MovementSimpleCreateDTO> donde tiene material y
+         *                  stock
          */
         @Override
-        public void confirmReservation(@Valid List<MovementSimpleCreateDTO> materials){
+        public void confirmReservation(@Valid List<MovementSimpleCreateDTO> materials) {
                 List<Movement> movements = new ArrayList<>();
 
                 materials.forEach(dto -> {
-                        if(dto.getMaterial().getReservedStock() < dto.getStock())
-                                throw new BadRequestException("Stock reservado: "+dto.getMaterial().getStock()
-                                        + "insuficiente para egresar " + dto.getStock());
+                        if (dto.getMaterial().getReservedStock() < dto.getStock())
+                                throw new BadRequestException("Stock reservado: " + dto.getMaterial().getStock()
+                                                + "insuficiente para egresar " + dto.getStock());
 
                         dto.getMaterial().reduceReservedStock(dto.getStock());
 
                         Movement movement = Movement.builder()
-                                .type(MovementType.EGRESO)
-                                .stock(dto.getStock())
-                                .reason("El stock salio de reserva ")
-                                .realizationDate(OffsetDateTime.now(ZoneOffset.UTC))
-                                .material(dto.getMaterial()).build();
+                                        .type(MovementType.EGRESO)
+                                        .stock(dto.getStock())
+                                        .reason("El stock salio de reserva ")
+                                        .realizationDate(OffsetDateTime.now(ZoneOffset.UTC))
+                                        .material(dto.getMaterial()).build();
 
                         movements.add(movement);
                 });
@@ -165,5 +184,78 @@ public class MovementServiceImpl implements MovementService {
                 Page<Movement> movements = movementRepository.findAll(
                                 MovementSpecification.createFilter(filterDTO), pageRequest);
                 return movements.map(movementMapper::toResponseDto);
+        }
+
+        /**
+         * Completa un movimiento pendiente ejecutando el cambio de stock
+         * y marcando el movimiento como completado
+         */
+        @Override
+        @Transactional
+        public MovementResponseDTO completeMovement(Long movementId) {
+                Movement movement = movementRepository.findById(movementId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Movimiento no encontrado con ID: " + movementId));
+
+                if (movement.getStatus() != MovementStatus.PENDIENTE) {
+                        throw new BadRequestException("El movimiento ya está completado o no es válido");
+                }
+
+                Material material = movement.getMaterial();
+
+                // Validar stock nuevamente en caso de que haya cambiado
+                if (movement.getType().equals(MovementType.EGRESO) &&
+                                movement.getStock() > material.getStock()) {
+                        throw new BadRequestException("Stock insuficiente para completar el egreso. " +
+                                        "Stock actual: " + material.getStock() +
+                                        ", Stock requerido: " + movement.getStock());
+                }
+
+                // Ejecutar el cambio de stock
+                if (movement.getType().equals(MovementType.EGRESO)) {
+                        material.reduceStock(movement.getStock());
+
+                        // Verificar si el material queda por debajo del umbral
+                        if (material.getStock() < material.getThreshold()) {
+                                notificationService.createLowStockNotification(
+                                                material.getId(),
+                                                material.getName(),
+                                                material.getStock(),
+                                                material.getThreshold());
+                                log.warn("Material {} quedó por debajo del umbral. Stock actual: {}, Umbral: {}",
+                                                material.getName(), material.getStock(), material.getThreshold());
+                        }
+                } else if (movement.getType().equals(MovementType.INGRESO)) {
+                        material.increaseStock(movement.getStock());
+                }
+
+                // Marcar movimiento como completado
+                movement.completeMovement(userService.getCurrentUser().getId());
+
+                // Guardar cambios
+                materialRepository.save(material);
+                Movement savedMovement = movementRepository.save(movement);
+
+                log.info("Movimiento {} completado por usuario: {}. Material: {}, Tipo: {}, Cantidad: {}",
+                                savedMovement.getId(), userService.getCurrentUser().getUsername(),
+                                material.getName(), movement.getType(), movement.getStock());
+
+                return movementMapper.toResponseDto(savedMovement);
+        }
+
+        /**
+         * Obtiene todos los movimientos en estado pendiente
+         */
+        @Override
+        public Page<MovementResponseDTO> getPendingMovements(Pageable pageable) {
+                Pageable pageRequest = PageRequest.of(
+                                pageable.getPageNumber(),
+                                pageable.getPageSize(),
+                                pageable.getSort());
+
+                Page<Movement> pendingMovements = movementRepository.findByStatusOrderByCreationDateAsc(
+                                MovementStatus.PENDIENTE, pageRequest);
+
+                return pendingMovements.map(movementMapper::toResponseDto);
         }
 }

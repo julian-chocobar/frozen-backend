@@ -27,15 +27,43 @@ public class Movement {
     @NotNull
     private Material material;
 
-    @Column(name = "id_usuario")
-    private Long idUser;
+    /**
+     * Usuario que creó el movimiento
+     */
+    @Column(name = "created_by_user_id")
+    private Long createdByUserId;
+
+    /**
+     * Usuario que completó/ejecutó el movimiento (solo para movimientos
+     * completados)
+     */
+    @Column(name = "completed_by_user_id")
+    private Long completedByUserId;
+
+    /**
+     * Estado del movimiento
+     */
+    @Enumerated(EnumType.STRING)
+    @NotNull
+    @Builder.Default
+    private MovementStatus status = MovementStatus.PENDIENTE;
 
     @Enumerated(EnumType.STRING)
     @NotNull
     private MovementType type;
 
-    @Column(name = "realization_date")
+    /**
+     * Fecha de creación del movimiento
+     */
+    @Column(name = "creation_date")
     @NotNull
+    @Builder.Default
+    private OffsetDateTime creationDate = OffsetDateTime.now();
+
+    /**
+     * Fecha de realización/completado del movimiento
+     */
+    @Column(name = "realization_date")
     private OffsetDateTime realizationDate;
 
     @NotNull
@@ -43,5 +71,18 @@ public class Movement {
 
     @Size(max = 255)
     private String reason;
+
+    /**
+     * Marca el movimiento como completado por un usuario específico
+     */
+    public void completeMovement(Long completedByUserId) {
+        this.status = MovementStatus.COMPLETADO;
+        this.completedByUserId = completedByUserId;
+        this.realizationDate = OffsetDateTime.now();
+    }
+
+    // Mantener compatibilidad con código existente
+    @Column(name = "id_usuario")
+    private Long idUser;
 
 }

@@ -90,4 +90,14 @@ public class Product {
     public void markAsNotReady() {
         this.isReady = Boolean.FALSE;
     }
+
+    public List<ProductPhase> getProductPhasesWithOutEnvasado() {
+        List<ProductPhase> filteredPhases = new ArrayList<>();
+        for (ProductPhase pp : this.phases) {
+            if (pp.getPhase() != Phase.ENVASADO) {
+                filteredPhases.add(pp);
+            }
+        }
+        return filteredPhases;
+    }
 }

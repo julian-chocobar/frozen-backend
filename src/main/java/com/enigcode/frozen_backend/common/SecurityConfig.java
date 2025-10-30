@@ -50,7 +50,8 @@ public class SecurityConfig {
                                                                 "/auth/validate",
                                                                 "/v3/api-docs/**",
                                                                 "/swagger-ui/**",
-                                                                "/swagger-ui.html")
+                                                                "/swagger-ui.html",
+                                                                "/test/**")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                                 .anyRequest().authenticated())
@@ -81,17 +82,56 @@ public class SecurityConfig {
                 return new SessionRegistryImpl();
         }
 
+        /**
+         * Configuración unificada de CORS
+         * Incluye soporte específico para SSE (Server-Sent Events)
+         */
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration c = new CorsConfiguration();
-                c.setAllowCredentials(true);
-                c.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001", "https://frozen-frontend-kappa.vercel.app"));
-                c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-                c.setAllowedHeaders(List.of("*")); // Permitir todos los headers
-                c.setExposedHeaders(List.of("Set-Cookie", "Authorization")); // Exponer cookies
-                c.setMaxAge(3600L); // Cache preflight por 1 hora
-                UrlBasedCorsConfigurationSource s = new UrlBasedCorsConfigurationSource();
-                s.registerCorsConfiguration("/**", c);
-                return s;
+                CorsConfiguration configuration = new CorsConfiguration();
+
+                // Orígenes permitidos - usar patrones para más flexibilidad
+                configuration.setAllowedOriginPatterns(List.of(
+                                "http://localhost:3000",
+                                "http://localhost:3001",
+                                "http://127.0.0.1:3000",
+                                "https://*.vercel.app",
+                                "https://*.netlify.app",
+                                "https://frozen-frontend-kappa.vercel.app"));
+
+                // Métodos HTTP permitidos
+                configuration.setAllowedMethods(List.of(
+                                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+
+                // Headers permitidos - importante para SSE
+                configuration.setAllowedHeaders(List.of(
+                                "Authorization",
+                                "Cache-Control",
+                                "Content-Type",
+                                "Accept",
+                                "X-Requested-With",
+                                "Access-Control-Request-Method",
+                                "Access-Control-Request-Headers",
+                                "Origin"));
+
+                // Headers expuestos - necesarios para SSE y autenticación
+                configuration.setExposedHeaders(List.of(
+                                "Set-Cookie",
+                                "Authorization",
+                                "Access-Control-Allow-Origin",
+                                "Access-Control-Allow-Credentials",
+                                "Cache-Control",
+                                "Content-Type"));
+
+                // Permitir credenciales (necesario para SSE y autenticación basada en cookies)
+                configuration.setAllowCredentials(true);
+
+                // Tiempo de cache para preflight requests
+                configuration.setMaxAge(3600L);
+
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+
+                return source;
         }
 }

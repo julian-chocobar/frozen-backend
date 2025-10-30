@@ -47,4 +47,22 @@ public interface NotificationService {
      * Este método será llamado desde ProductionOrderService
      */
     void createProductionOrderNotification(Long orderId, String productName);
+
+    /**
+     * Crea notificación automática para movimientos pendientes
+     * Este método será llamado desde MovementService cuando se crea un movimiento
+     */
+    void createPendingMovementNotification(Long movementId, String materialName, String movementType);
+
+    /**
+     * Crea notificación automática para alerta de stock bajo
+     * Este método será llamado desde MovementService cuando un egreso deje stock
+     * bajo el umbral
+     */
+    void createLowStockNotification(Long materialId, String materialName, Double currentStock, Double threshold);
+
+    /**
+     * Limpia las notificaciones automáticamente según la configuración
+     */
+    void cleanupOldNotifications();
 }

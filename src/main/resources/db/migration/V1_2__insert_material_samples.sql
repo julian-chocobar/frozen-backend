@@ -53,39 +53,39 @@ VALUES
 -- Fases estándar: MOLIENDA, MACERACION, FILTRACION, COCCION, FERMENTACION, MADURACION, GASIFICACION, ENVASADO
 -- Para no alcohólico se inserta DESALCOHOLIZACION entre FERMENTACION y MADURACION
 
--- Producto 1: Pale Ale (alcohólica)
+-- Producto 1: Pale Ale (alcohólica) - Valores realistas de cervecería
 INSERT INTO product_phases (id, creation_date, estimated_hours, input, is_ready, output, output_unit, phase, id_product) VALUES
-(1, now()-interval '119 days', 1.0,   240.000, TRUE, 237.600, 'KG', 'MOLIENDA', 1),
-(2, now()-interval '119 days', 4.0,  1200.000, TRUE,1000.000, 'LT','MACERACION', 1),
-(3, now()-interval '119 days', 1.0,  1000.000, TRUE, 995.000, 'LT','FILTRACION', 1),
-(4, now()-interval '119 days', 1.5,   995.000, TRUE, 980.000, 'LT','COCCION', 1),
-(5, now()-interval '118 days',168.0,  980.000, TRUE, 970.000, 'LT','FERMENTACION', 1),
-(6, now()-interval '111 days',72.0,   970.000, TRUE, 960.000, 'LT','MADURACION', 1),
-(7, now()-interval '109 days', 1.0,   960.000, TRUE, 960.000, 'LT','GASIFICACION', 1),
-(8, now()-interval '110 days', 6.0,   960.000, TRUE, 960.000, 'LT','ENVASADO', 1);
+(1, now()-interval '119 days', 2.0,   240.000, TRUE, 238.000, 'KG', 'MOLIENDA', 1),        -- 2h, pérdida 0.8%
+(2, now()-interval '119 days', 5.0,  1200.000, TRUE,1050.000, 'LT','MACERACION', 1),       -- 5h, concentración del mosto
+(3, now()-interval '119 days', 2.0,  1050.000, TRUE,1000.000, 'LT','FILTRACION', 1),       -- 2h, pérdida por filtrado 5%
+(4, now()-interval '119 days', 2.5,  1000.000, TRUE, 950.000, 'LT','COCCION', 1),          -- 2.5h, evaporación 5%
+(5, now()-interval '118 days',168.0,  950.000, TRUE, 920.000, 'LT','FERMENTACION', 1),     -- 7 días, pérdida por sedimento
+(6, now()-interval '111 days',240.0,  920.000, TRUE, 900.000, 'LT','MADURACION', 1),       -- 10 días, clarificación
+(7, now()-interval '109 days', 3.0,   900.000, TRUE, 900.000, 'LT','GASIFICACION', 1),     -- 3h, adición CO2
+(8, now()-interval '110 days', 8.0,   900.000, TRUE, 895.000, 'LT','ENVASADO', 1);         -- 8h, pérdida minimal
 
--- Producto 2: Stout Intensa (alcohólica)
+-- Producto 2: Stout Intensa (alcohólica) - Proceso más complejo
 INSERT INTO product_phases (id, creation_date, estimated_hours, input, is_ready, output, output_unit, phase, id_product) VALUES
-(9,  now()-interval '109 days', 1.0,   220.000, TRUE, 217.800, 'KG','MOLIENDA', 2),
-(10, now()-interval '109 days', 4.5,   980.000, TRUE, 800.000, 'LT','MACERACION', 2),
-(11, now()-interval '108 days', 1.0,   800.000, TRUE, 796.000, 'LT','FILTRACION', 2),
-(12, now()-interval '109 days', 1.0,   796.000, TRUE, 788.000, 'LT','COCCION', 2),
-(13, now()-interval '108 days',168.0,  788.000, TRUE, 780.000, 'LT','FERMENTACION', 2),
-(14, now()-interval '105 days',96.0,   780.000, TRUE, 775.000, 'LT','MADURACION', 2),
-(15, now()-interval '104 days', 1.0,   775.000, TRUE, 775.000, 'LT','GASIFICACION', 2),
-(16, now()-interval '104 days', 8.0,   775.000, TRUE, 775.000, 'LT','ENVASADO', 2);
+(9,  now()-interval '109 days', 2.5,   220.000, TRUE, 218.000, 'KG','MOLIENDA', 2),        -- 2.5h, molienda más fina
+(10, now()-interval '109 days', 6.0,   980.000, TRUE, 850.000, 'LT','MACERACION', 2),      -- 6h, maceración compleja
+(11, now()-interval '108 days', 2.5,   850.000, TRUE, 800.000, 'LT','FILTRACION', 2),      -- 2.5h, filtrado más lento
+(12, now()-interval '109 days', 3.0,   800.000, TRUE, 750.000, 'LT','COCCION', 2),         -- 3h, más evaporación
+(13, now()-interval '108 days',192.0,  750.000, TRUE, 720.000, 'LT','FERMENTACION', 2),    -- 8 días, fermentación lenta
+(14, now()-interval '105 days',336.0,  720.000, TRUE, 705.000, 'LT','MADURACION', 2),      -- 14 días, maduración larga
+(15, now()-interval '104 days', 3.0,   705.000, TRUE, 705.000, 'LT','GASIFICACION', 2),    -- 3h, carbonatación
+(16, now()-interval '104 days',10.0,   705.000, TRUE, 700.000, 'LT','ENVASADO', 2);        -- 10h, proceso más lento
 
--- Producto 3: Pale Sin Alcohol (no alcohólica) - incluye DESALCOHOLIZACION
+-- Producto 3: Pale Sin Alcohol (no alcohólica) - Incluye proceso de desalcoholización
 INSERT INTO product_phases (id, creation_date, estimated_hours, input, is_ready, output, output_unit, phase, id_product) VALUES
-(17, now()-interval '89 days', 1.0,   225.000, TRUE, 222.750, 'KG', 'MOLIENDA', 3),
-(18, now()-interval '89 days', 4.0,  1200.000, TRUE,1000.000, 'LT','MACERACION', 3),
-(19, now()-interval '89 days', 1.0,  1000.000, TRUE, 995.000, 'LT','FILTRACION', 3),
-(20, now()-interval '89 days', 1.0,   995.000, TRUE, 980.000, 'LT','COCCION', 3),
-(21, now()-interval '88 days',168.0,  980.000, TRUE, 975.000, 'LT','FERMENTACION', 3),
-(22, now()-interval '80 days', 24.0,  975.000, TRUE, 975.000, 'LT','DESALCOHOLIZACION', 3),
-(23, now()-interval '79 days', 48.0,  975.000, TRUE, 970.000, 'LT','MADURACION', 3),
-(24, now()-interval '77 days', 1.0,   970.000, TRUE, 970.000, 'LT','GASIFICACION', 3),
-(25, now()-interval '78 days', 6.0,   970.000, TRUE, 970.000, 'LT','ENVASADO', 3);
+(17, now()-interval '89 days', 2.0,   225.000, TRUE, 223.000, 'KG', 'MOLIENDA', 3),        -- 2h, molienda estándar
+(18, now()-interval '89 days', 5.0,  1200.000, TRUE,1050.000, 'LT','MACERACION', 3),       -- 5h, maceración normal
+(19, now()-interval '89 days', 2.0,  1050.000, TRUE,1000.000, 'LT','FILTRACION', 3),       -- 2h, filtrado estándar
+(20, now()-interval '89 days', 2.5,  1000.000, TRUE, 950.000, 'LT','COCCION', 3),          -- 2.5h, cocción normal
+(21, now()-interval '88 days',144.0,  950.000, TRUE, 920.000, 'LT','FERMENTACION', 3),     -- 6 días, fermentación corta
+(22, now()-interval '80 days', 48.0,  920.000, TRUE, 900.000, 'LT','DESALCOHOLIZACION', 3), -- 48h, proceso de desalco
+(23, now()-interval '79 days',120.0,  900.000, TRUE, 890.000, 'LT','MADURACION', 3),       -- 5 días, maduración
+(24, now()-interval '77 days', 4.0,   890.000, TRUE, 890.000, 'LT','GASIFICACION', 3),     -- 4h, carbonatación suave
+(25, now()-interval '78 days', 8.0,   890.000, TRUE, 885.000, 'LT','ENVASADO', 3);         -- 8h, envasado cuidadoso
 
 -- ===========================
 -- 4) PACKAGINGS (unit_measurement = 'LT' por pedido tuyo)
