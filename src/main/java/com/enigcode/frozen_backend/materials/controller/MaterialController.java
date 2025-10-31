@@ -16,6 +16,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 
@@ -31,6 +33,7 @@ public class MaterialController {
 
         @Operation(summary = "Registrar  material", description = "Registra un nuevo material en base de datos asignandole un codigo unico")
         @PostMapping
+        @PreAuthorize("hasRole('SUPERVISOR_DE_ALMACEN')")
         public ResponseEntity<MaterialResponseDTO> createMaterial(
                         @Valid @RequestBody MaterialCreateDTO materialCreateDTO) {
                 MaterialResponseDTO materialResponseDTO = materialService.createMaterial(materialCreateDTO);
@@ -39,6 +42,7 @@ public class MaterialController {
 
         @Operation(summary = "Modificación de material", description = "Permite modificar ciertos campos de un material registrado")
         @PatchMapping("/{id}")
+        @PreAuthorize("hasRole('SUPERVISOR_DE_ALMACEN')")
         public ResponseEntity<MaterialResponseDTO> updateMaterial(@PathVariable Long id,
                         @Valid @RequestBody MaterialUpdateDTO materialUpdateDTO) {
                 MaterialResponseDTO materialResponseDTO = materialService.updateMaterial(id, materialUpdateDTO);
@@ -48,6 +52,7 @@ public class MaterialController {
 
         @Operation(summary = "Cambiar estado material", description = "Cambia el estado del material al contrario (activo, inactivo)")
         @PatchMapping("/{id}/toggle-active")
+        @PreAuthorize("hasRole('SUPERVISOR_DE_ALMACEN')")
         public ResponseEntity<MaterialResponseDTO> toggleActive(@PathVariable Long id) {
                 MaterialResponseDTO materialResponseDTO = materialService.toggleActive(id);
 

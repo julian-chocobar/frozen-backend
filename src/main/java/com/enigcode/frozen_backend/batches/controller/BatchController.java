@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,27 +27,26 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class BatchController {
 
-    final BatchService batchService;
+        final BatchService batchService;
 
-    @Operation(
-            summary = "Recibir informacion sobre los lotes",
-            description = "Devuelve la informacion sobre un lote especificado segun id"
-    )
-    @GetMapping("/{id}")
-    public ResponseEntity<BatchResponseDTO> getBatch(@PathVariable Long id){
-        BatchResponseDTO dto = batchService.getBatch(id);
+        @Operation(summary = "Recibir informacion sobre los lotes", description = "Devuelve la informacion sobre un lote especificado segun id")
+        @GetMapping("/{id}")
+        @PreAuthorize("hasRole('OPERARIO_DE_PRODUCCION') or hasRole('SUPERVISOR_DE_PRODUCCION') or hasRole('GERENTE_DE_PLANTA')")
+        public ResponseEntity<BatchResponseDTO> getBatch(@PathVariable Long id) {
+                BatchResponseDTO dto = batchService.getBatch(id);
 
-        return new ResponseEntity<>(dto, HttpStatus.OK);
-    }
+                return new ResponseEntity<>(dto, HttpStatus.OK);
+        }
 
-    @Operation(summary = "Obtener movimientos", description = "Obtiene todos los movimientos con paginación y filtros")
+        @Operation(summary = "Obtener lotes", description = "Obtiene todos los lotes con paginación y filtros")
         @GetMapping
+        @PreAuthorize("hasRole('OPERARIO_DE_PRODUCCION') or hasRole('SUPERVISOR_DE_PRODUCCION') or hasRole('GERENTE_DE_PLANTA')")
         public ResponseEntity<Map<String, Object>> getBatches(
-                BatchFilterDTO filterDTO,
-                @PageableDefault(size = 10, sort = "creationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+                        BatchFilterDTO filterDTO,
+                        @PageableDefault(size = 10, sort = "creationDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
                 Page<BatchResponseDTO> pageResponse = batchService.findAll(filterDTO, pageable);
-                        
+
                 Map<String, Object> response = new HashMap<>();
                 response.put("content", pageResponse.getContent());
                 response.put("currentPage", pageResponse.getNumber());

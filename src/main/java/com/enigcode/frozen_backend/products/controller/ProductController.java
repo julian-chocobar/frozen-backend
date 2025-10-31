@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,6 +30,7 @@ public class ProductController {
 
     @Operation(summary = "Crear un producto", description = "Crea un producto no listo para orden, se le asignan fases pero requieren completarse")
     @PostMapping
+    @PreAuthorize("hasRole('SUPERVISOR_DE_PRODUCCION')")
     public ResponseEntity<ProductResponseDTO> createProduct(@Valid @RequestBody ProductCreateDTO productCreateDTO) {
         ProductResponseDTO productResponseDTO = productService.createProduct(productCreateDTO);
 
@@ -37,6 +39,7 @@ public class ProductController {
 
     @Operation(summary = "Marcar producto como Listo", description = "Cambia el estado del producto como ready haciendo que este disponible para produccion")
     @PatchMapping("/{id}/toogle-ready")
+    @PreAuthorize("hasRole('SUPERVISOR_DE_PRODUCCION')")
     public ResponseEntity<ProductResponseDTO> toogleReady(@PathVariable Long id) {
         ProductResponseDTO productResponseDTO = productService.toggleReady(id);
         return new ResponseEntity<>(productResponseDTO, HttpStatus.OK);
@@ -44,6 +47,7 @@ public class ProductController {
 
     @Operation(summary = "Alternar estado producto", description = "Alternar estado producto al contrario (activo, inactivo)")
     @PatchMapping("/{id}/toggle-active")
+    @PreAuthorize("hasRole('SUPERVISOR_DE_PRODUCCION')")
     public ResponseEntity<ProductResponseDTO> toggleProduct(@PathVariable Long id) {
         ProductResponseDTO productResponseDTO = productService.toggleActive(id);
 
@@ -52,6 +56,7 @@ public class ProductController {
 
     @Operation(summary = "Modificar producto", description = "Modificar ciertos cambios de un producto especifico")
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('SUPERVISOR_DE_PRODUCCION')")
     public ResponseEntity<ProductResponseDTO> updateProduct(@PathVariable Long id,
             @Valid @RequestBody ProductUpdateDTO productUpdateDTO) {
         ProductResponseDTO productResponseDTO = productService.updateProduct(id, productUpdateDTO);

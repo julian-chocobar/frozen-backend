@@ -18,6 +18,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,6 +32,7 @@ public class ProductionOrderController {
                         +
                         " espera de aprobación o rechazo")
         @PostMapping
+        @PreAuthorize("hasRole('SUPERVISOR_DE_PRODUCCION')")
         public ResponseEntity<ProductionOrderResponseDTO> createProductionOrder(
                         @Valid @RequestBody ProductionOrderCreateDTO productionOrderCreateDTO) {
                 ProductionOrderResponseDTO productionOrderResponseDTO = productionOrderService
@@ -41,6 +43,7 @@ public class ProductionOrderController {
 
         @Operation(summary = "Aprobación de orden de produccion", description = "Un usuario con cargo determinado puede aprobar una orden de produccion")
         @PatchMapping("/{id}/approve")
+        @PreAuthorize("hasRole('GERENTE_DE_PLANTA')")
         public ResponseEntity<ProductionOrderResponseDTO> approveOrder(@PathVariable Long id) {
                 ProductionOrderResponseDTO dto = productionOrderService.approveOrder(id);
 
@@ -51,6 +54,7 @@ public class ProductionOrderController {
                         +
                         "de ser aprobada o rechazada")
         @PatchMapping("/{id}/cancel")
+        @PreAuthorize("hasRole('SUPERVISOR_DE_PRODUCCION')")
         public ResponseEntity<ProductionOrderResponseDTO> cancelOrder(@PathVariable Long id) {
                 ProductionOrderResponseDTO dto = productionOrderService.returnOrder(id, OrderStatus.CANCELADA);
 
@@ -59,13 +63,14 @@ public class ProductionOrderController {
 
         @Operation(summary = "Rechazo de orden de produccion", description = "Se puede rechazar una orden de produccion si tenes un rol especifico")
         @PatchMapping("/{id}/reject")
+        @PreAuthorize("hasRole('GERENTE_DE_PLANTA')")
         public ResponseEntity<ProductionOrderResponseDTO> rejectOrder(@PathVariable Long id) {
                 ProductionOrderResponseDTO dto = productionOrderService.returnOrder(id, OrderStatus.RECHAZADA);
 
                 return new ResponseEntity<>(dto, HttpStatus.OK);
         }
 
-        @Operation(summary = "Obtener movimientos", description = "Obtiene todos los movimientos con paginación y filtros")
+        @Operation(summary = "Obtener ordenes de produccion", description = "Obtiene todos las ordenes de produccion con paginación y filtros")
         @GetMapping
         public ResponseEntity<Map<String, Object>> getProductionOrders(
                         ProductionOrderFilterDTO filterDTO,

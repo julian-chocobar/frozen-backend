@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,33 +31,27 @@ public class ProductPhaseController {
 
     final ProductPhaseService productPhaseService;
 
-    @Operation(
-            summary = "Modificar fase de produccion",
-            description = "Actualiza campos seleccionados de una fase de produccion"
-    )
+    @Operation(summary = "Modificar fase de produccion", description = "Actualiza campos seleccionados de una fase de produccion")
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('SUPERVISOR_DE_PRODUCCION')")
     public ResponseEntity<ProductPhaseResponseDTO> updateProductPhase(
             @PathVariable Long id,
             @Valid @RequestBody ProductPhaseUpdateDTO productPhaseUpdateDTO) {
-        ProductPhaseResponseDTO productPhaseResponseDTO = productPhaseService.updateProductPhase(id, productPhaseUpdateDTO);
+        ProductPhaseResponseDTO productPhaseResponseDTO = productPhaseService.updateProductPhase(id,
+                productPhaseUpdateDTO);
         return new ResponseEntity<>(productPhaseResponseDTO, HttpStatus.OK);
     }
 
-    @Operation(
-            summary = "Marcar producto como Listo",
-            description = "Cambia el estado del producto como ready haciendo que este disponible para produccion"
-    )
+    @Operation(summary = "Marcar producto como Listo", description = "Cambia el estado del producto como ready haciendo que este disponible para produccion")
     @PatchMapping("/{id}/toggle-ready")
-    public ResponseEntity<ProductPhaseResponseDTO> toggleReady(@PathVariable Long id){
+    @PreAuthorize("hasRole('SUPERVISOR_DE_PRODUCCION')")
+    public ResponseEntity<ProductPhaseResponseDTO> toggleReady(@PathVariable Long id) {
         ProductPhaseResponseDTO productPhaseResponseDTO = productPhaseService.toggleReady(id);
 
         return new ResponseEntity<>(productPhaseResponseDTO, HttpStatus.OK);
     }
 
-    @Operation(
-            summary = "Obtener fases de produccion",
-            description = "Obtiene todas las fases de produccion con paginacion"
-    )
+    @Operation(summary = "Obtener fases de produccion", description = "Obtiene todas las fases de produccion con paginacion")
     @GetMapping
     public ResponseEntity<Map<String, Object>> getProductPhases(
             @PageableDefault(size = 10, sort = "creationDate", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -76,20 +71,14 @@ public class ProductPhaseController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(
-            summary = "Obtener detalle de una fase",
-            description = "Obtiene la informacion detallada de una fase de produccion especifica"
-    )
+    @Operation(summary = "Obtener detalle de una fase", description = "Obtiene la informacion detallada de una fase de produccion especifica")
     @GetMapping("/{id}")
     public ResponseEntity<ProductPhaseResponseDTO> getProductPhase(@PathVariable Long id) {
         ProductPhaseResponseDTO productPhaseResponseDTO = productPhaseService.getProductPhase(id);
         return new ResponseEntity<>(productPhaseResponseDTO, HttpStatus.OK);
     }
 
-    @Operation(
-            summary = "Obtener fases por producto",
-            description = "Obtiene todas las fases de produccion asociadas a un producto especifico"
-    )
+    @Operation(summary = "Obtener fases por producto", description = "Obtiene todas las fases de produccion asociadas a un producto especifico")
     @GetMapping("/by-product/{productId}")
     public ResponseEntity<List<ProductPhaseResponseDTO>> getProductPhasesByProduct(@PathVariable Long productId) {
         List<ProductPhaseResponseDTO> phases = productPhaseService.getByProduct(productId);
