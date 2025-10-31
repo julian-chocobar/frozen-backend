@@ -24,4 +24,9 @@ public class MovementCreateDTO {
 
     @Size(max = 255, message = "El motivo no puede tener mas de 255 caracteres")
     private String reason;
+
+    @Size(max = 255, message = "La ubicación no puede tener mas de 255 caracteres")
+    @NotNull(message = "El movimiento debe tener una ubicación de destino")
+    private String location;
+
 }

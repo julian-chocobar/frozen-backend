@@ -67,9 +67,11 @@ public class MovementServiceImpl implements MovementService {
                                 .type(movementCreateDTO.getType())
                                 .stock(movementCreateDTO.getStock())
                                 .reason(movementCreateDTO.getReason())
+                                .location(movementCreateDTO.getLocation())
                                 .createdByUserId(userService.getCurrentUser().getId())
                                 .status(MovementStatus.PENDIENTE)
                                 .material(material)
+
                                 .creationDate(OffsetDateTime.now(ZoneOffset.UTC))
                                 .build();
 

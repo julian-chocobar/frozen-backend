@@ -22,6 +22,7 @@ public interface MaterialMapper {
                         +
                         "&& material.getStock() <= material.getThreshold())")
         @Mapping(target = "totalStock", expression = "java(material.getStock() + material.getReservedStock())")
+        @Mapping(source = "stock", target = "availableStock")
         MaterialResponseDTO toResponseDto(Material material);
 
         @Mapping(target = "stock", source = "stock", defaultValue = "0.0")

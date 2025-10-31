@@ -25,4 +25,5 @@ public class MovementResponseDTO {
     private UnitMeasurement unitMeasurement;
     private String materialType;
     private String materialName;
+    private String location;
 }

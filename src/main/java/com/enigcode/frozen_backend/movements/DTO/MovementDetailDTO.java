@@ -27,4 +27,5 @@ public class MovementDetailDTO {
     private String materialId;
     private String materialName;
     private String reason;
+    private String location;
 }
