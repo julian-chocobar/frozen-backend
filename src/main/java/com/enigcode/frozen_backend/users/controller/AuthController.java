@@ -21,6 +21,7 @@ import com.enigcode.frozen_backend.users.DTO.AuthResponseDTO;
 import com.enigcode.frozen_backend.users.DTO.LoginRequestDTO;
 import com.enigcode.frozen_backend.users.DTO.UserDetailDTO;
 import com.enigcode.frozen_backend.users.service.UserService;
+import com.enigcode.frozen_backend.notifications.service.SseNotificationService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,6 +38,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final LoginAttemptService loginAttemptService;
+    private final SseNotificationService sseNotificationService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO requestBody,
@@ -84,6 +86,14 @@ public class AuthController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null) {
+            String username = authentication.getName();
+            // Intentar limpiar el cache SSE solo si el usuario ya no tiene conexiones
+            // activas
+            try {
+                sseNotificationService.closeAllConnectionsForUsername(username);
+                sseNotificationService.removeUserFromCacheIfNoActiveConnections(username);
+            } catch (Exception ignored) {
+            }
             // Limpiar el contexto de seguridad
             SecurityContextHolder.clearContext();
 

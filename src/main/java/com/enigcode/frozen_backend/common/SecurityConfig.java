@@ -47,6 +47,7 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(
                                                                 "/auth/login",
+                                                                "/auth/logout",
                                                                 "/auth/validate",
                                                                 "/v3/api-docs/**",
                                                                 "/swagger-ui/**",
@@ -55,8 +56,14 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                                 .anyRequest().authenticated())
-                                .logout(l -> l.logoutUrl("/auth/logout").deleteCookies("JSESSIONID")
-                                                .invalidateHttpSession(true));
+                                .logout(logout -> logout
+                                                .logoutUrl("/api/auth/logout")
+                                                .deleteCookies("JSESSIONID")
+                                                .invalidateHttpSession(true)
+                                                .clearAuthentication(true)
+                                                .logoutSuccessHandler((request, response, authentication) -> {
+                                                        response.setStatus(200);
+                                                }));
                 return http.build();
         }
 

@@ -82,6 +82,9 @@ public class Movement {
     @Size(max = 255)
     private String reason;
 
+    @Size(max = 255)
+    private String location;
+
     /**
      * Marca el movimiento como completado por un usuario específico
      */

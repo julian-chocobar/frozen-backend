@@ -22,9 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-/**
- * Implementación del servicio de notificaciones
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j

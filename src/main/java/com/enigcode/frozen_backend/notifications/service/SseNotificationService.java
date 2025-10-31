@@ -3,6 +3,7 @@ package com.enigcode.frozen_backend.notifications.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -23,6 +24,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class SseNotificationService {
 
     private static final Long SSE_TIMEOUT = 30 * 60 * 1000L; // 30 minutos
+    private static final int MAX_CONNECTIONS_PER_USER = 2;
+    private static final long HEARTBEAT_INTERVAL_MS = 30_000L; // 30s
 
     // Map para almacenar conexiones SSE por usuario
     private final Map<Long, Set<SseEmitter>> userConnections = new ConcurrentHashMap<>();
@@ -62,13 +65,41 @@ public class SseNotificationService {
     }
 
     /**
+     * Remueve el usuario del cache solo si no tiene conexiones SSE activas
+     */
+    public void removeUserFromCacheIfNoActiveConnections(String username) {
+        Long userId = usernameToUserIdCache.get(username);
+        if (userId == null) {
+            return;
+        }
+        Set<SseEmitter> connections = userConnections.get(userId);
+        if (connections == null || connections.isEmpty()) {
+            usernameToUserIdCache.remove(username);
+            log.debug("Usuario {} removido del cache SSE (sin conexiones activas)", username);
+        } else {
+            log.debug("Usuario {} no removido del cache SSE ({} conexiones activas)", username, connections.size());
+        }
+    }
+
+    /**
      * Crea una nueva conexión SSE para un usuario
      */
     public SseEmitter createConnection(Long userId) {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 
-        // Agregar el emitter al conjunto de conexiones del usuario
-        userConnections.computeIfAbsent(userId, k -> new CopyOnWriteArraySet<>()).add(emitter);
+        // Agregar el emitter al conjunto de conexiones del usuario con límite
+        Set<SseEmitter> set = userConnections.computeIfAbsent(userId, k -> new CopyOnWriteArraySet<>());
+        while (set.size() >= MAX_CONNECTIONS_PER_USER) {
+            SseEmitter old = set.iterator().hasNext() ? set.iterator().next() : null;
+            if (old == null)
+                break;
+            set.remove(old);
+            try {
+                old.complete();
+            } catch (Exception ignored) {
+            }
+        }
+        set.add(emitter);
 
         // Configurar callbacks para limpiar cuando la conexión se cierre o expire
         emitter.onCompletion(() -> {
@@ -103,6 +134,31 @@ public class SseNotificationService {
             removeConnection(userId, emitter);
         }
         return emitter;
+    }
+
+    /**
+     * Envía heartbeats periódicos para mantener viva la conexión y detectar
+     * clientes caídos.
+     * Si el envío falla, se remueve la conexión.
+     */
+    @Scheduled(fixedRate = HEARTBEAT_INTERVAL_MS)
+    public void sendHeartbeats() {
+        if (userConnections.isEmpty())
+            return;
+        userConnections.forEach((userId, connections) -> {
+            if (connections == null || connections.isEmpty())
+                return;
+            // Copia para evitar ConcurrentModification
+            Set<SseEmitter> snapshot = new CopyOnWriteArraySet<>(connections);
+            snapshot.forEach(emitter -> {
+                try {
+                    emitter.send(SseEmitter.event().name("heartbeat").comment("ping"));
+                } catch (IOException e) {
+                    handleSseConnectionError(userId, e, "heartbeat");
+                    removeConnection(userId, emitter);
+                }
+            });
+        });
     }
 
     /**
@@ -198,6 +254,34 @@ public class SseNotificationService {
                 userConnections.remove(userId);
                 log.debug("Todas las conexiones SSE removidas para usuario: {}", userId);
             }
+        }
+    }
+
+    /**
+     * Cierra y limpia todas las conexiones activas para un usuario especificado por
+     * ID.
+     */
+    public void closeAllConnectionsForUser(Long userId) {
+        Set<SseEmitter> connections = userConnections.remove(userId);
+        if (connections != null) {
+            connections.forEach(emitter -> {
+                try {
+                    emitter.complete();
+                } catch (Exception ignored) {
+                }
+            });
+            log.debug("Conexiones SSE cerradas para usuario: {}", userId);
+        }
+    }
+
+    /**
+     * Cierra y limpia todas las conexiones activas para un usuario especificado por
+     * username.
+     */
+    public void closeAllConnectionsForUsername(String username) {
+        Long userId = usernameToUserIdCache.get(username);
+        if (userId != null) {
+            closeAllConnectionsForUser(userId);
         }
     }
 

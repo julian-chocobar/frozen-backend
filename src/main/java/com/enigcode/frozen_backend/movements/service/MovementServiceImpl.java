@@ -71,7 +71,6 @@ public class MovementServiceImpl implements MovementService {
                                 .createdByUserId(userService.getCurrentUser().getId())
                                 .status(MovementStatus.PENDIENTE)
                                 .material(material)
-
                                 .creationDate(OffsetDateTime.now(ZoneOffset.UTC))
                                 .build();
 
