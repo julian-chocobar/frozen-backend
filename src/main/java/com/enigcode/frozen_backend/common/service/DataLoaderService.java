@@ -139,10 +139,11 @@ public class DataLoaderService {
                                 loadRecipes(products);
                                 log.info("Recipes cargadas exitosamente.");
 
-                                // Paso 6: Marcar productos como ready después de tener recipes
-                                log.info("Marcando productos como ready...");
-                                markProductsAsReady(products);
-                                log.info("Productos marcados como ready exitosamente.");
+                                // Paso 6: Marcar todas las fases como listas (esto marcará automáticamente los
+                                // productos como listos)
+                                log.info("Marcando todas las fases de productos como listas...");
+                                markAllPhasesAsReady(products);
+                                log.info("Todas las fases marcadas como listas y productos marcados como listos exitosamente.");
 
                                 // Paso 7: Crear packagings
                                 log.info("Iniciando carga de packagings...");
@@ -155,7 +156,7 @@ public class DataLoaderService {
                                 log.info("SystemConfiguration creada/actualizada exitosamente.");
 
                                 /*
-                                 * // Paso 7: Crear sectores
+                                 * // Paso 8: Crear sectores
                                  * log.info("Iniciando carga de sectores...");
                                  * loadSectors();
                                  * log.info("Sectores cargados exitosamente.");
@@ -178,7 +179,7 @@ public class DataLoaderService {
                         // Admin
                         UserCreateDTO admin = UserCreateDTO.builder()
                                         .username("admin")
-                                        .password("Admin123")
+                                        .password("EnigCode123")
                                         .name("Administrador")
                                         .email("admin@frozen.com")
                                         .phoneNumber("1234567890")
@@ -190,7 +191,7 @@ public class DataLoaderService {
                         // Gerente General
                         UserCreateDTO gerenteGeneral = UserCreateDTO.builder()
                                         .username("gerentegeneral")
-                                        .password("GerenteGen123")
+                                        .password("EnigCode123")
                                         .name("Laura Gerente")
                                         .email("gerentegeneral@frozen.com")
                                         .phoneNumber("1234567894")
@@ -202,7 +203,7 @@ public class DataLoaderService {
                         // Gerente de Planta
                         UserCreateDTO gerentePlanta = UserCreateDTO.builder()
                                         .username("gerenteplanta")
-                                        .password("GerentePlanta123")
+                                        .password("EnigCode123")
                                         .name("Carlos Planta")
                                         .email("gerenteplanta@frozen.com")
                                         .phoneNumber("1234567895")
@@ -214,7 +215,7 @@ public class DataLoaderService {
                         // Supervisor de Producción
                         UserCreateDTO supervisorProduccion = UserCreateDTO.builder()
                                         .username("supervisorproduccion")
-                                        .password("SupProd123")
+                                        .password("EnigCode123")
                                         .name("Ana Producción")
                                         .email("supervisorproduccion@frozen.com")
                                         .phoneNumber("1234567896")
@@ -226,7 +227,7 @@ public class DataLoaderService {
                         // Supervisor de Calidad
                         UserCreateDTO supervisorCalidad = UserCreateDTO.builder()
                                         .username("supervisorcalidad")
-                                        .password("SupCal123")
+                                        .password("EnigCode123")
                                         .name("Miguel Calidad")
                                         .email("supervisorcalidad@frozen.com")
                                         .phoneNumber("1234567897")
@@ -238,7 +239,7 @@ public class DataLoaderService {
                         // Supervisor de Almacén
                         UserCreateDTO supervisorAlmacen = UserCreateDTO.builder()
                                         .username("supervisoralmacen")
-                                        .password("SupAlmacen123")
+                                        .password("EnigCode123")
                                         .name("Juan Supervisor Almacen")
                                         .email("supervisoralmacen@frozen.com")
                                         .phoneNumber("1234567891")
@@ -250,7 +251,7 @@ public class DataLoaderService {
                         // Operario de Producción
                         UserCreateDTO operarioProduccion = UserCreateDTO.builder()
                                         .username("operarioproduccion")
-                                        .password("OperarioProd123")
+                                        .password("EnigCode123")
                                         .name("Luis Operario")
                                         .email("operarioproduccion@frozen.com")
                                         .phoneNumber("1234567896")
@@ -262,7 +263,7 @@ public class DataLoaderService {
                         // Operario de Calidad
                         UserCreateDTO operarioCalidad = UserCreateDTO.builder()
                                         .username("operariocalidad")
-                                        .password("OperarioCal123")
+                                        .password("EnigCode123")
                                         .name("Sofía Operaria")
                                         .email("operariocalidad@frozen.com")
                                         .phoneNumber("1234567897")
@@ -274,7 +275,7 @@ public class DataLoaderService {
                         // Operario de Almacén
                         UserCreateDTO operarioAlmacen = UserCreateDTO.builder()
                                         .username("operarioalmacen")
-                                        .password("OperarioAlmacen123")
+                                        .password("EnigCode123")
                                         .name("Pedro Operario")
                                         .email("operarioalmacen@frozen.com")
                                         .phoneNumber("1234567892")
@@ -843,22 +844,6 @@ public class DataLoaderService {
                 }
         }
 
-        private void markProductsAsReady(List<ProductResponseDTO> products) {
-                log.info("Marcando productos como ready después de tener recipes...");
-
-                for (ProductResponseDTO product : products) {
-                        try {
-                                productService.toggleReady(product.getId());
-                                log.info("Producto {} marcado como ready", product.getName());
-                        } catch (Exception e) {
-                                log.warn("No se pudo marcar el producto {} como ready: {}", product.getName(),
-                                                e.getMessage());
-                        }
-                }
-
-                log.info("Productos marcados como ready.");
-        }
-
         private void loadPackagings() {
                 if (packagingRepository.count() == 0) {
                         log.info("Cargando empaques de ejemplo...");
@@ -947,6 +932,41 @@ public class DataLoaderService {
 
                         log.info("Sectores cargados.");
                 }
+        }
+
+        private void markAllPhasesAsReady(List<ProductResponseDTO> products) {
+                log.info("Marcando todas las fases de productos como listas...");
+
+                for (ProductResponseDTO product : products) {
+                        try {
+                                List<ProductPhaseResponseDTO> phases = productPhaseService
+                                                .getByProduct(product.getId());
+
+                                for (ProductPhaseResponseDTO phase : phases) {
+                                        try {
+                                                // Solo marcar como listo si no está ya listo
+                                                if (!phase.getIsReady()) {
+                                                        productPhaseService.toggleReady(phase.getId());
+                                                        log.debug("Fase {} del producto {} marcada como lista",
+                                                                        phase.getPhase().name(), product.getName());
+                                                }
+                                        } catch (Exception e) {
+                                                log.warn("No se pudo marcar como lista la fase {} del producto {}: {}",
+                                                                phase.getPhase().name(), product.getName(),
+                                                                e.getMessage());
+                                        }
+                                }
+
+                                log.info("Producto {} procesado - todas sus fases han sido marcadas como listas",
+                                                product.getName());
+
+                        } catch (Exception e) {
+                                log.error("Error procesando fases del producto {}: {}", product.getName(),
+                                                e.getMessage());
+                        }
+                }
+
+                log.info("Proceso de marcado de fases completado.");
         }
 
 }

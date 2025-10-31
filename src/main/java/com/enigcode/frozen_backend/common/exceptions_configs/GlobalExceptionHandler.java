@@ -166,8 +166,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
     }
 
-    // Nota: El manejo específico de InvalidCredentialsException se movió a un advice condicional
-    // para evitar errores de carga de clase durante los tests cuando dicha clase no está disponible
+    // Nota: El manejo específico de InvalidCredentialsException se movió a un
+    // advice condicional
+    // para evitar errores de carga de clase durante los tests cuando dicha clase no
+    // está disponible
 
     /**
      * Manejador general para cualquier otra excepción no prevista.

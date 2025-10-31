@@ -29,9 +29,19 @@ public class DateUtil {
 
         WorkingDay startWorkingDay = workingDays.get(startDay);
 
-        OffsetDateTime currentDate = startDate.withHour(startWorkingDay.getOpeningHour().getHour())
-                .withMinute(startWorkingDay.getOpeningHour().getMinute())
-                .withSecond(0).withNano(0);
+        // Si el día de inicio no es laborable, buscar el próximo día laborable
+        OffsetDateTime currentDate;
+        if (!startWorkingDay.getIsWorkingDay()) {
+            currentDate = nextWorkingDay(startDate.minusDays(1), workingDays);
+            WorkingDay nextWorking = workingDays.get(currentDate.getDayOfWeek());
+            currentDate = currentDate.withHour(nextWorking.getOpeningHour().getHour())
+                    .withMinute(nextWorking.getOpeningHour().getMinute())
+                    .withSecond(0).withNano(0);
+        } else {
+            currentDate = startDate.withHour(startWorkingDay.getOpeningHour().getHour())
+                    .withMinute(startWorkingDay.getOpeningHour().getMinute())
+                    .withSecond(0).withNano(0);
+        }
 
         for (ProductPhase phase : productPhases) {
             Double phaseHours = phase.getEstimatedHours();
@@ -109,6 +119,17 @@ public class DateUtil {
     private static OffsetDateTime alignStartWithWorkingHours(OffsetDateTime startDate,
             WorkingDay workingDay,
             Map<DayOfWeek, WorkingDay> workingDays) {
+
+        // Si no es un día laborable, buscar el próximo día laborable
+        if (!workingDay.getIsWorkingDay()) {
+            OffsetDateTime nextDay = nextWorkingDay(startDate.minusDays(1), workingDays);
+            WorkingDay nextWorking = workingDays.get(nextDay.getDayOfWeek());
+            return nextDay.withHour(nextWorking.getOpeningHour().getHour())
+                    .withMinute(nextWorking.getOpeningHour().getMinute())
+                    .withSecond(0)
+                    .withNano(0);
+        }
+
         LocalTime startTime = startDate.toLocalTime();
         LocalTime open = workingDay.getOpeningHour();
         LocalTime close = workingDay.getClosingHour();

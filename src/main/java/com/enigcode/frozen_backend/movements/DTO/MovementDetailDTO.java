@@ -19,6 +19,7 @@ public class MovementDetailDTO {
     private OffsetDateTime creationDate;
     private OffsetDateTime realizationDate;
     private Long createdByUserId;
+    private Long inProgressByUserId;
     private Long completedByUserId;
     private Double stock;
     private UnitMeasurement unitMeasurement;

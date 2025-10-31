@@ -119,6 +119,7 @@ public class MovementServiceImpl implements MovementService {
                         Movement movement = Movement.builder()
                                         .type(type)
                                         .stock(dto.getStock())
+                                        .status(MovementStatus.COMPLETADO)
                                         .reason("El stock se fue :" + type)
                                         .realizationDate(OffsetDateTime.now(ZoneOffset.UTC))
                                         .material(dto.getMaterial()).build();
@@ -151,6 +152,7 @@ public class MovementServiceImpl implements MovementService {
                         Movement movement = Movement.builder()
                                         .type(MovementType.EGRESO)
                                         .stock(dto.getStock())
+                                        .status(MovementStatus.COMPLETADO)
                                         .reason("El stock salio de reserva ")
                                         .realizationDate(OffsetDateTime.now(ZoneOffset.UTC))
                                         .material(dto.getMaterial()).build();
@@ -202,6 +204,17 @@ public class MovementServiceImpl implements MovementService {
                 if (movement.getStatus() != MovementStatus.PENDIENTE &&
                                 movement.getStatus() != MovementStatus.EN_PROCESO) {
                         throw new BadRequestException("El movimiento ya está completado o no es válido");
+                }
+
+                // Validar que si el movimiento está EN_PROCESO, solo el usuario que lo marcó
+                // puede completarlo
+                if (movement.getStatus() == MovementStatus.EN_PROCESO) {
+                        Long currentUserId = userService.getCurrentUser().getId();
+                        if (movement.getInProgressByUserId() != null
+                                        && !movement.getInProgressByUserId().equals(currentUserId)) {
+                                throw new BadRequestException(
+                                                "Solo el usuario que marcó este movimiento como 'En Proceso' puede completarlo");
+                        }
                 }
 
                 Material material = movement.getMaterial();
@@ -258,6 +271,15 @@ public class MovementServiceImpl implements MovementService {
                         throw new BadRequestException("Los movimientos completados no pueden cambiar de estado");
 
                 } else if (movement.getStatus() == MovementStatus.EN_PROCESO) {
+                        Long currentUserId = userService.getCurrentUser().getId();
+
+                        // Validar que solo el usuario que puso en proceso pueda revertir a pendiente
+                        if (movement.getInProgressByUserId() != null
+                                        && !movement.getInProgressByUserId().equals(currentUserId)) {
+                                throw new BadRequestException(
+                                                "Solo el usuario que marcó este movimiento como 'En Proceso' puede revertirlo a 'Pendiente'");
+                        }
+
                         movement.setStatus(MovementStatus.PENDIENTE);
                         movement.setInProgressByUserId(null);
                         movement.setTakenAt(null);
@@ -270,8 +292,18 @@ public class MovementServiceImpl implements MovementService {
                         return movementMapper.toResponseDto(savedMovement);
 
                 } else if (movement.getStatus() == MovementStatus.PENDIENTE) {
+                        Long currentUserId = userService.getCurrentUser().getId();
+
+                        // Validar que si ya hay un usuario en proceso, solo ese usuario pueda cambiar
+                        // el estado
+                        if (movement.getInProgressByUserId() != null
+                                        && !movement.getInProgressByUserId().equals(currentUserId)) {
+                                throw new BadRequestException(
+                                                "Este movimiento ya está siendo procesado por otro usuario");
+                        }
+
                         movement.setStatus(MovementStatus.EN_PROCESO);
-                        movement.setInProgressByUserId(userService.getCurrentUser().getId());
+                        movement.setInProgressByUserId(currentUserId);
                         movement.setTakenAt(OffsetDateTime.now(ZoneOffset.UTC).toLocalDateTime());
 
                         Movement savedMovement = movementRepository.save(movement);
