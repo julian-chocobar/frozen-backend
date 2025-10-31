@@ -1,8 +1,8 @@
 package com.enigcode.frozen_backend.system_configurations.DTO;
 
-import com.enigcode.frozen_backend.system_configurations.model.DayOfWeek;
 import lombok.*;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 @Getter

@@ -53,6 +53,9 @@ public class ProductPhase {
     @NotNull
     private Phase phase;
 
+    @Column(name = "phase_order")
+    private Integer phaseOrder;
+
     @DecimalMin(value = "0.0")
     private Double input;
 
@@ -83,5 +86,12 @@ public class ProductPhase {
                 && this.getOutput() != null
                 && this.getOutputUnit() != null
                 && this.getEstimatedHours() != null;
+    }
+
+    // LÓGICA DE INICIALIZACIÓN:
+    @PrePersist
+    @PreUpdate
+    public void setPhaseOrder() {
+        if (this.phase != null) this.phaseOrder = this.phase.getOrder();
     }
 }

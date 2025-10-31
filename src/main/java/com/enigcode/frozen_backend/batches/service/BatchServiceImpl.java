@@ -11,8 +11,11 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.Resource
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
 
+import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.products.model.Product;
+import com.enigcode.frozen_backend.system_configurations.model.WorkingDay;
+import com.enigcode.frozen_backend.system_configurations.service.SystemConfigurationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,7 +24,12 @@ import org.springframework.data.domain.Pageable;
 
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
+import java.time.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static com.enigcode.frozen_backend.common.Utils.DateUtil.estimateEndDate;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +38,7 @@ public class BatchServiceImpl implements BatchService{
     final BatchRepository batchRepository;
     final BatchMapper batchMapper;
     final PackagingRepository packagingRepository;
+    final SystemConfigurationService systemConfigurationService;
 
     /**
      * Crea un Lote cuando se crea una orden de produccion, la misma tiene que ser transactional
@@ -46,7 +55,9 @@ public class BatchServiceImpl implements BatchService{
 
         Integer quantityInteger = (int) Math.floor(createDTO.getQuantity()/packaging.getQuantity());
 
-        OffsetDateTime estimatedEndDate = estimateEndDate(product);
+        Map<DayOfWeek, WorkingDay> workingDays = systemConfigurationService.getWorkingDays();
+
+        OffsetDateTime estimatedEndDate = estimateEndDate(product, createDTO.getPlannedDate(), workingDays);
 
         Batch batch = Batch.builder()
                         .packaging(packaging)
@@ -62,16 +73,6 @@ public class BatchServiceImpl implements BatchService{
         Batch savedBatch = batchRepository.saveAndFlush(batch);
         savedBatch.setCode(generateCode(savedBatch));
         return savedBatch;
-    }
-
-    /**
-     * Funcion que estima la fecha de finalizacion de un producto teniendo en cuenta el trabajo en la pyme
-     * TODO: CUANDO SE TENGAN LAS AREAS SE DEBERA CALCULAR EN BASE A LA CANTIDAD DE HORAS QUE TRABAJAN LAS DISTINTAS AREAS
-     * @param product
-     * @return
-     */
-    private OffsetDateTime estimateEndDate(Product product) {
-        return null;
     }
 
     /**

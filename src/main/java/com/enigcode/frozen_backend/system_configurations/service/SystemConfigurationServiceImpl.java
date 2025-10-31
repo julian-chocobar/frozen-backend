@@ -5,7 +5,6 @@ import com.enigcode.frozen_backend.system_configurations.DTO.SystemConfiguration
 import com.enigcode.frozen_backend.system_configurations.DTO.WorkingDayUpdateDTO;
 import com.enigcode.frozen_backend.system_configurations.mapper.SystemConfigurationMapper;
 import com.enigcode.frozen_backend.system_configurations.mapper.WorkingDayMapper;
-import com.enigcode.frozen_backend.system_configurations.model.DayOfWeek;
 import com.enigcode.frozen_backend.system_configurations.model.SystemConfiguration;
 import com.enigcode.frozen_backend.system_configurations.model.WorkingDay;
 import com.enigcode.frozen_backend.system_configurations.repository.SystemConfigurationRepository;
@@ -13,9 +12,12 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -78,6 +80,19 @@ public class SystemConfigurationServiceImpl implements SystemConfigurationServic
         SystemConfiguration savedSystemConfiguration = systemConfigurationRepository.save(systemConfiguration);
 
         return systemConfigurationMapper.toResponseDto(savedSystemConfiguration);
+    }
+
+    @Override
+    public Map<DayOfWeek,WorkingDay> getWorkingDays() {
+        List<WorkingDay> workingDays = getSystemConfiguration().getWorkingDays(); // Esto llama a tu método getWorkingDays()
+
+        return workingDays.stream()
+                .collect(Collectors.toMap(
+                        WorkingDay::getDayOfWeek,
+                        workingDay -> workingDay,
+                        // Merge Function (Manejo de duplicados, aunque no debería haber)
+                        (existing, replacement) -> existing
+                ));
     }
 
     private Optional<WorkingDay> findWorkingDay(DayOfWeek dayOfWeek, SystemConfiguration systemConfiguration) {

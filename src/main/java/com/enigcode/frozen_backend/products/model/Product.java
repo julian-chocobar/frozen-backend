@@ -30,7 +30,7 @@ public class Product {
     private String name;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @OrderBy("id ASC")
+    @OrderBy("phaseOrder ASC")
     private List<ProductPhase> phases;
 
     @NotNull
