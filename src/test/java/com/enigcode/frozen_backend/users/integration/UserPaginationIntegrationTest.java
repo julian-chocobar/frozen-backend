@@ -1,8 +1,6 @@
 package com.enigcode.frozen_backend.users.integration;
 
 import com.enigcode.frozen_backend.users.model.Role;
-import com.enigcode.frozen_backend.users.model.RoleEntity;
-import com.enigcode.frozen_backend.users.repository.RoleRepository;
 import com.enigcode.frozen_backend.users.model.User;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,21 +39,15 @@ class UserPaginationIntegrationTest {
   @Autowired
   private PasswordEncoder passwordEncoder;
 
-  @Autowired
-  private RoleRepository roleRepository;
+  
 
   @BeforeEach
   void seedUsers() {
     userRepository.deleteAll();
 
-  RoleEntity supervisorAlmacen = roleRepository.findByName(Role.SUPERVISOR_DE_ALMACEN.name())
-    .orElseGet(() -> roleRepository.save(RoleEntity.builder().name(Role.SUPERVISOR_DE_ALMACEN.name()).build()));
-  RoleEntity operarioAlmacen = roleRepository.findByName(Role.OPERARIO_DE_ALMACEN.name())
-    .orElseGet(() -> roleRepository.save(RoleEntity.builder().name(Role.OPERARIO_DE_ALMACEN.name()).build()));
-
   for (int i = 1; i <= 7; i++) {
-    RoleEntity role = (i % 2 == 0) ? supervisorAlmacen : operarioAlmacen;
-    Set<RoleEntity> mutableRoles = new HashSet<>();
+    Role role = (i % 2 == 0) ? Role.SUPERVISOR_DE_ALMACEN : Role.OPERARIO_DE_ALMACEN;
+    Set<Role> mutableRoles = new HashSet<>();
     mutableRoles.add(role);
 
     User u = User.builder()
@@ -73,10 +65,8 @@ class UserPaginationIntegrationTest {
     userRepository.save(u);
   }
 
-  RoleEntity adminRole = roleRepository.findByName(Role.ADMIN.name())
-    .orElseGet(() -> roleRepository.save(RoleEntity.builder().name(Role.ADMIN.name()).build()));
-  Set<RoleEntity> adminRoles = new HashSet<>();
-  adminRoles.add(adminRole);
+  Set<Role> adminRoles = new HashSet<>();
+  adminRoles.add(Role.ADMIN);
 
   User admin = User.builder()
     .username("admin")

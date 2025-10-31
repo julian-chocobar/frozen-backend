@@ -2,9 +2,8 @@ package com.enigcode.frozen_backend.users.service;
 
 import com.enigcode.frozen_backend.users.DTO.*;
 import com.enigcode.frozen_backend.users.mapper.UserMapper;
-import com.enigcode.frozen_backend.users.model.RoleEntity;
+import com.enigcode.frozen_backend.users.model.Role;
 import com.enigcode.frozen_backend.users.model.User;
-import com.enigcode.frozen_backend.users.repository.RoleRepository;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,9 +34,6 @@ class UserServiceImplTest {
         UserRepository userRepository;
 
         @Mock
-        RoleRepository roleRepository;
-
-        @Mock
         UserMapper userMapper;
 
         @Mock
@@ -52,41 +48,33 @@ class UserServiceImplTest {
         @InjectMocks
         UserServiceImpl service;
 
-        // Helper methods
-        private RoleEntity createRoleEntity(String name) {
-                return RoleEntity.builder()
-                                .id((long) name.hashCode())
-                                .name(name)
-                                .description("Test role: " + name)
-                                .build();
-        }
-
-        private Set<String> roleEntitiesToNames(Set<RoleEntity> roleEntities) {
-                return roleEntities.stream()
-                                .map(RoleEntity::getName)
-                                .collect(java.util.stream.Collectors.toSet());
-        }
+    // Helper methods
+    private Set<String> rolesToNames(Set<Role> roles) {
+            return roles.stream()
+                            .map(Role::name)
+                            .collect(java.util.stream.Collectors.toSet());
+    }
 
         @BeforeEach
         void setUp() {
-                lenient().when(userMapper.toResponseDto(any(User.class))).thenAnswer(inv -> {
+            lenient().when(userMapper.toResponseDto(any(User.class))).thenAnswer(inv -> {
                         User u = inv.getArgument(0);
                         return UserResponseDTO.builder()
                                         .id(u.getId())
                                         .username(u.getUsername())
                                         .name(u.getName())
-                                        .roles(roleEntitiesToNames(u.getRoles()))
+                                    .roles(rolesToNames(u.getRoles()))
                                         .isActive(u.getIsActive())
                                         .build();
                 });
 
-                lenient().when(userMapper.toUserDetailDTO(any(User.class))).thenAnswer(inv -> {
+            lenient().when(userMapper.toUserDetailDTO(any(User.class))).thenAnswer(inv -> {
                         User u = inv.getArgument(0);
                         return UserDetailDTO.builder()
                                         .id(u.getId())
                                         .username(u.getUsername())
                                         .name(u.getName())
-                                        .roles(roleEntitiesToNames(u.getRoles()))
+                                    .roles(rolesToNames(u.getRoles()))
                                         .email(u.getEmail())
                                         .phoneNumber(u.getPhoneNumber())
                                         .isActive(u.getIsActive())
@@ -110,10 +98,7 @@ class UserServiceImplTest {
                                 .email("test@example.com")
                                 .build();
 
-                RoleEntity roleEntity = createRoleEntity("OPERARIO_DE_ALMACEN");
-
                 when(userMapper.toEntity(createDTO)).thenReturn(user);
-                when(roleRepository.findByNameIn(Set.of("OPERARIO_DE_ALMACEN"))).thenReturn(Set.of(roleEntity));
                 when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
                 when(userRepository.save(any(User.class))).thenAnswer(inv -> {
                         User u = inv.getArgument(0);
@@ -130,7 +115,7 @@ class UserServiceImplTest {
                 assertThat(savedUser.getPassword()).isEqualTo("encodedPassword");
                 assertThat(savedUser.getIsActive()).isTrue();
                 assertThat(savedUser.getCreationDate()).isNotNull();
-                assertThat(savedUser.getRoles()).contains(roleEntity);
+        assertThat(savedUser.getRoles()).contains(Role.OPERARIO_DE_ALMACEN);
 
                 assertThat(result.getUsername()).isEqualTo("testuser");
                 assertThat(result.getIsActive()).isTrue();
@@ -150,10 +135,7 @@ class UserServiceImplTest {
                                 .name("New User")
                                 .build();
 
-                RoleEntity roleEntity = createRoleEntity("SUPERVISOR_DE_CALIDAD");
-
                 when(userMapper.toEntity(createDTO)).thenReturn(user);
-                when(roleRepository.findByNameIn(Set.of("SUPERVISOR_DE_CALIDAD"))).thenReturn(Set.of(roleEntity));
                 when(passwordEncoder.encode(anyString())).thenReturn("encoded");
                 when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -165,7 +147,7 @@ class UserServiceImplTest {
                 User saved = captor.getValue();
                 assertThat(saved.getIsActive()).isTrue();
                 assertThat(saved.getCreationDate()).isNotNull();
-                assertThat(saved.getRoles()).contains(roleEntity);
+        assertThat(saved.getRoles()).contains(Role.SUPERVISOR_DE_CALIDAD);
         }
 
         @Test
@@ -174,7 +156,7 @@ class UserServiceImplTest {
                                 .id(1L)
                                 .username("activeuser")
                                 .name("Active User")
-                                .roles(Set.of(createRoleEntity("OPERARIO_DE_PRODUCCION")))
+                                .roles(Set.of(Role.OPERARIO_DE_PRODUCCION))
                                 .isActive(true)
                                 .enabled(true)
                                 .build();
@@ -198,7 +180,7 @@ class UserServiceImplTest {
                                 .id(2L)
                                 .username("inactiveuser")
                                 .name("Inactive User")
-                                .roles(Set.of(createRoleEntity("OPERARIO_DE_PRODUCCION")))
+                                .roles(Set.of(Role.OPERARIO_DE_PRODUCCION))
                                 .isActive(false)
                                 .enabled(false)
                                 .build();
@@ -219,7 +201,7 @@ class UserServiceImplTest {
                                 .id(1L)
                                 .username("user1")
                                 .name("Old Name")
-                                .roles(Set.of(createRoleEntity("OPERARIO_DE_PRODUCCION")))
+                                .roles(Set.of(Role.OPERARIO_DE_PRODUCCION))
                                 .email("old@example.com")
                                 .build();
 
@@ -262,26 +244,24 @@ class UserServiceImplTest {
                                 .id(1L)
                                 .username("user1")
                                 .name("User")
-                                .roles(Set.of(createRoleEntity("OPERARIO_DE_ALMACEN")))
+                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN))
                                 .build();
 
                 UpdateRoleDTO updateRoleDTO = UpdateRoleDTO.builder()
                                 .roles(Set.of("ADMIN"))
                                 .build();
 
-                RoleEntity adminRole = createRoleEntity("ADMIN");
                 when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-                when(roleRepository.findByNameIn(Set.of("ADMIN"))).thenReturn(Set.of(adminRole));
-                when(userMapper.updateUserRoles(Set.of(adminRole), user)).thenAnswer(inv -> {
+                when(userMapper.updateUserRoles(Set.of(Role.ADMIN), user)).thenAnswer(inv -> {
                         User u = inv.getArgument(1);
-                        u.setRoles(Set.of(adminRole));
+                        u.setRoles(Set.of(Role.ADMIN));
                         return u;
                 });
                 when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
                 UserResponseDTO result = service.updateUserRole(1L, updateRoleDTO);
 
-                verify(userRepository).save(argThat(u -> u.getRoles().contains(adminRole)));
+                verify(userRepository).save(argThat(u -> u.getRoles().contains(Role.ADMIN)));
                 assertThat(result.getRoles()).containsExactly("ADMIN");
         }
 
@@ -292,7 +272,7 @@ class UserServiceImplTest {
                                 .username("user1")
                                 .name("User")
                                 .password("oldEncoded")
-                                .roles(Set.of(createRoleEntity("OPERARIO_DE_ALMACEN")))
+                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN))
                                 .build();
 
                 UpdatePasswordDTO updatePasswordDTO = UpdatePasswordDTO.builder()
@@ -317,7 +297,7 @@ class UserServiceImplTest {
                                 .id(1L)
                                 .username("user1")
                                 .name("User One")
-                                .roles(Set.of(createRoleEntity("OPERARIO_DE_ALMACEN")))
+                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN))
                                 .email("user1@example.com")
                                 .isActive(true)
                                 .build();
@@ -346,7 +326,7 @@ class UserServiceImplTest {
                                 .id(1L)
                                 .username("testuser")
                                 .name("Test User")
-                                .roles(Set.of(createRoleEntity("OPERARIO_DE_ALMACEN")))
+                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN))
                                 .build();
 
                 when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
@@ -363,14 +343,14 @@ class UserServiceImplTest {
                                 .id(1L)
                                 .username("user1")
                                 .name("User One")
-                                .roles(Set.of(createRoleEntity("OPERARIO_DE_ALMACEN")))
+                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN))
                                 .build();
 
                 User user2 = User.builder()
                                 .id(2L)
                                 .username("user2")
                                 .name("User Two")
-                                .roles(Set.of(createRoleEntity("ADMIN")))
+                                .roles(Set.of(Role.ADMIN))
                                 .build();
 
                 Page<User> page = new PageImpl<>(List.of(user1, user2));

@@ -27,6 +27,8 @@ import com.enigcode.frozen_backend.users.DTO.UserCreateDTO;
 import com.enigcode.frozen_backend.users.DTO.UserResponseDTO;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
 import com.enigcode.frozen_backend.users.service.UserService;
+import com.enigcode.frozen_backend.system_configurations.service.SystemConfigurationService;
+import com.enigcode.frozen_backend.system_configurations.DTO.WorkingDayUpdateDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 
 @Service
 @RequiredArgsConstructor
@@ -54,6 +58,7 @@ public class DataLoaderService {
         private final RecipeService recipeService;
         private final PackagingService packagingService;
         private final SectorService sectorService;
+        private final SystemConfigurationService systemConfigurationService;
 
         // IDs de materiales creados para usar en recipes
         private Long maltaPaleId;
@@ -143,6 +148,11 @@ public class DataLoaderService {
                                 log.info("Iniciando carga de packagings...");
                                 loadPackagings();
                                 log.info("Packagings cargados exitosamente.");
+
+                                // Paso 8: Crear SystemConfiguration con días laborales
+                                log.info("Iniciando configuración de días laborales...");
+                                loadSystemConfiguration();
+                                log.info("SystemConfiguration creada/actualizada exitosamente.");
 
                                 /*
                                  * // Paso 7: Crear sectores
@@ -873,6 +883,34 @@ public class DataLoaderService {
 
                         log.info("Empaques cargados.");
                 }
+        }
+
+        private void loadSystemConfiguration() {
+                // Asegura que exista una configuración activa (el service crea una por defecto
+                // si no hay)
+                systemConfigurationService.getSystemConfiguration();
+
+                // Definir lunes a viernes laborales 09:00 - 17:00, fines de semana no laborales
+                LocalTime open = LocalTime.of(9, 0);
+                LocalTime close = LocalTime.of(17, 0);
+
+                List<WorkingDayUpdateDTO> updates = List.of(
+                                WorkingDayUpdateDTO.builder().dayOfWeek(DayOfWeek.MONDAY).isWorkingDay(true)
+                                                .openingHour(open).closingHour(close).build(),
+                                WorkingDayUpdateDTO.builder().dayOfWeek(DayOfWeek.TUESDAY).isWorkingDay(true)
+                                                .openingHour(open).closingHour(close).build(),
+                                WorkingDayUpdateDTO.builder().dayOfWeek(DayOfWeek.WEDNESDAY).isWorkingDay(true)
+                                                .openingHour(open).closingHour(close).build(),
+                                WorkingDayUpdateDTO.builder().dayOfWeek(DayOfWeek.THURSDAY).isWorkingDay(true)
+                                                .openingHour(open).closingHour(close).build(),
+                                WorkingDayUpdateDTO.builder().dayOfWeek(DayOfWeek.FRIDAY).isWorkingDay(true)
+                                                .openingHour(open).closingHour(close).build(),
+                                WorkingDayUpdateDTO.builder().dayOfWeek(DayOfWeek.SATURDAY).isWorkingDay(false)
+                                                .openingHour(null).closingHour(null).build(),
+                                WorkingDayUpdateDTO.builder().dayOfWeek(DayOfWeek.SUNDAY).isWorkingDay(false)
+                                                .openingHour(null).closingHour(null).build());
+
+                systemConfigurationService.updateWorkingDays(updates);
         }
 
         @SuppressWarnings("unused")

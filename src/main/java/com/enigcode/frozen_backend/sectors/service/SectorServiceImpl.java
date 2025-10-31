@@ -10,7 +10,6 @@ import com.enigcode.frozen_backend.sectors.model.Sector;
 import com.enigcode.frozen_backend.sectors.model.SectorType;
 import com.enigcode.frozen_backend.sectors.repository.SectorRepository;
 import com.enigcode.frozen_backend.users.model.Role;
-import com.enigcode.frozen_backend.users.model.RoleEntity;
 import com.enigcode.frozen_backend.users.model.User;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -125,13 +124,13 @@ public class SectorServiceImpl implements SectorService {
                 dto.getIsTimeActive() != null;
     }
 
-    private boolean rolPhaseValidation(Set<RoleEntity> supervisorRoles, SectorType type) {
-        return supervisorRoles.stream().anyMatch(rol -> (rol.getName().equals(Role.SUPERVISOR_DE_PRODUCCION.toString())
+    private boolean rolPhaseValidation(Set<Role> supervisorRoles, SectorType type) {
+        return supervisorRoles.stream().anyMatch(rol -> (rol == Role.SUPERVISOR_DE_PRODUCCION
                 && type.equals(SectorType.PRODUCCION)) ||
-                (rol.getName().equals(Role.SUPERVISOR_DE_ALMACEN.toString())
+                (rol == Role.SUPERVISOR_DE_ALMACEN
                         && type.equals(SectorType.ALMACEN))
                 ||
-                (rol.getName().equals(Role.SUPERVISOR_DE_CALIDAD.toString())
+                (rol == Role.SUPERVISOR_DE_CALIDAD
                         && type.equals(SectorType.CALIDAD)));
     }
 }

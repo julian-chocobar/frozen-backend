@@ -1,8 +1,6 @@
 package com.enigcode.frozen_backend.users.integration;
 
 import com.enigcode.frozen_backend.users.model.Role;
-import com.enigcode.frozen_backend.users.model.RoleEntity;
-import com.enigcode.frozen_backend.users.repository.RoleRepository;
 import com.enigcode.frozen_backend.users.model.User;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,20 +40,14 @@ class UserValidationIntegrationTest {
   @Autowired
   private PasswordEncoder passwordEncoder;
 
-  @Autowired
-  private RoleRepository roleRepository;
+  
 
   @BeforeEach
   void setUp() {
     userRepository.deleteAll();
 
-    RoleEntity adminRole = roleRepository.findByName(Role.ADMIN.name())
-      .orElseGet(() -> roleRepository.save(RoleEntity.builder().name(Role.ADMIN.name()).build()));
-    RoleEntity operarioRole = roleRepository.findByName(Role.OPERARIO_DE_ALMACEN.name())
-      .orElseGet(() -> roleRepository.save(RoleEntity.builder().name(Role.OPERARIO_DE_ALMACEN.name()).build()));
-
-    Set<RoleEntity> adminRoles = new HashSet<>();
-    adminRoles.add(adminRole);
+    Set<Role> adminRoles = new HashSet<>();
+    adminRoles.add(Role.ADMIN);
     User admin = User.builder()
       .username("admin")
       .password(passwordEncoder.encode("AdminPass123"))
@@ -70,8 +62,8 @@ class UserValidationIntegrationTest {
       .build();
     userRepository.save(admin);
 
-    Set<RoleEntity> userRoles = new HashSet<>();
-    userRoles.add(operarioRole);
+    Set<Role> userRoles = new HashSet<>();
+    userRoles.add(Role.OPERARIO_DE_ALMACEN);
     User user1 = User.builder()
       .username("user1")
       .password(passwordEncoder.encode("Password123"))

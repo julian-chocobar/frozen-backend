@@ -11,7 +11,7 @@ import com.enigcode.frozen_backend.users.DTO.UserResponseDTO;
 import com.enigcode.frozen_backend.users.DTO.UserUpdateDTO;
 import com.enigcode.frozen_backend.users.DTO.UserCreateDTO;
 import com.enigcode.frozen_backend.users.model.User;
-import com.enigcode.frozen_backend.users.model.RoleEntity;
+import com.enigcode.frozen_backend.users.model.Role;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,7 +29,7 @@ public interface UserMapper {
 
     User partialUpdate(UserUpdateDTO dto, @MappingTarget User user);
 
-    default User updateUserRoles(Set<RoleEntity> roles, User user) {
+    default User updateUserRoles(Set<Role> roles, User user) {
         user.setRoles(roles);
         return user;
     }
@@ -37,9 +37,9 @@ public interface UserMapper {
     User updateUserPassword(String password, @MappingTarget User user);
 
     // Métodos helper para conversión de roles
-    default Set<String> mapRolesToStrings(Set<RoleEntity> roles) {
+    default Set<String> mapRolesToStrings(Set<Role> roles) {
         return roles.stream()
-                .map(RoleEntity::getName)
+                .map(Role::name)
                 .collect(Collectors.toSet());
     }
 

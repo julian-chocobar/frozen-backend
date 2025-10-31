@@ -1,9 +1,7 @@
 package com.enigcode.frozen_backend.users.integration;
 
 import com.enigcode.frozen_backend.users.model.Role;
-import com.enigcode.frozen_backend.users.model.RoleEntity;
 import com.enigcode.frozen_backend.users.model.User;
-import com.enigcode.frozen_backend.users.repository.RoleRepository;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,8 +39,7 @@ class UserRoleAuthorizationMatrixIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private RoleRepository roleRepository;
+    
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -54,17 +51,10 @@ class UserRoleAuthorizationMatrixIntegrationTest {
     void setup() {
         userRepository.deleteAll();
 
-        // Ensure all RoleEntity records exist
-        for (Role r : Role.values()) {
-            roleRepository.findByName(r.name())
-                    .orElseGet(() -> roleRepository.save(RoleEntity.builder().name(r.name()).build()));
-        }
-
         // Seed one user per role: username = "user_" + roleName
         for (Role r : Role.values()) {
-            RoleEntity roleEntity = roleRepository.findByName(r.name()).orElseThrow();
-            Set<RoleEntity> roles = new HashSet<>();
-            roles.add(roleEntity);
+            Set<Role> roles = new HashSet<>();
+            roles.add(r);
             User u = User.builder()
                     .username("user_" + r.name())
                     .password(passwordEncoder.encode("Passw0rd!"))

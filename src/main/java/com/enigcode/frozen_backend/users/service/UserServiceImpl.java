@@ -19,11 +19,10 @@ import org.springframework.data.domain.Pageable;
 import java.util.Set;
 
 import com.enigcode.frozen_backend.users.model.User;
-import com.enigcode.frozen_backend.users.model.RoleEntity;
+import com.enigcode.frozen_backend.users.model.Role;
 import com.enigcode.frozen_backend.users.DTO.*;
 import com.enigcode.frozen_backend.users.mapper.UserMapper;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
-import com.enigcode.frozen_backend.users.repository.RoleRepository;
 import com.enigcode.frozen_backend.notifications.service.SseNotificationService;
 
 import org.springframework.context.annotation.Lazy;
@@ -34,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    // removed RoleRepository, using enum Role directly
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -101,9 +100,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setCreationDate(OffsetDateTime.now(ZoneOffset.UTC));
         user.setIsActive(Boolean.TRUE);
 
-        // Convertir nombres de roles a entidades
-        Set<RoleEntity> roleEntities = roleRepository.findByNameIn(userCreateDTO.getRoles());
-        user.setRoles(roleEntities);
+        // Convertir nombres de roles a enum Role con validación
+        Set<Role> roleEnums = userCreateDTO.getRoles().stream()
+                .map(String::trim)
+                .map(Role::valueOf)
+                .collect(java.util.stream.Collectors.toSet());
+        user.setRoles(roleEnums);
 
         userRepository.save(user);
         return userMapper.toResponseDto(user);
@@ -155,9 +157,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con ID: " + id));
 
-        // Convertir nombres de roles a entidades
-        Set<RoleEntity> roleEntities = roleRepository.findByNameIn(updateRolDTO.getRoles());
-        user = userMapper.updateUserRoles(roleEntities, user);
+        // Convertir nombres de roles a enum Role
+        Set<Role> roleEnums = updateRolDTO.getRoles().stream()
+                .map(String::trim)
+                .map(Role::valueOf)
+                .collect(java.util.stream.Collectors.toSet());
+        user = userMapper.updateUserRoles(roleEnums, user);
         userRepository.save(user);
         return userMapper.toResponseDto(user);
     }

@@ -1,7 +1,7 @@
 package com.enigcode.frozen_backend.users.security;
 
 import com.enigcode.frozen_backend.users.DTO.UserDetailDTO;
-import com.enigcode.frozen_backend.users.model.RoleEntity;
+import com.enigcode.frozen_backend.users.model.Role;
 import com.enigcode.frozen_backend.users.model.User;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
 import com.enigcode.frozen_backend.users.service.UserService;
@@ -64,8 +64,8 @@ class UserSecurityTest {
     @Test
     void canDeactivateUser_adminCannotToggleSelf_orOtherAdmin_butCanToggleNonAdmin() {
         // Current user = admin1
-        Set<RoleEntity> adminRole = new HashSet<>();
-        adminRole.add(RoleEntity.builder().id(1L).name("ADMIN").build());
+        Set<Role> adminRole = new HashSet<>();
+        adminRole.add(Role.ADMIN);
 
         User currentAdmin = User.builder().id(100L).username("admin1").roles(adminRole).build();
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(currentAdmin));
@@ -86,8 +86,8 @@ class UserSecurityTest {
         assertThat(userSecurity.canDeactivateUser(101L)).isFalse();
 
         // Target 3: non-admin
-        Set<RoleEntity> nonAdminRoles = new HashSet<>();
-        nonAdminRoles.add(RoleEntity.builder().id(2L).name("OPERARIO_DE_ALMACEN").build());
+        Set<Role> nonAdminRoles = new HashSet<>();
+        nonAdminRoles.add(Role.OPERARIO_DE_ALMACEN);
         User worker = User.builder().id(200L).username("worker").roles(nonAdminRoles).build();
         when(userRepository.findById(200L)).thenReturn(Optional.of(worker));
 

@@ -54,7 +54,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                         SELECT n FROM Notification n
                         JOIN User u ON n.userId = u.id
                         JOIN u.roles r
-                        WHERE r.name = 'GERENTE_DE_PLANTA'
+                        WHERE r = com.enigcode.frozen_backend.users.model.Role.GERENTE_DE_PLANTA
                         AND n.isRead = false
                         AND n.createdAt <= :maxDate
                         ORDER BY n.createdAt ASC
@@ -69,7 +69,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                         SELECT DISTINCT n.userId FROM Notification n
                         JOIN User u ON n.userId = u.id
                         JOIN u.roles r
-                        WHERE r.name = 'GERENTE_DE_PLANTA'
+                        WHERE r = com.enigcode.frozen_backend.users.model.Role.GERENTE_DE_PLANTA
                         AND n.isRead = false
                         AND n.type = :notificationType
                         """)

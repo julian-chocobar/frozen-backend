@@ -15,13 +15,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * Busca IDs de usuarios que tienen un rol específico
      */
-    @Query("SELECT u.id FROM User u JOIN u.roles r WHERE r.name = :roleName")
-    List<Long> findUserIdsByRole(@Param("roleName") String roleName);
+    @Query("SELECT u.id FROM User u JOIN u.roles r WHERE r = :role")
+    List<Long> findUserIdsByRole(@Param("role") Role role);
 
     /**
      * Sobrecarga para usar el enum Role directamente
      */
-    default List<Long> findUserIdsByRole(Role role) {
-        return findUserIdsByRole(role.name());
+    default List<Long> findUserIdsByRoleName(String roleName) {
+        return findUserIdsByRole(Role.valueOf(roleName));
     }
 }

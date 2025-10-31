@@ -1,6 +1,6 @@
 package com.enigcode.frozen_backend.users.mapper;
 
-import com.enigcode.frozen_backend.users.model.RoleEntity;
+import com.enigcode.frozen_backend.users.model.Role;
 import com.enigcode.frozen_backend.users.model.User;
 import com.enigcode.frozen_backend.users.DTO.UserDetailDTO;
 import com.enigcode.frozen_backend.users.DTO.UserResponseDTO;
@@ -19,9 +19,9 @@ class UserMapperTest {
 
     @Test
     void toResponseDto_mapsRolesToStrings() {
-        RoleEntity admin = RoleEntity.builder().id(1L).name("ADMIN").build();
-        RoleEntity operario = RoleEntity.builder().id(2L).name("OPERARIO_DE_ALMACEN").build();
-        Set<RoleEntity> roles = new HashSet<>();
+        Role admin = Role.ADMIN;
+        Role operario = Role.OPERARIO_DE_ALMACEN;
+        Set<Role> roles = new HashSet<>();
         roles.add(admin);
         roles.add(operario);
 
@@ -40,8 +40,8 @@ class UserMapperTest {
 
     @Test
     void toUserDetailDTO_mapsRolesToStrings() {
-        RoleEntity qa = RoleEntity.builder().id(3L).name("OPERARIO_DE_CALIDAD").build();
-        Set<RoleEntity> roles = new HashSet<>();
+        Role qa = Role.OPERARIO_DE_CALIDAD;
+        Set<Role> roles = new HashSet<>();
         roles.add(qa);
 
         User user = User.builder()
@@ -60,9 +60,9 @@ class UserMapperTest {
 
     @Test
     void updateUserRoles_replacesRoles() {
-        RoleEntity r1 = RoleEntity.builder().id(1L).name("ADMIN").build();
-        RoleEntity r2 = RoleEntity.builder().id(2L).name("SUPERVISOR_DE_ALMACEN").build();
-        Set<RoleEntity> newRoles = new HashSet<>();
+        Role r1 = Role.ADMIN;
+        Role r2 = Role.SUPERVISOR_DE_ALMACEN;
+        Set<Role> newRoles = new HashSet<>();
         newRoles.add(r1);
         newRoles.add(r2);
 

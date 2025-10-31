@@ -48,11 +48,11 @@ public class UserSecurity {
 
         // Verificar si el usuario actual tiene rol ADMIN
         boolean currentUserIsAdmin = currentUser.getRoles().stream()
-                .anyMatch(role -> role.getName().equals("ADMIN"));
+                .anyMatch(role -> role.name().equals("ADMIN"));
 
         // Verificar si el usuario objetivo tiene rol ADMIN
         boolean targetUserIsAdmin = targetUser.getRoles().stream()
-                .anyMatch(role -> role.getName().equals("ADMIN"));
+                .anyMatch(role -> role.name().equals("ADMIN"));
 
         // Un ADMIN no puede desactivar a otro ADMIN
         if (currentUserIsAdmin && targetUserIsAdmin) {
