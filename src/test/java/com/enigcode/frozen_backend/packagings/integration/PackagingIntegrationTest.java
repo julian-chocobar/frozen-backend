@@ -23,7 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(roles = "SUPERVISOR_DE_ALMACEN")
 class PackagingIntegrationTest {
 
     @Autowired
@@ -39,6 +39,7 @@ class PackagingIntegrationTest {
     private static final String PASS = "test";
 
     private Long envaseMaterialId;
+    private Long etiquetadoMaterialId;
 
     @BeforeEach
     void setUp() {
@@ -57,6 +58,22 @@ class PackagingIntegrationTest {
                 .creationDate(OffsetDateTime.now())
                 .build();
         envaseMaterialId = materialRepository.saveAndFlush(m).getId();
+
+        // Ensure at least one ETIQUETADO material exists for FK constraint
+        Material etiq = Material.builder()
+                .code("ETQ-001")
+                .name("Etiqueta grande")
+                .type(MaterialType.ETIQUETADO)
+                .supplier("ACME")
+                .value(5.0)
+                .stock(200.0)
+                .reservedStock(0.0)
+                .unitMeasurement(UnitMeasurement.UNIDAD)
+                .threshold(10.0)
+                .isActive(true)
+                .creationDate(OffsetDateTime.now())
+                .build();
+        etiquetadoMaterialId = materialRepository.saveAndFlush(etiq).getId();
     }
 
     @Test
@@ -65,7 +82,8 @@ class PackagingIntegrationTest {
         // 1) Create packaging
         String createJson = "{" +
                 "\"name\":\"Pack Botella 6x1L\"," +
-                "\"materialId\":" + envaseMaterialId + "," +
+                "\"packagingMaterialId\":" + envaseMaterialId + "," +
+                "\"labelingMaterialId\":" + etiquetadoMaterialId + "," +
                 "\"unitMeasurement\":\"KG\"," +
                 "\"quantity\":2.5" +
                 "}";

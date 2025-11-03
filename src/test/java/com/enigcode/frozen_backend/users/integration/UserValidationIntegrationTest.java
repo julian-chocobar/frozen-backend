@@ -49,7 +49,7 @@ class UserValidationIntegrationTest {
     Set<Role> adminRoles = new HashSet<>();
     adminRoles.add(Role.ADMIN);
     User admin = User.builder()
-      .username("admin")
+      .username("admin_test")
       .password(passwordEncoder.encode("AdminPass123"))
       .name("Admin")
       .email("admin@test.com")
@@ -80,7 +80,7 @@ class UserValidationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void createUser_invalidPayload_returns400() throws Exception {
     String badRequest = """
         {
@@ -107,7 +107,7 @@ class UserValidationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void createUser_weakPassword_returns400() throws Exception {
     String badPwd = """
         {
@@ -128,7 +128,7 @@ class UserValidationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void createUser_emptyRoles_returns400() throws Exception {
     Long userId = userRepository.findByUsername("user1").orElseThrow().getId();
 
@@ -147,7 +147,7 @@ class UserValidationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void createUser_invalidEmail_returns400() throws Exception {
     Long userId = userRepository.findByUsername("user1").orElseThrow().getId();
 
@@ -166,7 +166,7 @@ class UserValidationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void updateUser_invalidPayload_returns400() throws Exception {
     Long userId = userRepository.findByUsername("user1").orElseThrow().getId();
 
@@ -185,7 +185,7 @@ class UserValidationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void updatePassword_weakPassword_returns400() throws Exception {
     Long userId = userRepository.findByUsername("user1").orElseThrow().getId();
 

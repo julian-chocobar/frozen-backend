@@ -25,6 +25,8 @@ class ProductionOrderControllerSecurityTest {
 
     @MockBean
     private ProductionOrderService productionOrderService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     @Test
     @DisplayName("GET /production-orders without auth -> 401")

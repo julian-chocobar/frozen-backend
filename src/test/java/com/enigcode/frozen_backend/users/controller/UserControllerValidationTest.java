@@ -35,6 +35,9 @@ class UserControllerValidationTest {
         @MockBean
         private UserService userService;
 
+        @MockBean
+        private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
+
     // No repository needed for validation-only tests
 
         @Test

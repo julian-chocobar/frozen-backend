@@ -26,6 +26,8 @@ class RecipeControllerSecurityTest {
 
     @MockBean
     private RecipeService recipeService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     @Test
     @DisplayName("GET /recipes/list without auth -> 401")

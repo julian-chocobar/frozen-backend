@@ -41,6 +41,10 @@ class MovementServiceImplTest {
     private MaterialRepository materialRepository;
     @Mock
     private MovementMapper movementMapper;
+    @Mock
+    private com.enigcode.frozen_backend.users.service.UserService userService;
+        @Mock
+        private com.enigcode.frozen_backend.notifications.service.NotificationService notificationService;
 
     @InjectMocks
     private MovementServiceImpl movementService;
@@ -65,6 +69,11 @@ class MovementServiceImplTest {
 
         responseDTO = new MovementResponseDTO();
         responseDTO.setId(1L);
+
+        // Mock user for createMovement
+        com.enigcode.frozen_backend.users.model.User mockUser = new com.enigcode.frozen_backend.users.model.User();
+        mockUser.setId(1L);
+        org.mockito.Mockito.lenient().when(userService.getCurrentUser()).thenReturn(mockUser);
     }
 
     @Test
@@ -81,10 +90,9 @@ class MovementServiceImplTest {
 
         MovementResponseDTO result = movementService.createMovement(createDTO);
 
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-        verify(materialRepository).save(material);
-        verify(movementRepository).saveAndFlush(any(Movement.class));
+    assertNotNull(result);
+    assertEquals(1L, result.getId());
+    verify(movementRepository).saveAndFlush(any(Movement.class));
     }
 
     @Test
@@ -101,9 +109,8 @@ class MovementServiceImplTest {
 
         MovementResponseDTO result = movementService.createMovement(createDTO);
 
-        assertNotNull(result);
-        verify(materialRepository).save(material);
-        verify(movementRepository).saveAndFlush(any(Movement.class));
+    assertNotNull(result);
+    verify(movementRepository).saveAndFlush(any(Movement.class));
     }
 
     @Test

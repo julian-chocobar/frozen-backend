@@ -43,6 +43,9 @@ class ProductControllerTest {
         @MockBean
         private ProductService productService;
 
+        @MockBean
+        private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
+
         @Test
         void testCreateProduct() throws Exception {
                 var request = ProductCreateDTO.builder()

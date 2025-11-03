@@ -48,6 +48,9 @@ class UserControllerTest {
         @MockBean
         private UserRepository userRepository;
 
+        @MockBean
+        private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
+
         @Test
         @WithMockUser(roles = "ADMIN")
         void testCreateUser_success() throws Exception {

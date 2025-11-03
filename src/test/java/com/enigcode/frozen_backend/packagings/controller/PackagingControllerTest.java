@@ -33,6 +33,8 @@ class PackagingControllerTest {
     private MockMvc mockMvc;
     @MockBean
     private PackagingService packagingService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
     @Autowired
     private ObjectMapper objectMapper;
     private String packagingJson;
@@ -42,6 +44,7 @@ class PackagingControllerTest {
         PackagingCreateDTO dto = PackagingCreateDTO.builder()
             .name("Caja de cartón")
             .packagingMaterialId(1L)
+            .labelingMaterialId(2L)
             .unitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.UNIDAD)
             .quantity(20.0)
             .build();

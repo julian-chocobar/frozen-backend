@@ -57,6 +57,8 @@ class ProductionOrderServiceImplTest {
         private MovementService movementService;
         @Mock
         private ProductionOrderRepository productionOrderRepository;
+        @Mock
+        private com.enigcode.frozen_backend.notifications.service.NotificationService notificationService;
 
         @InjectMocks
         private ProductionOrderServiceImpl service;

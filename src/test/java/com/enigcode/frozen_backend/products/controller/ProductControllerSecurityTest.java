@@ -22,6 +22,8 @@ class ProductControllerSecurityTest {
 
     @MockBean
     private ProductService productService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     @Test
     @DisplayName("GET /products without auth -> 401")

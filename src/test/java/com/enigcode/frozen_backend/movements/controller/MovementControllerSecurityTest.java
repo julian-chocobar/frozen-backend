@@ -22,6 +22,8 @@ class MovementControllerSecurityTest {
 
     @MockBean
     private MovementService movementService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     @Test
     @DisplayName("GET /movements without auth -> 401")

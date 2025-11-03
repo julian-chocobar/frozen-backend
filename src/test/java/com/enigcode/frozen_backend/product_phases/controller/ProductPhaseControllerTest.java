@@ -20,6 +20,8 @@ class ProductPhaseControllerTest {
     private MockMvc mockMvc;
     @MockBean
     private com.enigcode.frozen_backend.product_phases.service.ProductPhaseService productPhaseService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     private String updateJson;
 

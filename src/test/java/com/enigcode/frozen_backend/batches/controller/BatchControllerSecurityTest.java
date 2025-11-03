@@ -14,9 +14,9 @@ import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @WebMvcTest(BatchController.class)
 class BatchControllerSecurityTest {
@@ -26,6 +26,8 @@ class BatchControllerSecurityTest {
 
     @MockBean
     private BatchService batchService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     @Test
     void getAllBatchesRequiresAuth() throws Exception {
@@ -34,12 +36,12 @@ class BatchControllerSecurityTest {
     }
 
     @Test
+    @WithMockUser
     void getAllBatchesWithValidAuthReturnsOk() throws Exception {
         Page<BatchResponseDTO> page = new PageImpl<>(Collections.emptyList());
         when(batchService.findAll(any(), any())).thenReturn(page);
         
-        mockMvc.perform(get("/batches")
-                .with(httpBasic("test", "test")))
+        mockMvc.perform(get("/batches"))
                 .andExpect(status().isOk());
     }
 }

@@ -22,6 +22,8 @@ class MaterialControllerSecurityTest {
 
     @MockBean
     private MaterialService materialService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     @Test
     @DisplayName("GET /materials without auth -> 401")

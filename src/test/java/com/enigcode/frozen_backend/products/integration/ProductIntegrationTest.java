@@ -15,7 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(roles = "SUPERVISOR_DE_PRODUCCION")
 class ProductIntegrationTest {
 
     @Autowired

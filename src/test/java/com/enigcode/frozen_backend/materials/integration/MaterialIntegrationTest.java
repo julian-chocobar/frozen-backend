@@ -22,7 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@WithMockUser
+@WithMockUser(roles = "SUPERVISOR_DE_ALMACEN")
 class MaterialIntegrationTest {
     @Autowired
     private MockMvc mockMvc;

@@ -32,6 +32,8 @@ class RecipeControllerTest {
     private ObjectMapper objectMapper;
     @MockBean
     private RecipeService recipeService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     @Test
     @DisplayName("POST /recipes - success")

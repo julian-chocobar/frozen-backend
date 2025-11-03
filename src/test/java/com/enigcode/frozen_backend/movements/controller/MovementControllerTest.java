@@ -30,6 +30,8 @@ class MovementControllerTest {
     private MockMvc mockMvc;
     @MockBean
     private MovementService movementService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     @Test
     void testCreateMovement() throws Exception {
@@ -40,7 +42,7 @@ class MovementControllerTest {
         when(movementService.createMovement(any(MovementCreateDTO.class))).thenReturn(responseDTO);
 
     // JSON con campos mínimos válidos según validaciones del DTO
-    String validJson = "{\"materialId\":1,\"stock\":5,\"type\":\"INGRESO\"}";
+    String validJson = "{\"materialId\":1,\"stock\":5,\"type\":\"INGRESO\",\"location\":\"A1\"}";
     mockMvc.perform(post("/movements")
         .contentType(MediaType.APPLICATION_JSON)
         .content(validJson))
@@ -55,7 +57,7 @@ class MovementControllerTest {
         when(movementService.createMovement(any(MovementCreateDTO.class)))
                 .thenThrow(new BadRequestException("stock insuficiente"));
 
-        String validJson = "{\"materialId\":1,\"stock\":5,\"type\":\"INGRESO\"}";
+        String validJson = "{\"materialId\":1,\"stock\":5,\"type\":\"INGRESO\",\"location\":\"A1\"}";
         mockMvc.perform(post("/movements")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validJson))

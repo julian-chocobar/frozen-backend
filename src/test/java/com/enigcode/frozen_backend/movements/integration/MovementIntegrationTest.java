@@ -19,7 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@WithMockUser
+@WithMockUser(username = "supervisoralmacen", roles = "SUPERVISOR_DE_ALMACEN")
 class MovementIntegrationTest {
     
     @Autowired
@@ -58,7 +58,8 @@ class MovementIntegrationTest {
                         "type": "INGRESO",
             "stock": 100.0,
             "materialId": %d,
-            "reason": "Compra de material"
+            "reason": "Compra de material",
+            "location": "ALMACEN"
         }
         """, materialId);
         
@@ -85,7 +86,7 @@ class MovementIntegrationTest {
 
     @Test
     void createMovement_updatesStockCorrectly() throws Exception {
-        // Crear material con stock inicial de 500
+        // Crear material con stock inicial de 500 (como supervisor)
         String materialBody = """
         {
             "name": "Lupulo Test",
@@ -107,22 +108,41 @@ class MovementIntegrationTest {
         Long materialId = objectMapper.readTree(materialResult.getResponse().getContentAsString())
                 .get("id").asLong();
 
-        // Crear movimiento de SALIDA de 100 unidades
+        // Crear movimiento de SALIDA de 100 unidades (estado PENDIENTE)
                 String movementBody = String.format("""
                 {
                         "type": "EGRESO",
             "stock": 100.0,
             "materialId": %d,
-            "reason": "Uso en producción"
+            "reason": "Uso en producción",
+            "location": "ALMACEN"
         }
         """, materialId);
         
-        mockMvc.perform(post("/movements")
+        MvcResult movementResult = mockMvc.perform(post("/movements")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(movementBody))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn();
 
-        // Verificar que el stock del material se actualizó correctamente
+        Long movementId = objectMapper.readTree(movementResult.getResponse().getContentAsString())
+                .get("id").asLong();
+
+        // Verificar que el stock NO ha cambiado aún (movimiento pendiente)
+        MvcResult materialCheckResult = mockMvc.perform(get("/materials/" + materialId))
+                .andExpect(status().isOk())
+                .andReturn();
+        
+        Double stockBeforeComplete = objectMapper.readTree(materialCheckResult.getResponse().getContentAsString())
+                .get("availableStock").asDouble();
+        assertThat(stockBeforeComplete).isEqualTo(500.0);
+
+        // Completar el movimiento (esto sí reduce el stock) - como operario
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/movements/" + movementId + "/complete")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("operarioalmacen").roles("OPERARIO_DE_ALMACEN")))
+                .andExpect(status().isOk());
+
+        // Verificar que el stock del material se actualizó correctamente después de completar
         // Stock debería ser 500 - 100 = 400
         MvcResult materialGetResult = mockMvc.perform(get("/materials/" + materialId))
                 .andExpect(status().isOk())
@@ -163,7 +183,8 @@ class MovementIntegrationTest {
                         "type": "INGRESO",
             "stock": 50.0,
             "materialId": %d,
-            "reason": "Compra inicial"
+            "reason": "Compra inicial",
+            "location": "ALMACEN"
         }
         """, materialId);
         
@@ -172,7 +193,8 @@ class MovementIntegrationTest {
                         "type": "EGRESO",
             "stock": 20.0,
             "materialId": %d,
-            "reason": "Producción batch 001"
+            "reason": "Producción batch 001",
+            "location": "ALMACEN"
         }
         """, materialId);
         

@@ -49,6 +49,8 @@ class MaterialControllerTest {
     private MockMvc mockMvc;
     @MockBean
     private MaterialService materialService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
     @Autowired
     private ObjectMapper objectMapper;
     private String materialJson;

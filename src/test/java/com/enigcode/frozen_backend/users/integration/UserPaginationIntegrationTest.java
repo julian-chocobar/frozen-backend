@@ -69,7 +69,7 @@ class UserPaginationIntegrationTest {
   adminRoles.add(Role.ADMIN);
 
   User admin = User.builder()
-    .username("admin")
+    .username("admin_test")
     .password(passwordEncoder.encode("AdminPass123"))
     .name("Admin")
     .email("admin@test.com")
@@ -84,7 +84,7 @@ class UserPaginationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void findAll_defaultPagination_returnsFirstPage() throws Exception {
     mockMvc.perform(get("/users")
         .with(csrf()))
@@ -100,7 +100,7 @@ class UserPaginationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void findAll_customPageSize_returnsCorrectNumberOfElements() throws Exception {
     mockMvc.perform(get("/users")
         .param("page", "1")
@@ -115,7 +115,7 @@ class UserPaginationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void findAll_sortByNameDesc_returnsSortedResults() throws Exception {
     mockMvc.perform(get("/users")
         .param("sort", "username,asc")
@@ -127,7 +127,7 @@ class UserPaginationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void findAll_outOfRangePage_returnsEmptyContent() throws Exception {
     mockMvc.perform(get("/users")
         .param("page", "999")
@@ -139,7 +139,7 @@ class UserPaginationIntegrationTest {
   }
 
   @Test
-  @WithMockUser(username = "admin", roles = "ADMIN")
+  @WithMockUser(username = "admin_test", roles = "ADMIN")
   void toggleActive_success_togglesActiveStatus() throws Exception {
     Long userId = userRepository.findByUsername("user1").orElseThrow().getId();
 

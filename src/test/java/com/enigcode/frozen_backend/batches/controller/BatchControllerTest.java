@@ -15,11 +15,12 @@ import java.util.Collections;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @WebMvcTest(BatchController.class)
+@WithMockUser
 class BatchControllerTest {
     
     @Autowired
@@ -27,14 +28,15 @@ class BatchControllerTest {
 
     @MockBean
     private BatchService batchService;
+    @MockBean
+    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     @Test
     void getAllBatchesReturnsOk() throws Exception {
         Page<BatchResponseDTO> page = new PageImpl<>(Collections.emptyList());
         when(batchService.findAll(any(), any())).thenReturn(page);
         
-        mockMvc.perform(get("/batches")
-                .with(httpBasic("test", "test")))
+        mockMvc.perform(get("/batches"))
                 .andExpect(status().isOk());
     }
 
@@ -44,8 +46,7 @@ class BatchControllerTest {
         dto.setCode("BATCH-001");
         when(batchService.getBatch(anyLong())).thenReturn(dto);
         
-        mockMvc.perform(get("/batches/1")
-                .with(httpBasic("test", "test")))
+        mockMvc.perform(get("/batches/1"))
                 .andExpect(status().isOk());
     }
 }

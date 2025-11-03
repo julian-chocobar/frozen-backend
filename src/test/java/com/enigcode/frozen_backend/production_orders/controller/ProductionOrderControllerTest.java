@@ -39,6 +39,8 @@ class ProductionOrderControllerTest {
 
         @MockBean
         private ProductionOrderService productionOrderService;
+        @MockBean
+        private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
         @Autowired
         private ObjectMapper objectMapper;

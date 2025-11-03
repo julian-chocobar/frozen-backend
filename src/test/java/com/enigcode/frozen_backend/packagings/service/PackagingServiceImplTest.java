@@ -55,10 +55,12 @@ class PackagingServiceImplTest {
         PackagingCreateDTO createDTO = new PackagingCreateDTO();
         createDTO.setName("Caja mediana");
         createDTO.setPackagingMaterialId(1L);
+        createDTO.setLabelingMaterialId(2L);
     createDTO.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.KG);
         createDTO.setQuantity(1.0);
 
         when(materialRepository.findById(1L)).thenReturn(Optional.of(new com.enigcode.frozen_backend.materials.model.Material() {{ setId(1L); setType(com.enigcode.frozen_backend.materials.model.MaterialType.ENVASE); }}));
+        when(materialRepository.findById(2L)).thenReturn(Optional.of(new com.enigcode.frozen_backend.materials.model.Material() {{ setId(2L); setType(com.enigcode.frozen_backend.materials.model.MaterialType.ETIQUETADO); }}));
         when(packagingMapper.toEntity(createDTO)).thenReturn(packaging);
         when(packagingRepository.saveAndFlush(any(Packaging.class))).thenReturn(packaging);
         when(packagingMapper.toResponseDto(any(Packaging.class))).thenReturn(responseDTO);
