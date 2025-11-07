@@ -48,7 +48,13 @@ public class ProductionPhase {
     private Double input;
 
     @DecimalMin(value = "0.0")
+    private Double standardInput;
+
+    @DecimalMin(value = "0.0")
     private Double output;
+
+    @DecimalMin(value = "0.0")
+    private Double standardOutput;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "output_unit")

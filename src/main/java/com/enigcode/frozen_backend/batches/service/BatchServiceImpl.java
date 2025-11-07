@@ -65,6 +65,8 @@ public class BatchServiceImpl implements BatchService{
             return ProductionPhase.builder()
                     .status(ProductionPhaseStatus.PENDIENTE)
                     .phase(productPhase.getPhase())
+                    .standardInput(productPhase.getInput())
+                    .standardOutput(productPhase.getOutput())
                     .outputUnit(productPhase.getOutputUnit())
                     .build();
         }).toList();

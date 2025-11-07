@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProductionPhaseRepository extends JpaRepository<ProductionPhase, Long> {
+    boolean existsByIdAndSector_Supervisor_Id(Long phaseId, Long userId);
 }
