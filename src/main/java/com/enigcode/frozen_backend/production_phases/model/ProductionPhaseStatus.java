@@ -5,5 +5,7 @@ public enum ProductionPhaseStatus {
     EN_PROCESO,
     BAJO_REVISION,
     SIENDO_AJUSTADA,
+    RECHAZADA,
+    SUSPENDIDA,
     COMPLETADA
 }

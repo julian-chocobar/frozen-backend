@@ -2,6 +2,7 @@ package com.enigcode.frozen_backend.production_phases.controller;
 
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseResponseDTO;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseUnderReviewDTO;
+import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.production_phases.service.ProductionPhaseService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -10,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,5 +32,25 @@ public class ProductionPhaseController {
         ProductionPhaseResponseDTO productionPhaseResponseDTO = productionPhaseService.setUnderReview(id,dto);
 
         return new ResponseEntity<>(productionPhaseResponseDTO, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Ver una production phase",
+            description = "Ver una production phase en especifico segun id")
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductionPhaseResponseDTO> getProductionPhase(@PathVariable Long id){
+        ProductionPhaseResponseDTO productionPhaseResponseDTO = productionPhaseService.getProductionPhase(id);
+
+        return new ResponseEntity<>(productionPhaseResponseDTO, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Ver production phase por batch",
+            description = "Ver una lista de production phase segun id del batch")
+    @GetMapping("/by-batch/{id}")
+    public ResponseEntity<List<ProductionPhaseResponseDTO>> getProductionPhasesByBatch(@PathVariable Long id){
+        List<ProductionPhaseResponseDTO> productionPhaseResponseDTOs= productionPhaseService.getProductionPhasesByBatch(id);
+
+        return new ResponseEntity<>(productionPhaseResponseDTOs, HttpStatus.OK);
     }
 }

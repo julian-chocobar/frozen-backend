@@ -23,4 +23,6 @@ public interface ProductionMaterialRepository extends JpaRepository<ProductionMa
         WHERE pp.batch.id = :batchId
         """)
     List<ProductionMaterial> findAllByBatchId(@Param("batchId") Long batchId);
+
+    List<ProductionMaterial> findAllByProductionPhaseId(Long id);
 }

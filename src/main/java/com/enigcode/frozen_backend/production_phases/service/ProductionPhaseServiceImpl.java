@@ -12,6 +12,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ProductionPhaseServiceImpl implements ProductionPhaseService{
@@ -35,5 +37,23 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService{
         ProductionPhase savedProductionPhase = productionPhaseRepository.save(updatedProductionPhase);
 
         return productionPhaseMapper.toResponseDTO(savedProductionPhase);
+    }
+
+    @Override
+    @Transactional
+    public ProductionPhaseResponseDTO getProductionPhase(Long id) {
+        ProductionPhase productionPhase = productionPhaseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró production phase de id " + id));
+        return productionPhaseMapper.toResponseDTO(productionPhase);
+    }
+
+    @Override
+    @Transactional
+    public List<ProductionPhaseResponseDTO> getProductionPhasesByBatch(Long id) {
+        List<ProductionPhase> productionPhases = productionPhaseRepository.findAllByBatchId(id);
+        if(productionPhases.isEmpty())
+            throw new ResourceNotFoundException("No se encontraron production phases asociados al batch " + id);
+
+        return productionPhases.stream().map(productionPhaseMapper::toResponseDTO).toList();
     }
 }
