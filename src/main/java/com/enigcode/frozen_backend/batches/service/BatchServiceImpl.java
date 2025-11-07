@@ -13,6 +13,8 @@ import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
 
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
+import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
+import com.enigcode.frozen_backend.production_phases.model.ProductionPhaseStatus;
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.system_configurations.model.WorkingDay;
 import com.enigcode.frozen_backend.system_configurations.service.SystemConfigurationService;
@@ -59,16 +61,25 @@ public class BatchServiceImpl implements BatchService{
 
         OffsetDateTime estimatedEndDate = estimateEndDate(product, createDTO.getPlannedDate(), workingDays);
 
+        List<ProductionPhase> batchPhases = product.getPhases().stream().map(productPhase -> {
+            return ProductionPhase.builder()
+                    .status(ProductionPhaseStatus.PENDIENTE)
+                    .phase(productPhase.getPhase())
+                    .outputUnit(productPhase.getOutputUnit())
+                    .build();
+        }).toList();
+
         Batch batch = Batch.builder()
-                        .packaging(packaging)
-                        .status(BatchStatus.PENDIENTE)
-                        .quantity(quantityInteger)
-                        .plannedDate(createDTO.getPlannedDate())
-                        .creationDate(OffsetDateTime.now())
-                        .startDate(null)
-                        .completedDate(null)
-                        .estimatedCompletedDate(estimatedEndDate)
-                        .build();
+                .packaging(packaging)
+                .status(BatchStatus.PENDIENTE)
+                .phases(batchPhases)
+                .quantity(quantityInteger)
+                .plannedDate(createDTO.getPlannedDate())
+                .creationDate(OffsetDateTime.now())
+                .startDate(null)
+                .completedDate(null)
+                .estimatedCompletedDate(estimatedEndDate)
+                .build();
 
         Batch savedBatch = batchRepository.saveAndFlush(batch);
         savedBatch.setCode(generateCode(savedBatch));

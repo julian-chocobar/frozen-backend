@@ -1,13 +1,18 @@
 package com.enigcode.frozen_backend.batches.model;
 
 import com.enigcode.frozen_backend.packagings.model.Packaging;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.production_orders.Model.ProductionOrder;
+import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "batches")
@@ -34,6 +39,10 @@ public class Batch {
     @OneToOne(mappedBy = "batch")
     private ProductionOrder productionOrder;
 
+    @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("phaseOrder ASC")
+    private List<ProductionPhase> phases;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     @NotNull
@@ -59,4 +68,16 @@ public class Batch {
 
     @Column(name = "estimated_completed_date")
     private OffsetDateTime estimatedCompletedDate;
+
+    public Map<Phase, ProductionPhase> getPhasesAsMap() {
+        if (phases == null || phases.isEmpty()) {
+            return Map.of();
+        }
+
+        return phases.stream()
+                .collect(Collectors.toMap(
+                        ProductionPhase::getPhase,
+                        phase -> phase
+                ));
+    }
 }

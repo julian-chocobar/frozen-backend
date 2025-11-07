@@ -8,6 +8,9 @@ import com.enigcode.frozen_backend.movements.DTO.MovementSimpleCreateDTO;
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import com.enigcode.frozen_backend.movements.service.MovementService;
 import com.enigcode.frozen_backend.notifications.service.NotificationService;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
+import com.enigcode.frozen_backend.production_materials.model.ProductionMaterial;
+import com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderFilterDTO;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderResponseDTO;
@@ -16,6 +19,7 @@ import com.enigcode.frozen_backend.production_orders.Model.OrderStatus;
 import com.enigcode.frozen_backend.production_orders.Model.ProductionOrder;
 import com.enigcode.frozen_backend.production_orders.Repository.ProductionOrderRepository;
 import com.enigcode.frozen_backend.production_orders.specification.ProductionOrderSpecification;
+import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
 import com.enigcode.frozen_backend.recipes.service.RecipeService;
@@ -29,20 +33,23 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ProductionOrderServiceImpl implements ProductionOrderService {
 
-    final ProductionOrderMapper productionOrderMapper;
-    final ProductRepository productRepository;
-    final BatchService batchService;
-    final RecipeService recipeService;
-    final MovementService movementService;
-    final ProductionOrderRepository productionOrderRepository;
-    final NotificationService notificationService;
+    private final ProductionOrderMapper productionOrderMapper;
+    private final ProductRepository productRepository;
+    private final BatchService batchService;
+    private final RecipeService recipeService;
+    private final MovementService movementService;
+    private final ProductionOrderRepository productionOrderRepository;
+    private final NotificationService notificationService;
+    private final ProductionMaterialRepository productionMaterialRepository;
 
     /**
      * Funcion que crea una nueva orden de produccion en estado pendiente junto al
@@ -71,7 +78,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
 
         Double materialQuantityMultiplier = quantity / product.getStandardQuantity();
 
-        reserveMaterials(product.getId(), materialQuantityMultiplier);
+        reserveMaterials(batch, product.getId(), materialQuantityMultiplier);
 
         ProductionOrder productionOrder = ProductionOrder.builder()
                 .batch(batch)
@@ -93,34 +100,39 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
 
     /**
      * Funcion auxiliar para reservar materiales segun id de producto
-     * TODO: Cuando esten las fases de produccion de un lote se deben adherir los
-     * materiales a cada una de las fases correspondientes
-     * 
+     * @param batch
      * @param productId
-     * @param materialQuantityMultiplier la cantidad de producto dividido el
-     *                                   estandar del mismo
+     * @param materialQuantityMultiplier
      */
-    private void reserveMaterials(Long productId, Double materialQuantityMultiplier) {
-        // FIXME: FALTA IMPLEMENTAR LA VINCULACION DE LOS MATERIALES A LAS DISTINTAS
-        // FASES DE PRODUCCION
-        List<MovementSimpleCreateDTO> reserveMaterialMovements = recipeService.getRecipeByProduct(productId).stream()
-                .map(recipe -> {
-                    return MovementSimpleCreateDTO.builder()
+    private void reserveMaterials(Batch batch, Long productId, Double materialQuantityMultiplier) {
+        List<MovementSimpleCreateDTO> reserveMaterialMovements = new ArrayList<>();
+        Map<Phase, ProductionPhase> batchPhases = batch.getPhasesAsMap();
+        List<ProductionMaterial> productionMaterials = new ArrayList<>();
+
+        recipeService.getRecipeByProduct(productId).stream()
+                .forEach(recipe -> {
+                    Double quantity = recipe.getQuantity() * materialQuantityMultiplier;
+
+                    reserveMaterialMovements.add(
+                            MovementSimpleCreateDTO.builder()
                             .material(recipe.getMaterial())
-                            .stock(recipe.getQuantity() * materialQuantityMultiplier)
-                            .build();
-                }).toList();
+                            .stock(quantity)
+                            .build());
+
+                    productionMaterials.add(
+                            ProductionMaterial.builder()
+                                    .material(recipe.getMaterial())
+                                    .productionPhase(batchPhases.get(recipe.getProductPhase().getPhase()))
+                                    .quantity(quantity)
+                                    .build());
+                });
 
         movementService.createReserveOrReturn(MovementType.RESERVA, reserveMaterialMovements);
+        productionMaterialRepository.saveAllAndFlush(productionMaterials);
     }
 
     /**
-     * Funcion que permite aprobar una orden de produccion si tenes un rol
-     * determinado
-     * TODO: Actualmente vuelve a calcular los materiales necesarios y reduce de la
-     * reserva a partir de eso, cuando se tenga el modulo ProductionMaterial se debe
-     * cambiar
-     * 
+     * Funcion que permite aprobar una orden de produccion
      * @param id
      * @return
      */
@@ -133,10 +145,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
         if (!productionOrder.getStatus().equals(OrderStatus.PENDIENTE))
             throw new BadRequestException("La orden esta en estado " + productionOrder.getStatus());
 
-        // FIXME: FUNCION QUE DEBE SER MODIFICADA EN PROXIMO SPRINT (MODULO NO
-        // COMPLETADO)
-        confirmApprovedMaterials(productionOrder.getProduct().getId(),
-                productionOrder.getQuantity() / productionOrder.getProduct().getStandardQuantity());
+        confirmApprovedMaterials(productionOrder.getBatch().getId());
 
         productionOrder.setStatus(OrderStatus.APROBADA);
         productionOrder.setValidationDate(OffsetDateTime.now());
@@ -149,20 +158,17 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
     /**
      * Funcion que confirma la aprobacion de los materiales y por cada material lo
      * pasa a los asocia a las fases
-     * TODO: Actualmente la logica se calcula de nuevo, esto debe ser remplazado
-     * para buscar los materiales y cantidades ya calculadas en la creacion
      * 
      * @param productId
      * @param materialQuantityMultiplier
      */
-    private void confirmApprovedMaterials(Long productId, Double materialQuantityMultiplier) {
-        // FIXME: Esta lista se debera buscar de la ProducionMaterials ya reservadas
-        // para ese producto
-        List<MovementSimpleCreateDTO> confirmReservationMovements = recipeService.getRecipeByProduct(productId).stream()
+    private void confirmApprovedMaterials(Long batchId) {
+        List<ProductionMaterial> productionMaterials = productionMaterialRepository.findAllByBatchId(batchId);
+        List<MovementSimpleCreateDTO> confirmReservationMovements = productionMaterials.stream()
                 .map(recipe -> {
                     return MovementSimpleCreateDTO.builder()
                             .material(recipe.getMaterial())
-                            .stock(recipe.getQuantity() * materialQuantityMultiplier)
+                            .stock(recipe.getQuantity())
                             .build();
                 }).toList();
 
@@ -172,9 +178,6 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
     /**
      * Funcion que permite cancelar una orden de produccion si esta sigue pendiente
      * y devolver los materiales utilizados
-     * TODO: Actualmente vuelve a calcular los materiales necesarios y reduce de la
-     * reserva a partir de eso, cuando se tenga el modulo ProductionMaterial se debe
-     * cambiar
      * 
      * @param id
      * @return
@@ -191,10 +194,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
         if (orderStatus.equals(OrderStatus.PENDIENTE))
             throw new BadRequestException("Esta funcion no cambia a estado " + orderStatus);
 
-        // FIXME: FUNCION QUE DEBE SER MODIFICADA EN PROXIMO SPRINT (MODULO NO
-        // COMPLETADO)
-        returnReservedMaterials(productionOrder.getProduct().getId(),
-                productionOrder.getQuantity() / productionOrder.getProduct().getStandardQuantity());
+        returnReservedMaterials(productionOrder.getBatch().getId());
 
         productionOrder.setStatus(orderStatus);
         productionOrder.setValidationDate(OffsetDateTime.now());
@@ -202,6 +202,26 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
         ProductionOrder savedProductionOrder = productionOrderRepository.save(productionOrder);
 
         return productionOrderMapper.toResponseDTO(savedProductionOrder);
+    }
+
+    /**
+     * Funcion que devuelve de los materiales reservadios debido a la cancelacion de
+     * una orden
+     *
+     * @param productId
+     * @param materialQuantityMultiplier
+     */
+    private void returnReservedMaterials(Long batchId) {
+        List<ProductionMaterial> productionMaterials = productionMaterialRepository.findAllByBatchId(batchId);
+        List<MovementSimpleCreateDTO> returnReservedMaterialsMovements = productionMaterials.stream()
+                .map(recipe -> {
+                    return MovementSimpleCreateDTO.builder()
+                            .material(recipe.getMaterial())
+                            .stock(recipe.getQuantity())
+                            .build();
+                }).toList();
+
+        movementService.createReserveOrReturn(MovementType.DEVUELTO, returnReservedMaterialsMovements);
     }
 
     @Override
@@ -229,28 +249,5 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("No se encontro Orden de id " + id));
 
         return productionOrderMapper.toResponseDTO(productionOrder);
-    }
-
-    /**
-     * Funcion que devuelve de los materiales reservadios debido a la cancelacion de
-     * una orden
-     * TODO: Actualmente la logica se calcula de nuevo, esto debe ser remplazado
-     * para buscar los materiales y cantidades ya calculadas en la creacion
-     * 
-     * @param productId
-     * @param materialQuantityMultiplier
-     */
-    private void returnReservedMaterials(Long productId, Double materialQuantityMultiplier) {
-        // FIXME: Esta lista se debera buscar de la ProducionMaterials ya reservadas
-        // para ese producto
-        List<MovementSimpleCreateDTO> returnReservedMaterialsMovements = recipeService.getRecipeByProduct(productId)
-                .stream().map(recipe -> {
-                    return MovementSimpleCreateDTO.builder()
-                            .material(recipe.getMaterial())
-                            .stock(recipe.getQuantity() * materialQuantityMultiplier)
-                            .build();
-                }).toList();
-
-        movementService.createReserveOrReturn(MovementType.DEVUELTO, returnReservedMaterialsMovements);
     }
 }
