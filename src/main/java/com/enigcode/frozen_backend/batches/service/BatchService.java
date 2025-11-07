@@ -12,4 +12,5 @@ public interface BatchService {
     Batch createBatch(ProductionOrderCreateDTO createDTO, Product product);
     Page<BatchResponseDTO> findAll(BatchFilterDTO filterDTO, Pageable pageable);
     BatchResponseDTO getBatch(Long id);
+    BatchResponseDTO cancelBatch(Long id);
 }

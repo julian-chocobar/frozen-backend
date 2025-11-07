@@ -2,6 +2,13 @@ package com.enigcode.frozen_backend.production_phases.service;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+import com.enigcode.frozen_backend.movements.DTO.MovementCreateDTO;
+import com.enigcode.frozen_backend.movements.DTO.MovementInternalCreateDTO;
+import com.enigcode.frozen_backend.movements.model.MovementType;
+import com.enigcode.frozen_backend.movements.service.MovementService;
+import com.enigcode.frozen_backend.production_materials.model.ProductionMaterial;
+import com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository;
+import com.enigcode.frozen_backend.production_materials.service.ProductionMaterialService;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseResponseDTO;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseUnderReviewDTO;
 import com.enigcode.frozen_backend.production_phases.mapper.ProductionPhaseMapper;
@@ -12,6 +19,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -19,6 +27,8 @@ import java.util.List;
 public class ProductionPhaseServiceImpl implements ProductionPhaseService{
     private final ProductionPhaseRepository productionPhaseRepository;
     private final ProductionPhaseMapper productionPhaseMapper;
+    private final ProductionMaterialRepository productionMaterialRepository;
+    private final MovementService movementService;
 
     @Override
     @Transactional
@@ -55,5 +65,35 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService{
             throw new ResourceNotFoundException("No se encontraron production phases asociados al batch " + id);
 
         return productionPhases.stream().map(productionPhaseMapper::toResponseDTO).toList();
+    }
+
+    /**
+     * Marca como suspendida las production fases y devuelve los materiales de las mismas
+     * @param remainingProductionPhases
+     */
+    @Override
+    @Transactional
+    public void suspendProductionPhases(List<ProductionPhase> remainingProductionPhases) {
+        List <MovementInternalCreateDTO> materialsMovements = new ArrayList<>();
+
+        remainingProductionPhases.forEach(productionPhase -> {
+            productionPhase.setStatus(ProductionPhaseStatus.SUSPENDIDA);
+            List<ProductionMaterial> materials =
+                    productionMaterialRepository.findAllByProductionPhaseId(productionPhase.getId());
+
+            if(!materials.isEmpty()) {
+                materialsMovements.addAll(materials.stream().map(productionMaterial -> {
+                    return MovementInternalCreateDTO.builder()
+                            .type(MovementType.INGRESO)
+                            .stock(productionMaterial.getQuantity())
+                            .material(productionMaterial.getMaterial())
+                            .reason("Cancelación de lote, material devuelto")
+                            .location("Almacen de materias primas")
+                            .build();
+                }).toList());
+            }
+            productionPhaseRepository.save(productionPhase);
+        });
+        movementService.createMovements(materialsMovements);
     }
 }

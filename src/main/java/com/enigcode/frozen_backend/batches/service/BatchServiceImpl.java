@@ -15,6 +15,8 @@ import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhaseStatus;
+import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
+import com.enigcode.frozen_backend.production_phases.service.ProductionPhaseService;
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.system_configurations.model.WorkingDay;
 import com.enigcode.frozen_backend.system_configurations.service.SystemConfigurationService;
@@ -41,6 +43,7 @@ public class BatchServiceImpl implements BatchService{
     final BatchMapper batchMapper;
     final PackagingRepository packagingRepository;
     final SystemConfigurationService systemConfigurationService;
+    private final ProductionPhaseService productionPhaseService;
 
     /**
      * Crea un Lote cuando se crea una orden de produccion, la misma tiene que ser transactional
@@ -108,6 +111,30 @@ public class BatchServiceImpl implements BatchService{
                 .orElseThrow(()-> new ResourceNotFoundException("No se encontró lote con id " + id));
 
         return batchMapper.toResponseDTO(batch);
+    }
+
+    /**
+     * Dado un id cancela el lote, suspende las fases no completas y devuelve la materia prima restante
+     * @param id
+     * @return
+     */
+    @Override
+    @Transactional
+    public BatchResponseDTO cancelBatch(Long id) {
+        Batch batch = batchRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("No se encontró lote con id " + id));
+
+        batch.setStatus(BatchStatus.CANCELADO);
+
+        List<ProductionPhase> remainingProductionPhases = batch.getPhases().stream()
+                .filter(productionPhase ->
+                        productionPhase.getStatus().equals(ProductionPhaseStatus.PENDIENTE))
+                .toList();
+
+        productionPhaseService.suspendProductionPhases(remainingProductionPhases);
+
+        Batch savedBatch = batchRepository.save(batch);
+        return batchMapper.toResponseDTO(savedBatch);
     }
 
     @Override

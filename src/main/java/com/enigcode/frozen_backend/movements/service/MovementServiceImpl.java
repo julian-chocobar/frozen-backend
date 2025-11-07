@@ -318,4 +318,23 @@ public class MovementServiceImpl implements MovementService {
 
         }
 
+        @Override
+        @Transactional
+        public void createMovements(List<MovementInternalCreateDTO> materialsMovements) {
+                List<Movement> movements = materialsMovements.stream().map(dto -> {
+                        return Movement.builder()
+                                .type(dto.getType())
+                                .stock(dto.getStock())
+                                .reason(dto.getReason())
+                                .location(dto.getLocation())
+                                .createdByUserId(userService.getCurrentUser().getId())
+                                .status(MovementStatus.PENDIENTE)
+                                .material(dto.getMaterial())
+                                .creationDate(OffsetDateTime.now(ZoneOffset.UTC))
+                                .build();
+                }).toList();
+
+                movementRepository.saveAll(movements);
+        }
+
 }

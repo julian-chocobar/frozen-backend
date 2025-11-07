@@ -33,4 +33,5 @@ public interface MovementService {
      */
     MovementResponseDTO toggleInProgressPending(Long movementId);
 
+    void createMovements(List<MovementInternalCreateDTO> materialsMovements);
 }
