@@ -62,6 +62,23 @@ public class Material {
     @NotNull
     private OffsetDateTime creationDate;
 
+    // Campos de ubicación en el almacén
+    @Column(name = "warehouse_x")
+    private Double warehouseX;
+
+    @Column(name = "warehouse_y")
+    private Double warehouseY;
+
+    @Column(name = "warehouse_zone", length = 50)
+    private String warehouseZone;
+
+    @Column(name = "warehouse_section", length = 10)
+    private String warehouseSection;
+
+    @Column(name = "warehouse_level")
+    @Builder.Default
+    private Integer warehouseLevel = 1;
+
     public void toggleActive() {
         this.isActive = !this.isActive;
     }

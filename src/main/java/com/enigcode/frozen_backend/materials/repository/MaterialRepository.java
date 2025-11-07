@@ -30,11 +30,27 @@ public interface MaterialRepository extends JpaRepository<Material, Long>, JpaSp
   List<Material> findTop10ByNameContainingIgnoreCaseAndIsActiveTrue(String name);
 
   List<Material> findTop10ByNameContainingIgnoreCaseAndIsActiveFalse(String name);
-  
+
   List<Material> findTop10ByTypeInAndNameContainingIgnoreCase(List<MaterialType> materialTypes, String name);
-  
-  List<Material> findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(List<MaterialType> materialTypes, String name);
-  
-  List<Material> findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(List<MaterialType> materialTypes, String name);
+
+  List<Material> findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveTrue(List<MaterialType> materialTypes,
+      String name);
+
+  List<Material> findTop10ByTypeInAndNameContainingIgnoreCaseAndIsActiveFalse(List<MaterialType> materialTypes,
+      String name);
+
+  // Métodos para consultas de ubicación del almacén
+  List<Material> findByWarehouseZoneAndIsActiveTrue(String zone);
+
+  List<Material> findByWarehouseZone(String zone);
+
+  List<Material> findByIsActiveTrueAndWarehouseXIsNotNullAndWarehouseYIsNotNull();
+
+  List<Material> findByWarehouseXIsNotNullAndWarehouseYIsNotNull();
+
+  boolean existsByCode(String code);
+
+  @org.springframework.data.jpa.repository.Query("SELECT DISTINCT m.warehouseSection FROM Material m WHERE m.warehouseZone = :zone AND m.warehouseSection IS NOT NULL")
+  List<String> findWarehouseSectionsByZone(@org.springframework.data.repository.query.Param("zone") String zone);
 
 }

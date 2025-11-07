@@ -26,4 +26,11 @@ public class MaterialDetailDTO {
     private Boolean isBelowThreshold;
     private OffsetDateTime creationDate;
     private OffsetDateTime lastUpdateDate;
+
+    // Información de ubicación
+    private Double warehouseX;
+    private Double warehouseY;
+    private String warehouseZone;
+    private String warehouseSection;
+    private Integer warehouseLevel;
 }

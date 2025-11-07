@@ -100,4 +100,35 @@ public class MaterialController {
                 return new ResponseEntity<>(materialDetailDTO, HttpStatus.OK);
         }
 
+        // Endpoints para funcionalidad de almacén
+
+        @Operation(summary = "Obtener ubicaciones de materiales", description = "Obtiene las ubicaciones de todos los materiales activos para mostrar en el mapa del almacén")
+        @GetMapping("/warehouse-map")
+        @PreAuthorize("hasRole('SUPERVISOR_DE_ALMACEN') or hasRole('OPERARIO_DE_ALMACEN')")
+        public ResponseEntity<List<MaterialWarehouseLocationDTO>> getWarehouseMap(
+                        @RequestParam(required = false) String zone,
+                        @RequestParam(required = false, defaultValue = "true") Boolean activeOnly) {
+                List<MaterialWarehouseLocationDTO> locations = materialService.getWarehouseLocations(zone, activeOnly);
+                return ResponseEntity.ok(locations);
+        }
+
+        @Operation(summary = "Actualizar ubicación de material", description = "Actualiza la ubicación física de un material en el almacén")
+        @PatchMapping("/{id}/location")
+        @PreAuthorize("hasRole('SUPERVISOR_DE_ALMACEN')")
+        public ResponseEntity<MaterialResponseDTO> updateMaterialLocation(
+                        @PathVariable Long id,
+                        @Valid @RequestBody MaterialLocationUpdateDTO locationUpdateDTO) {
+                MaterialResponseDTO updatedMaterial = materialService.updateMaterialLocation(id, locationUpdateDTO);
+                return ResponseEntity.ok(updatedMaterial);
+        }
+
+        @Operation(summary = "Obtener información del almacén", description = "Obtiene zonas disponibles y próxima ubicación sugerida")
+        @GetMapping("/warehouse-info")
+        @PreAuthorize("hasRole('SUPERVISOR_DE_ALMACEN') or hasRole('OPERARIO_DE_ALMACEN')")
+        public ResponseEntity<WarehouseInfoDTO> getWarehouseInfo(
+                        @RequestParam(required = false) MaterialType materialType) {
+                WarehouseInfoDTO info = materialService.getWarehouseInfo(materialType);
+                return ResponseEntity.ok(info);
+        }
+
 }

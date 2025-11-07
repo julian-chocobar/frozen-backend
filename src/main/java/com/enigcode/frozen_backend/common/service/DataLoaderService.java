@@ -301,6 +301,11 @@ public class DataLoaderService {
                                         .stock(20000.0) // Stock amplio para múltiples órdenes
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(50.0)
+                                        .warehouseZone("ZONA_MALTA")
+                                        .warehouseSection("A1")
+                                        .warehouseLevel(1)
+                                        .warehouseX(55.0)
+                                        .warehouseY(55.0)
                                         .build();
                         MaterialResponseDTO maltaPaleResponse = materialService.createMaterial(maltaPale);
                         maltaPaleId = maltaPaleResponse.getId();
@@ -313,6 +318,11 @@ public class DataLoaderService {
                                         .stock(10000.0) // Stock amplio
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(10.0)
+                                        .warehouseZone("ZONA_MALTA")
+                                        .warehouseSection("A2")
+                                        .warehouseLevel(1)
+                                        .warehouseX(125.0)
+                                        .warehouseY(55.0)
                                         .build();
                         MaterialResponseDTO maltaCrystalResponse = materialService.createMaterial(maltaCrystal);
                         maltaCrystalId = maltaCrystalResponse.getId();
@@ -325,6 +335,11 @@ public class DataLoaderService {
                                         .stock(8000.0) // Para productos especiales como Stout
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(5.0)
+                                        .warehouseZone("ZONA_MALTA")
+                                        .warehouseSection("B1")
+                                        .warehouseLevel(1)
+                                        .warehouseX(55.0)
+                                        .warehouseY(125.0)
                                         .build();
                         MaterialResponseDTO maltaChocolateResponse = materialService.createMaterial(maltaChocolate);
                         maltaChocolateId = maltaChocolateResponse.getId();
@@ -338,6 +353,11 @@ public class DataLoaderService {
                                         .stock(2000.0) // Stock suficiente para muchas órdenes
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(1.0)
+                                        .warehouseZone("ZONA_LUPULO")
+                                        .warehouseSection("A1")
+                                        .warehouseLevel(1)
+                                        .warehouseX(565.0)
+                                        .warehouseY(55.0)
                                         .build();
                         MaterialResponseDTO lupuloCitraResponse = materialService.createMaterial(lupuloCitra);
                         lupuloCitraId = lupuloCitraResponse.getId();
@@ -350,6 +370,11 @@ public class DataLoaderService {
                                         .stock(1500.0) // Para productos específicos
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(1.0)
+                                        .warehouseZone("ZONA_LUPULO")
+                                        .warehouseSection("A2")
+                                        .warehouseLevel(1)
+                                        .warehouseX(635.0)
+                                        .warehouseY(55.0)
                                         .build();
                         MaterialResponseDTO lupuloSimcoeResponse = materialService.createMaterial(lupuloSimcoe);
                         lupuloSimcoeId = lupuloSimcoeResponse.getId();
@@ -363,6 +388,11 @@ public class DataLoaderService {
                                         .stock(2000.0) // Stock amplio para múltiples fermentaciones
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(0.2)
+                                        .warehouseZone("ZONA_LEVADURA")
+                                        .warehouseSection("A1")
+                                        .warehouseLevel(1)
+                                        .warehouseX(65.0)
+                                        .warehouseY(385.0)
                                         .build();
                         MaterialResponseDTO levaduraAleResponse = materialService.createMaterial(levaduraAle);
                         levaduraAleId = levaduraAleResponse.getId();
@@ -375,6 +405,11 @@ public class DataLoaderService {
                                         .stock(1500.0) // Para diferentes tipos de fermentación
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(0.2)
+                                        .warehouseZone("ZONA_LEVADURA")
+                                        .warehouseSection("A2")
+                                        .warehouseLevel(1)
+                                        .warehouseX(172.0)
+                                        .warehouseY(385.0)
                                         .build();
                         MaterialResponseDTO levaduraLagerResponse = materialService.createMaterial(levaduraLager);
                         levaduraLagerId = levaduraLagerResponse.getId();
@@ -388,6 +423,11 @@ public class DataLoaderService {
                                         .stock(1000000.0) // Stock masivo de agua
                                         .unitMeasurement(UnitMeasurement.LT)
                                         .threshold(500.0)
+                                        .warehouseZone("ZONA_AGUA")
+                                        .warehouseSection("A1")
+                                        .warehouseLevel(1)
+                                        .warehouseX(290.0)
+                                        .warehouseY(385.0)
                                         .build();
                         MaterialResponseDTO aguaResponse = materialService.createMaterial(agua);
                         aguaId = aguaResponse.getId();
@@ -401,6 +441,11 @@ public class DataLoaderService {
                                         .stock(5000.0) // Stock suficiente para múltiples lotes
                                         .unitMeasurement(UnitMeasurement.LT)
                                         .threshold(2.0)
+                                        .warehouseZone("ZONA_OTROS")
+                                        .warehouseSection("A1")
+                                        .warehouseLevel(1)
+                                        .warehouseX(583.0)
+                                        .warehouseY(505.0)
                                         .build();
                         MaterialResponseDTO clarificanteResponse = materialService.createMaterial(clarificante);
                         clarificanteId = clarificanteResponse.getId();
@@ -413,6 +458,11 @@ public class DataLoaderService {
                                         .stock(50000.0) // Stock masivo de CO2 para gasificación
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(5.0)
+                                        .warehouseZone("ZONA_OTROS")
+                                        .warehouseSection("A2")
+                                        .warehouseLevel(1)
+                                        .warehouseX(690.0)
+                                        .warehouseY(505.0)
                                         .build();
                         MaterialResponseDTO co2Response = materialService.createMaterial(co2);
                         co2Id = co2Response.getId();
@@ -425,6 +475,11 @@ public class DataLoaderService {
                                         .stock(5000.0) // Para procesos de desalcoholización
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(1.0)
+                                        .warehouseZone("ZONA_OTROS")
+                                        .warehouseSection("B1")
+                                        .warehouseLevel(1)
+                                        .warehouseX(583.0)
+                                        .warehouseY(550.0)
                                         .build();
                         MaterialResponseDTO adsorbenteResponse = materialService.createMaterial(adsorbente);
                         adsorbenteId = adsorbenteResponse.getId();
@@ -438,6 +493,11 @@ public class DataLoaderService {
                                         .stock(500000.0) // Stock masivo de botellas
                                         .unitMeasurement(UnitMeasurement.UNIDAD)
                                         .threshold(200.0)
+                                        .warehouseZone("ZONA_ENVASE")
+                                        .warehouseSection("A1")
+                                        .warehouseLevel(1)
+                                        .warehouseX(808.0)
+                                        .warehouseY(385.0)
                                         .build();
                         MaterialResponseDTO botella330Response = materialService.createMaterial(botella330);
                         botella330Id = botella330Response.getId();
@@ -450,6 +510,11 @@ public class DataLoaderService {
                                         .stock(5000.0) // Stock suficiente de barriles
                                         .unitMeasurement(UnitMeasurement.UNIDAD)
                                         .threshold(5.0)
+                                        .warehouseZone("ZONA_ENVASE")
+                                        .warehouseSection("A2")
+                                        .warehouseLevel(1)
+                                        .warehouseX(915.0)
+                                        .warehouseY(385.0)
                                         .build();
                         MaterialResponseDTO barril20LResponse = materialService.createMaterial(barril20L);
                         barril20LId = barril20LResponse.getId();
@@ -463,6 +528,11 @@ public class DataLoaderService {
                                         .stock(500000.0) // Stock masivo de etiquetas
                                         .unitMeasurement(UnitMeasurement.UNIDAD)
                                         .threshold(200.0)
+                                        .warehouseZone("ZONA_ETIQUETADO")
+                                        .warehouseSection("A1")
+                                        .warehouseLevel(1)
+                                        .warehouseX(583.0)
+                                        .warehouseY(375.0)
                                         .build();
                         MaterialResponseDTO etiquetaBotellaResponse = materialService.createMaterial(etiquetaBotella);
                         etiquetaBotellaId = etiquetaBotellaResponse.getId();
@@ -475,6 +545,11 @@ public class DataLoaderService {
                                         .stock(5000.0) // Stock suficiente de etiquetas para barriles
                                         .unitMeasurement(UnitMeasurement.UNIDAD)
                                         .threshold(5.0)
+                                        .warehouseZone("ZONA_ETIQUETADO")
+                                        .warehouseSection("A2")
+                                        .warehouseLevel(1)
+                                        .warehouseX(690.0)
+                                        .warehouseY(375.0)
                                         .build();
 
                         MaterialResponseDTO etiquetaBarrilResponse = materialService.createMaterial(etiquetaBarril);

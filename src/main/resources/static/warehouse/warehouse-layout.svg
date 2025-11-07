@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+  viewBox="0 0 1000 600" 
+  preserveAspectRatio="xMidYMid meet"
+  xmlns="http://www.w3.org/2000/svg"
+  class="warehouse-svg">
+  
+  <defs>
+    <style>
+      /* Estilos que escalan con el SVG */
+      .zone-malta { fill: #8B4513; stroke: #654321; stroke-width: 2; }
+      .zone-lupulo { fill: #228B22; stroke: #006400; stroke-width: 2; }
+      .zone-agua { fill: #4169E1; stroke: #000080; stroke-width: 2; }
+      .zone-levadura { fill: #FFD700; stroke: #FFA500; stroke-width: 2; }
+      .zone-envase { fill: #D3D3D3; stroke: #808080; stroke-width: 2; }
+      .zone-etiquetado { fill: #DDA0DD; stroke: #9370DB; stroke-width: 2; }
+      .zone-otros { fill: #F0E68C; stroke: #DAA520; stroke-width: 2; }
+      .walkway { fill: #E6E6FA; stroke: #9370DB; stroke-width: 1; }
+      .wall { fill: none; stroke: #2F4F4F; stroke-width: 4; }
+      .door { fill: #8B4513; stroke: #654321; stroke-width: 2; }
+      .section-grid { fill: none; stroke: #666; stroke-width: 0.5; stroke-dasharray: 2,2; }
+      .text-zone { 
+        font-family: Arial; 
+        font-size: 14px; 
+        font-weight: bold; 
+      }
+      .text-section { 
+        font-family: Arial; 
+        font-size: 9px; 
+        fill: #333; 
+      }
+      
+      /* Estados interactivos */
+      .zone:hover { opacity: 0.8; cursor: pointer; }
+      .section:hover { stroke-width: 3; cursor: pointer; }
+      .section.occupied { fill: rgba(255, 0, 0, 0.3); }
+      .section.available { fill: rgba(0, 255, 0, 0.3); }
+      .section.selected { stroke: #ff6b35; stroke-width: 4; }
+      
+      /* Animaciones */
+      .material-marker {
+        animation: pulse 2s infinite;
+        transform-origin: center;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+      }
+    </style>
+  </defs>
+
+  <!-- Estructura con IDs y clases para JavaScript -->
+  <g id="warehouse-container">
+    
+    <!-- Paredes exteriores -->
+    <rect x="10" y="10" width="980" height="580" class="wall"/>
+    
+    <!-- Entrada principal -->
+    <rect x="470" y="10" width="60" height="10" class="door"/>
+    
+    <!-- Pasillos principales -->
+    <rect x="20" y="280" width="960" height="40" class="walkway"/>
+    <rect x="480" y="20" width="40" height="560" class="walkway"/>
+
+    <!-- ZONA MALTA (Superior Izquierda) A1-A5, B1-B5, C1-C5 -->
+    <g id="zona-malta" class="zone" data-zone="ZONA_MALTA" data-material-type="MALTA">
+      <rect x="20" y="20" width="450" height="250" class="zone-malta"/>
+      <text x="245" y="35" class="text-zone" text-anchor="middle" fill="white">ZONA MALTA</text>
+      
+      <g class="sections-container" data-zone="ZONA_MALTA">
+        <!-- Fila A: A1-A5 -->
+        <g class="section" id="section-ZONA_MALTA-A1" data-zone="ZONA_MALTA" data-section="A1" data-x="55" data-y="85">
+          <rect x="30" y="60" width="70" height="50" class="section-grid"/>
+          <text x="65" y="82" class="text-section" text-anchor="middle">A1</text>
+          <circle cx="65" cy="85" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-A2" data-zone="ZONA_MALTA" data-section="A2" data-x="135" data-y="85">
+          <rect x="110" y="60" width="70" height="50" class="section-grid"/>
+          <text x="145" y="82" class="text-section" text-anchor="middle">A2</text>
+          <circle cx="145" cy="85" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-A3" data-zone="ZONA_MALTA" data-section="A3" data-x="215" data-y="85">
+          <rect x="190" y="60" width="70" height="50" class="section-grid"/>
+          <text x="225" y="82" class="text-section" text-anchor="middle">A3</text>
+          <circle cx="225" cy="85" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-A4" data-zone="ZONA_MALTA" data-section="A4" data-x="295" data-y="85">
+          <rect x="270" y="60" width="70" height="50" class="section-grid"/>
+          <text x="305" y="82" class="text-section" text-anchor="middle">A4</text>
+          <circle cx="305" cy="85" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-A5" data-zone="ZONA_MALTA" data-section="A5" data-x="375" data-y="85">
+          <rect x="350" y="60" width="70" height="50" class="section-grid"/>
+          <text x="385" y="82" class="text-section" text-anchor="middle">A5</text>
+          <circle cx="385" cy="85" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        
+        <!-- Fila B: B1-B5 -->
+        <g class="section" id="section-ZONA_MALTA-B1" data-zone="ZONA_MALTA" data-section="B1" data-x="65" data-y="155">
+          <rect x="30" y="130" width="70" height="50" class="section-grid"/>
+          <text x="65" y="152" class="text-section" text-anchor="middle">B1</text>
+          <circle cx="65" cy="155" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-B2" data-zone="ZONA_MALTA" data-section="B2" data-x="145" data-y="155">
+          <rect x="110" y="130" width="70" height="50" class="section-grid"/>
+          <text x="145" y="152" class="text-section" text-anchor="middle">B2</text>
+          <circle cx="145" cy="155" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-B3" data-zone="ZONA_MALTA" data-section="B3" data-x="225" data-y="155">
+          <rect x="190" y="130" width="70" height="50" class="section-grid"/>
+          <text x="225" y="152" class="text-section" text-anchor="middle">B3</text>
+          <circle cx="225" cy="155" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-B4" data-zone="ZONA_MALTA" data-section="B4" data-x="305" data-y="155">
+          <rect x="270" y="130" width="70" height="50" class="section-grid"/>
+          <text x="305" y="152" class="text-section" text-anchor="middle">B4</text>
+          <circle cx="305" cy="155" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-B5" data-zone="ZONA_MALTA" data-section="B5" data-x="385" data-y="155">
+          <rect x="350" y="130" width="70" height="50" class="section-grid"/>
+          <text x="385" y="152" class="text-section" text-anchor="middle">B5</text>
+          <circle cx="385" cy="155" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        
+        <!-- Fila C: C1-C5 -->
+        <g class="section" id="section-ZONA_MALTA-C1" data-zone="ZONA_MALTA" data-section="C1" data-x="65" data-y="225">
+          <rect x="30" y="200" width="70" height="50" class="section-grid"/>
+          <text x="65" y="222" class="text-section" text-anchor="middle">C1</text>
+          <circle cx="65" cy="225" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-C2" data-zone="ZONA_MALTA" data-section="C2" data-x="145" data-y="225">
+          <rect x="110" y="200" width="70" height="50" class="section-grid"/>
+          <text x="145" y="222" class="text-section" text-anchor="middle">C2</text>
+          <circle cx="145" cy="225" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-C3" data-zone="ZONA_MALTA" data-section="C3" data-x="225" data-y="225">
+          <rect x="190" y="200" width="70" height="50" class="section-grid"/>
+          <text x="225" y="222" class="text-section" text-anchor="middle">C3</text>
+          <circle cx="225" cy="225" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-C4" data-zone="ZONA_MALTA" data-section="C4" data-x="305" data-y="225">
+          <rect x="270" y="200" width="70" height="50" class="section-grid"/>
+          <text x="305" y="222" class="text-section" text-anchor="middle">C4</text>
+          <circle cx="305" cy="225" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_MALTA-C5" data-zone="ZONA_MALTA" data-section="C5" data-x="385" data-y="225">
+          <rect x="350" y="200" width="70" height="50" class="section-grid"/>
+          <text x="385" y="222" class="text-section" text-anchor="middle">C5</text>
+          <circle cx="385" cy="225" r="2" class="anchor-point" opacity="0"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- ZONA LUPULO (Superior Derecha) A1-A5, B1-B5, C1-C5 -->
+    <g id="zona-lupulo" class="zone" data-zone="ZONA_LUPULO" data-material-type="LUPULO">
+      <rect x="530" y="20" width="450" height="250" class="zone-lupulo"/>
+      <text x="755" y="35" class="text-zone" text-anchor="middle" fill="white">ZONA LUPULO</text>
+      
+      <g class="sections-container" data-zone="ZONA_LUPULO">
+        <!-- Fila A: A1-A5 -->
+        <g class="section" id="section-ZONA_LUPULO-A1" data-zone="ZONA_LUPULO" data-section="A1" data-x="565" data-y="85">
+          <rect x="540" y="60" width="70" height="50" class="section-grid"/>
+          <text x="575" y="82" class="text-section" text-anchor="middle">A1</text>
+          <circle cx="575" cy="85" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-A2" data-zone="ZONA_LUPULO" data-section="A2" data-x="645" data-y="85">
+          <rect x="620" y="60" width="70" height="50" class="section-grid"/>
+          <text x="655" y="82" class="text-section" text-anchor="middle">A2</text>
+          <circle cx="655" cy="85" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-A3" data-zone="ZONA_LUPULO" data-section="A3" data-x="725" data-y="85">
+          <rect x="700" y="60" width="70" height="50" class="section-grid"/>
+          <text x="735" y="82" class="text-section" text-anchor="middle">A3</text>
+          <circle cx="735" cy="85" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-A4" data-zone="ZONA_LUPULO" data-section="A4" data-x="805" data-y="85">
+          <rect x="780" y="60" width="70" height="50" class="section-grid"/>
+          <text x="815" y="82" class="text-section" text-anchor="middle">A4</text>
+          <circle cx="815" cy="85" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-A5" data-zone="ZONA_LUPULO" data-section="A5" data-x="885" data-y="85">
+          <rect x="860" y="60" width="70" height="50" class="section-grid"/>
+          <text x="895" y="82" class="text-section" text-anchor="middle">A5</text>
+          <circle cx="895" cy="85" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        
+        <!-- Fila B: B1-B5 -->
+        <g class="section" id="section-ZONA_LUPULO-B1" data-zone="ZONA_LUPULO" data-section="B1" data-x="575" data-y="155">
+          <rect x="540" y="130" width="70" height="50" class="section-grid"/>
+          <text x="575" y="152" class="text-section" text-anchor="middle">B1</text>
+          <circle cx="575" cy="155" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-B2" data-zone="ZONA_LUPULO" data-section="B2" data-x="655" data-y="155">
+          <rect x="620" y="130" width="70" height="50" class="section-grid"/>
+          <text x="655" y="152" class="text-section" text-anchor="middle">B2</text>
+          <circle cx="655" cy="155" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-B3" data-zone="ZONA_LUPULO" data-section="B3" data-x="735" data-y="155">
+          <rect x="700" y="130" width="70" height="50" class="section-grid"/>
+          <text x="735" y="152" class="text-section" text-anchor="middle">B3</text>
+          <circle cx="735" cy="155" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-B4" data-zone="ZONA_LUPULO" data-section="B4" data-x="815" data-y="155">
+          <rect x="780" y="130" width="70" height="50" class="section-grid"/>
+          <text x="815" y="152" class="text-section" text-anchor="middle">B4</text>
+          <circle cx="815" cy="155" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-B5" data-zone="ZONA_LUPULO" data-section="B5" data-x="895" data-y="155">
+          <rect x="860" y="130" width="70" height="50" class="section-grid"/>
+          <text x="895" y="152" class="text-section" text-anchor="middle">B5</text>
+          <circle cx="895" cy="155" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        
+        <!-- Fila C: C1-C5 -->
+        <g class="section" id="section-ZONA_LUPULO-C1" data-zone="ZONA_LUPULO" data-section="C1" data-x="575" data-y="225">
+          <rect x="540" y="200" width="70" height="50" class="section-grid"/>
+          <text x="575" y="222" class="text-section" text-anchor="middle">C1</text>
+          <circle cx="575" cy="225" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-C2" data-zone="ZONA_LUPULO" data-section="C2" data-x="655" data-y="225">
+          <rect x="620" y="200" width="70" height="50" class="section-grid"/>
+          <text x="655" y="222" class="text-section" text-anchor="middle">C2</text>
+          <circle cx="655" cy="225" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-C3" data-zone="ZONA_LUPULO" data-section="C3" data-x="735" data-y="225">
+          <rect x="700" y="200" width="70" height="50" class="section-grid"/>
+          <text x="735" y="222" class="text-section" text-anchor="middle">C3</text>
+          <circle cx="735" cy="225" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-C4" data-zone="ZONA_LUPULO" data-section="C4" data-x="815" data-y="225">
+          <rect x="780" y="200" width="70" height="50" class="section-grid"/>
+          <text x="815" y="222" class="text-section" text-anchor="middle">C4</text>
+          <circle cx="815" cy="225" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LUPULO-C5" data-zone="ZONA_LUPULO" data-section="C5" data-x="895" data-y="225">
+          <rect x="860" y="200" width="70" height="50" class="section-grid"/>
+          <text x="895" y="222" class="text-section" text-anchor="middle">C5</text>
+          <circle cx="895" cy="225" r="2" class="anchor-point" opacity="0"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- ZONA LEVADURA A1-A2, B1-B2, C1-C2 -->
+    <g id="zona-levadura" class="zone" data-zone="ZONA_LEVADURA" data-material-type="LEVADURA">
+      <rect x="20" y="330" width="215" height="250" class="zone-levadura"/>
+      <text x="127" y="345" class="text-zone" text-anchor="middle" fill="black">ZONA LEVADURA</text>
+      
+      <g class="sections-container" data-zone="ZONA_LEVADURA">
+        <g class="section" id="section-ZONA_LEVADURA-A1" data-zone="ZONA_LEVADURA" data-section="A1" data-x="75" data-y="385">
+          <rect x="35" y="360" width="80" height="65" class="section-grid"/>
+          <text x="75" y="390" class="text-section" text-anchor="middle">A1</text>
+          <circle cx="75" cy="385" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LEVADURA-A2" data-zone="ZONA_LEVADURA" data-section="A2" data-x="165" data-y="385">
+          <rect x="125" y="360" width="80" height="65" class="section-grid"/>
+          <text x="165" y="390" class="text-section" text-anchor="middle">A2</text>
+          <circle cx="165" cy="385" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LEVADURA-B1" data-zone="ZONA_LEVADURA" data-section="B1" data-x="75" data-y="465">
+          <rect x="35" y="440" width="80" height="65" class="section-grid"/>
+          <text x="75" y="470" class="text-section" text-anchor="middle">B1</text>
+          <circle cx="75" cy="465" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LEVADURA-B2" data-zone="ZONA_LEVADURA" data-section="B2" data-x="165" data-y="465">
+          <rect x="125" y="440" width="80" height="65" class="section-grid"/>
+          <text x="165" y="470" class="text-section" text-anchor="middle">B2</text>
+          <circle cx="165" cy="465" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LEVADURA-C1" data-zone="ZONA_LEVADURA" data-section="C1" data-x="75" data-y="545">
+          <rect x="35" y="520" width="80" height="65" class="section-grid"/>
+          <text x="75" y="550" class="text-section" text-anchor="middle">C1</text>
+          <circle cx="75" cy="545" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_LEVADURA-C2" data-zone="ZONA_LEVADURA" data-section="C2" data-x="165" data-y="545">
+          <rect x="125" y="520" width="80" height="65" class="section-grid"/>
+          <text x="165" y="550" class="text-section" text-anchor="middle">C2</text>
+          <circle cx="165" cy="545" r="2" class="anchor-point" opacity="0"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- ZONA AGUA A1-A2, B1-B2, C1-C2 -->
+    <g id="zona-agua" class="zone" data-zone="ZONA_AGUA" data-material-type="AGUA">
+      <rect x="245" y="330" width="215" height="250" class="zone-agua"/>
+      <text x="352" y="345" class="text-zone" text-anchor="middle" fill="white">ZONA AGUA</text>
+      
+      <g class="sections-container" data-zone="ZONA_AGUA">
+        <g class="section" id="section-ZONA_AGUA-A1" data-zone="ZONA_AGUA" data-section="A1" data-x="300" data-y="385">
+          <rect x="260" y="360" width="80" height="65" class="section-grid"/>
+          <text x="300" y="390" class="text-section" text-anchor="middle">A1</text>
+          <circle cx="300" cy="385" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_AGUA-A2" data-zone="ZONA_AGUA" data-section="A2" data-x="390" data-y="385">
+          <rect x="350" y="360" width="80" height="65" class="section-grid"/>
+          <text x="390" y="390" class="text-section" text-anchor="middle">A2</text>
+          <circle cx="390" cy="385" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_AGUA-B1" data-zone="ZONA_AGUA" data-section="B1" data-x="300" data-y="465">
+          <rect x="260" y="440" width="80" height="65" class="section-grid"/>
+          <text x="300" y="470" class="text-section" text-anchor="middle">B1</text>
+          <circle cx="300" cy="465" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_AGUA-B2" data-zone="ZONA_AGUA" data-section="B2" data-x="390" data-y="465">
+          <rect x="350" y="440" width="80" height="65" class="section-grid"/>
+          <text x="390" y="470" class="text-section" text-anchor="middle">B2</text>
+          <circle cx="390" cy="465" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_AGUA-C1" data-zone="ZONA_AGUA" data-section="C1" data-x="300" data-y="545">
+          <rect x="260" y="520" width="80" height="65" class="section-grid"/>
+          <text x="300" y="550" class="text-section" text-anchor="middle">C1</text>
+          <circle cx="300" cy="545" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_AGUA-C2" data-zone="ZONA_AGUA" data-section="C2" data-x="390" data-y="545">
+          <rect x="350" y="520" width="80" height="65" class="section-grid"/>
+          <text x="390" y="550" class="text-section" text-anchor="middle">C2</text>
+          <circle cx="390" cy="545" r="2" class="anchor-point" opacity="0"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- ZONA ENVASE A1-A2, B1-B2, C1-C2 -->
+    <g id="zona-envase" class="zone" data-zone="ZONA_ENVASE" data-material-type="ENVASE">
+      <rect x="755" y="330" width="215" height="250" class="zone-envase"/>
+      <text x="862" y="345" class="text-zone" text-anchor="middle" fill="black">ZONA ENVASE</text>
+      
+      <g class="sections-container" data-zone="ZONA_ENVASE">
+        <g class="section" id="section-ZONA_ENVASE-A1" data-zone="ZONA_ENVASE" data-section="A1" data-x="808" data-y="385">
+          <rect x="765" y="360" width="90" height="70" class="section-grid"/>
+          <text x="810" y="392" class="text-section" text-anchor="middle">A1</text>
+          <circle cx="808" cy="385" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_ENVASE-A2" data-zone="ZONA_ENVASE" data-section="A2" data-x="915" data-y="385">
+          <rect x="872" y="360" width="90" height="70" class="section-grid"/>
+          <text x="917" y="392" class="text-section" text-anchor="middle">A2</text>
+          <circle cx="915" cy="385" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_ENVASE-B1" data-zone="ZONA_ENVASE" data-section="B1" data-x="808" data-y="465">
+          <rect x="765" y="440" width="90" height="70" class="section-grid"/>
+          <text x="810" y="472" class="text-section" text-anchor="middle">B1</text>
+          <circle cx="808" cy="465" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_ENVASE-B2" data-zone="ZONA_ENVASE" data-section="B2" data-x="915" data-y="465">
+          <rect x="872" y="440" width="90" height="70" class="section-grid"/>
+          <text x="917" y="472" class="text-section" text-anchor="middle">B2</text>
+          <circle cx="915" cy="465" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_ENVASE-C1" data-zone="ZONA_ENVASE" data-section="C1" data-x="808" data-y="545">
+          <rect x="765" y="520" width="90" height="70" class="section-grid"/>
+          <text x="810" y="552" class="text-section" text-anchor="middle">C1</text>
+          <circle cx="808" cy="545" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_ENVASE-C2" data-zone="ZONA_ENVASE" data-section="C2" data-x="915" data-y="545">
+          <rect x="872" y="520" width="90" height="70" class="section-grid"/>
+          <text x="917" y="552" class="text-section" text-anchor="middle">C2</text>
+          <circle cx="915" cy="545" r="2" class="anchor-point" opacity="0"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- ZONA ETIQUETADO A1-A2, B1-B2 -->
+    <g id="zona-etiquetado" class="zone" data-zone="ZONA_ETIQUETADO" data-material-type="ETIQUETADO">
+      <rect x="530" y="330" width="215" height="120" class="zone-etiquetado"/>
+      <text x="600" y="345" class="text-zone" text-anchor="middle" fill="black">ZONA ETIQUETADO</text>
+      
+      <g class="sections-container" data-zone="ZONA_ETIQUETADO">
+        <g class="section" id="section-ZONA_ETIQUETADO-A1" data-zone="ZONA_ETIQUETADO" data-section="A1" data-x="583" data-y="375">
+          <rect x="540" y="360" width="90" height="50" class="section-grid"/>
+          <text x="585" y="382" class="text-section" text-anchor="middle">A1</text>
+          <circle cx="583" cy="375" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_ETIQUETADO-A2" data-zone="ZONA_ETIQUETADO" data-section="A2" data-x="690" data-y="375">
+          <rect x="647" y="360" width="90" height="50" class="section-grid"/>
+          <text x="692" y="382" class="text-section" text-anchor="middle">A2</text>
+          <circle cx="690" cy="375" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_ETIQUETADO-B1" data-zone="ZONA_ETIQUETADO" data-section="B1" data-x="583" data-y="420">
+          <rect x="540" y="410" width="90" height="50" class="section-grid"/>
+          <text x="585" y="432" class="text-section" text-anchor="middle">B1</text>
+          <circle cx="583" cy="420" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_ETIQUETADO-B2" data-zone="ZONA_ETIQUETADO" data-section="B2" data-x="690" data-y="420">
+          <rect x="647" y="410" width="90" height="50" class="section-grid"/>
+          <text x="692" y="432" class="text-section" text-anchor="middle">B2</text>
+          <circle cx="690" cy="420" r="2" class="anchor-point" opacity="0"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- ZONA OTROS A1-A2, B1-B2 -->
+    <g id="zona-otros" class="zone" data-zone="ZONA_OTROS" data-material-type="OTROS">
+      <rect x="530" y="460" width="215" height="120" class="zone-otros"/>
+      <text x="600" y="475" class="text-zone" text-anchor="middle" fill="black">ZONA OTROS</text>
+      
+      <g class="sections-container" data-zone="ZONA_OTROS">
+        <g class="section" id="section-ZONA_OTROS-A1" data-zone="ZONA_OTROS" data-section="A1" data-x="583" data-y="505">
+          <rect x="540" y="490" width="90" height="50" class="section-grid"/>
+          <text x="585" y="512" class="text-section" text-anchor="middle">A1</text>
+          <circle cx="583" cy="505" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_OTROS-A2" data-zone="ZONA_OTROS" data-section="A2" data-x="690" data-y="505">
+          <rect x="647" y="490" width="90" height="50" class="section-grid"/>
+          <text x="692" y="512" class="text-section" text-anchor="middle">A2</text>
+          <circle cx="690" cy="505" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_OTROS-B1" data-zone="ZONA_OTROS" data-section="B1" data-x="583" data-y="550">
+          <rect x="540" y="540" width="90" height="50" class="section-grid"/>
+          <text x="585" y="562" class="text-section" text-anchor="middle">B1</text>
+          <circle cx="583" cy="550" r="2" class="anchor-point" opacity="0"/>
+        </g>
+        <g class="section" id="section-ZONA_OTROS-B2" data-zone="ZONA_OTROS" data-section="B2" data-x="690" data-y="550">
+          <rect x="647" y="540" width="90" height="50" class="section-grid"/>
+          <text x="692" y="562" class="text-section" text-anchor="middle">B2</text>
+          <circle cx="690" cy="550" r="2" class="anchor-point" opacity="0"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- Container dinámico para marcadores de materiales -->
+    <g id="materials-layer" class="materials-overlay">
+      <!-- Los materiales se insertarán aquí dinámicamente -->
+    </g>
+
+    <!-- Container para elementos UI interactivos -->
+    <g id="ui-layer" class="ui-overlay">
+      <!-- Tooltips, selecciones, etc. se insertarán aquí -->
+    </g>
+
+    <!-- Puntos de referencia para coordenadas -->
+    <circle cx="0" cy="0" r="2" fill="red" opacity="0.3"/>
+    <text x="5" y="5" font-size="8" fill="red">(0,0)</text>
+    
+    <circle cx="1000" cy="600" r="2" fill="red" opacity="0.3"/>
+    <text x="950" y="595" font-size="8" fill="red">(1000,600)</text>
+
+  </g>
+</svg>

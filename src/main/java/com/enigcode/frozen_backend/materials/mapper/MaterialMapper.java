@@ -30,4 +30,10 @@ public interface MaterialMapper {
 
         @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
         Material partialUpdate(MaterialUpdateDTO materialupdateDTO, @MappingTarget Material material);
+
+        // Mappings para funcionalidad de almacén
+        @Mapping(target = "isBelowThreshold", expression = "java(material.getStock() != null && material.getThreshold() != null "
+                        + "&& material.getStock() <= material.getThreshold())")
+        com.enigcode.frozen_backend.materials.DTO.MaterialWarehouseLocationDTO toWarehouseLocationDTO(
+                        Material material);
 }

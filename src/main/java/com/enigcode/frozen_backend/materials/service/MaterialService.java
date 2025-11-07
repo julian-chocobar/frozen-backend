@@ -19,4 +19,11 @@ public interface MaterialService {
     List<MaterialSimpleResponseDTO> getMaterialSimpleList(String name, Boolean active, Phase phase, MaterialType type);
 
     MaterialDetailDTO getMaterial(Long id);
+
+    // Métodos para funcionalidad de almacén
+    List<MaterialWarehouseLocationDTO> getWarehouseLocations(String zone, Boolean activeOnly);
+
+    MaterialResponseDTO updateMaterialLocation(Long id, MaterialLocationUpdateDTO locationUpdateDTO);
+
+    WarehouseInfoDTO getWarehouseInfo(com.enigcode.frozen_backend.materials.model.MaterialType materialType);
 }
