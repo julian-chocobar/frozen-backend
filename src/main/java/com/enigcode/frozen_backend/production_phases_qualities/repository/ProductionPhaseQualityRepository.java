@@ -4,6 +4,10 @@ import com.enigcode.frozen_backend.production_phases_qualities.model.ProductionP
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ProductionPhaseQualityRepository extends JpaRepository<ProductionPhaseQuality, Long> {
+    List<ProductionPhaseQuality> findAllByProductionPhase_Batch_Id(Long batchId);
+    List<ProductionPhaseQuality> findAllByProductionPhaseId(Long phaseId);
 }

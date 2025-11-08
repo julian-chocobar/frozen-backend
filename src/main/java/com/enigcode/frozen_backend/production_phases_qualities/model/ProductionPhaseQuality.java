@@ -10,7 +10,12 @@ import lombok.*;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "production_phases_qualities")
+@Table(name = "production_phases_qualities",
+        uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uq_production_phase_quality_parameter",
+                columnNames = {"id_production_phase", "id_quality_parameter"})
+})
 @Getter
 @Setter
 @NoArgsConstructor

@@ -10,8 +10,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ProductionPhaseQualityUpdateDTO {
-    private Long qualityParameterId;
-    private Long productionPhaseId;
     private String value;
     private Boolean isApproved;
 }

@@ -1,11 +1,14 @@
 package com.enigcode.frozen_backend.production_phases_qualities.mapper;
 
 import com.enigcode.frozen_backend.common.mapper.GlobalMapperConfig;
+import com.enigcode.frozen_backend.production_phases_qualities.DTO.ProductionPhaseQualityCreateDTO;
 import com.enigcode.frozen_backend.production_phases_qualities.DTO.ProductionPhaseQualityResponseDTO;
+import com.enigcode.frozen_backend.production_phases_qualities.DTO.ProductionPhaseQualityUpdateDTO;
 import com.enigcode.frozen_backend.production_phases_qualities.model.ProductionPhaseQuality;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
 
 @Mapper(config = GlobalMapperConfig.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ProductionPhaseQualityMapper {
@@ -13,4 +16,6 @@ public interface ProductionPhaseQualityMapper {
     @Mapping(target = "productionPhaseId", source = "productionPhase.id")
     @Mapping(target = "productionPhase", source = "productionPhase.phase")
     ProductionPhaseQualityResponseDTO toResponseDTO (ProductionPhaseQuality productionPhaseQuality);
+    ProductionPhaseQuality toEntity(ProductionPhaseQualityCreateDTO dto);
+    ProductionPhaseQuality partialUpdate(ProductionPhaseQualityUpdateDTO dto, @MappingTarget ProductionPhaseQuality productionPhaseQuality);
 }
