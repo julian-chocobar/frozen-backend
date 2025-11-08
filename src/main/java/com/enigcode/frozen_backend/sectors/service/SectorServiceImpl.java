@@ -2,6 +2,7 @@ package com.enigcode.frozen_backend.sectors.service;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.sectors.DTO.SectorCreateDTO;
 import com.enigcode.frozen_backend.sectors.DTO.SectorResponseDTO;
 import com.enigcode.frozen_backend.sectors.DTO.SectorUpdateDTO;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -110,6 +112,18 @@ public class SectorServiceImpl implements SectorService {
         Sector savedSector = sectorRepository.save(updatedSector);
 
         return sectorMapper.toResponseDTO(savedSector);
+    }
+
+    @Override
+    @Transactional
+    public List<Sector> getAllSectorsAvailableByPhase(Phase phase) {
+        return sectorRepository.findAvailableProductionSectorsByPhase(phase);
+    }
+
+    @Override
+    @Transactional
+    public void saveAll(List<Sector> sectors) {
+        sectorRepository.saveAll(sectors);
     }
 
     private boolean dtoProductionValidation(SectorCreateDTO dto) {

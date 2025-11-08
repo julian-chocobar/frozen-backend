@@ -40,6 +40,9 @@ public class Sector {
     @Column(name = "production_capacity")
     private Double productionCapacity;
 
+    @Column(name = "actual_production")
+    private Double actualProduction;
+
     @NotNull
     private Boolean isActive;
 
@@ -48,4 +51,19 @@ public class Sector {
     @Column(name = "creation_date")
     @NotNull
     private OffsetDateTime creationDate;
+
+    // LÓGICA DE INICIALIZACIÓN:
+    @PrePersist
+    public void setActualProduction() {
+        if (this.actualProduction == null) this.actualProduction = 0.0;
+    }
+
+    public void increaseActualProduction(Double quantity) {
+        this.actualProduction += quantity;
+    }
+
+    public void decreaseActualProduction(Double quantity) {
+        this.actualProduction -= quantity;
+        if(this.actualProduction < 0.0) this.actualProduction = 0.0;
+    }
 }

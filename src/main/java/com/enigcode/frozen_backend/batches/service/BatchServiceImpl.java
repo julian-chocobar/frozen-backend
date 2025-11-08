@@ -11,13 +11,14 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.Resource
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
 
-import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhaseStatus;
-import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
 import com.enigcode.frozen_backend.production_phases.service.ProductionPhaseService;
 import com.enigcode.frozen_backend.products.model.Product;
+import com.enigcode.frozen_backend.sectors.model.Sector;
+import com.enigcode.frozen_backend.sectors.service.SectorService;
 import com.enigcode.frozen_backend.system_configurations.model.WorkingDay;
 import com.enigcode.frozen_backend.system_configurations.service.SystemConfigurationService;
 import jakarta.transaction.Transactional;
@@ -26,12 +27,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 
 import static com.enigcode.frozen_backend.common.Utils.DateUtil.estimateEndDate;
 
@@ -39,11 +41,13 @@ import static com.enigcode.frozen_backend.common.Utils.DateUtil.estimateEndDate;
 @RequiredArgsConstructor
 public class BatchServiceImpl implements BatchService{
 
-    final BatchRepository batchRepository;
-    final BatchMapper batchMapper;
-    final PackagingRepository packagingRepository;
-    final SystemConfigurationService systemConfigurationService;
+    private final BatchRepository batchRepository;
+    private final BatchMapper batchMapper;
+    private final PackagingRepository packagingRepository;
+    private final SystemConfigurationService systemConfigurationService;
     private final ProductionPhaseService productionPhaseService;
+    private final SectorService sectorService;
+
 
     /**
      * Crea un Lote cuando se crea una orden de produccion, la misma tiene que ser transactional
@@ -145,5 +149,89 @@ public class BatchServiceImpl implements BatchService{
                                 pageable.getSort());
         Page<Batch> batches = batchRepository.findAll(BatchSpecification.createFilter(filterDTO), pageRequest);
         return batches.map(batchMapper::toResponseDTO);
+    }
+
+    /**
+     * Automatizacion de inicializacion de lotes de la fecha programado para las 8 am
+     * En caso de estar llena la producción se postergan hacia el proximo dia
+     * TODO: AGREGAR TAMBIEN EN ESPERA EN CASO DE SER POSTERGADO Y AÑADIRLO A LA CREACION?
+     */
+    @Scheduled(cron = "0 0 8 * * *", zone = "America/Argentina/Buenos_Aires")
+    @Transactional
+    @Override
+    public void processBatchesForToday(){
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime startOfDay = now.toLocalDate().atStartOfDay().atOffset(now.getOffset());
+        OffsetDateTime endOfDay = startOfDay.plusDays(1);
+
+        List<Batch> scheduledBatches = batchRepository.findAllStartingToday(startOfDay, endOfDay);
+
+        if(scheduledBatches.isEmpty()) return;
+
+        //Se fija de que sea un dia laborable para asignar el lote
+        boolean isWorkingDay = systemConfigurationService.getWorkingDays().get(now.getDayOfWeek()).getIsWorkingDay();
+        if(isWorkingDay)
+            processAllBatches(scheduledBatches);
+
+        List<Batch> remainingBatches = scheduledBatches.stream()
+                .filter(batch -> batch.getStatus().equals(BatchStatus.PENDIENTE))
+                .toList();
+        
+        postPoneBatches(remainingBatches);
+        
+        batchRepository.saveAll(scheduledBatches);
+    }
+
+    /**
+     * Agarra los lotes que estan pendientes que se deberian haber inicializado el dia de la fecha y los aplaza 1 dia
+     * @param remainingBatches
+     */
+    private void postPoneBatches(List<Batch> remainingBatches) {
+        if (remainingBatches.isEmpty()) return;
+
+        OffsetDateTime tomorrowStart = OffsetDateTime.now()
+                .toLocalDate()
+                .plusDays(1)
+                .atStartOfDay()
+                .atOffset(OffsetDateTime.now().getOffset());
+
+        remainingBatches.forEach(batch -> batch.setStartDate(tomorrowStart));
+    }
+
+    /**
+     * Recibe los lotes que se deberian iniciar en la fecha y uno a uno los inicializa asignandole un sector hasta
+     * que se termine la lista o el limite de produccion sea alcanzado
+     * @param scheduledBatches
+     * @return
+     */
+    private void processAllBatches(List<Batch> scheduledBatches) {
+        List<Sector> sectors = sectorService.getAllSectorsAvailableByPhase(Phase.MOLIENDA);
+        if(sectors.isEmpty())
+            return;
+
+        for (Batch batch : scheduledBatches) {
+            Double batchQuantity = batch.getProductionOrder().getQuantity();
+
+            sectors.stream()
+                    .filter(sector ->
+                            (sector.getActualProduction() + batchQuantity) <= sector.getProductionCapacity())
+                    .findFirst()
+                    .ifPresent(sector -> {
+                        startBatch(batch, sector);
+                        sector.increaseActualProduction(batchQuantity);});
+        }
+
+        sectorService.saveAll(sectors);
+    }
+
+    //TODO: ENVIAR NOTIFICACION AL SUPERVISOR DEL SECTOR
+    private void startBatch(Batch batch, Sector sector) {
+        if (batch.getPhases() == null || batch.getPhases().isEmpty()) return;
+        ProductionPhase firstPhase = batch.getPhases().get(0);
+        batch.setStatus(BatchStatus.EN_PRODUCCION);
+        batch.setStartDate(OffsetDateTime.now());
+        firstPhase.setSector(sector);
+        firstPhase.setStatus(ProductionPhaseStatus.EN_PROCESO);
+        firstPhase.setStartDate(OffsetDateTime.now());
     }
 }
