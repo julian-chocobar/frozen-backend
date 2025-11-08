@@ -1,0 +1,13 @@
+package com.enigcode.frozen_backend.production_phases_qualities.service;
+
+import com.enigcode.frozen_backend.production_phases_qualities.mapper.ProductionPhaseQualityMapper;
+import com.enigcode.frozen_backend.production_phases_qualities.repository.ProductionPhaseQualityRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class ProductionPhaseQualityServiceImpl implements ProductionPhaseQualityService{
+    private final ProductionPhaseQualityMapper productionPhaseQualityMapper;
+    private final ProductionPhaseQualityRepository productionPhaseQualityRepository;
+}

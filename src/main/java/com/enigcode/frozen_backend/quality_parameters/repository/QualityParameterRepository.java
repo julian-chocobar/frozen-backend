@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface QualityParameterRepository extends JpaRepository<QualityParameter, Long>, JpaSpecificationExecutor<QualityParameter> {
+public interface QualityParameterRepository extends JpaRepository<QualityParameter, Long> {
 }
