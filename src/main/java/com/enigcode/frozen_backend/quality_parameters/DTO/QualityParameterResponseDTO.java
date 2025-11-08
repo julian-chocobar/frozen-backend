@@ -15,4 +15,5 @@ public class QualityParameterResponseDTO {
     private Boolean isCritical;
     private String name;
     private String description;
+    private Boolean isActive;
 }

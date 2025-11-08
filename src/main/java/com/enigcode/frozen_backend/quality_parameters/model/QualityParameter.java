@@ -33,8 +33,12 @@ public class QualityParameter {
     @Size(max = 255)
     private String description;
 
-    private Boolean is_active;
+    private Boolean isActive;
 
     @PrePersist
-    public void setIs_active(){if(is_active == null) is_active = true;}
+    public void setIsActive(){if(isActive == null) isActive = true;}
+
+    public void toggleActive() {
+        this.isActive = !this.isActive;
+    }
 }
