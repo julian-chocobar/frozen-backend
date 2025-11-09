@@ -24,7 +24,7 @@ public class QualityParameter {
     private Phase phase;
 
     @NotNull
-    private boolean isCritical;
+    private Boolean isCritical;
 
     @Size(max = 20)
     @NotNull

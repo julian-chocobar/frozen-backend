@@ -24,7 +24,7 @@ public class ProductionPhaseController {
             summary = "Enviar a revision lote después de la fase",
             description = "El supervisor de produccion del sector envía su fase a ser revisada por calidad"
     )
-    @PatchMapping("/{id}")
+    @PatchMapping("/set-under-review/{id}")
     @PreAuthorize("@securityService.isSupervisorOfPhase(authentication, #id)")
     public ResponseEntity<ProductionPhaseResponseDTO> setUnderReview(
             @PathVariable Long id,
@@ -32,6 +32,19 @@ public class ProductionPhaseController {
         ProductionPhaseResponseDTO productionPhaseResponseDTO = productionPhaseService.setUnderReview(id,dto);
 
         return new ResponseEntity<>(productionPhaseResponseDTO, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Revision de parámetros de calidad",
+            description = "Revisa los parámetros de calidad y puede aprobar y completar la fase, rechazarla y cancelarla" +
+                    "o rechazarla y enviarla a ajustar dependiendo los quality parameters"
+    )
+    @PatchMapping("/review/{id}")
+    @PreAuthorize("hasRole('SUPERVISOR_DE_CALIDAD')")
+    public ResponseEntity<ProductionPhaseResponseDTO> reviewProductionPhase(@PathVariable Long id){
+        ProductionPhaseResponseDTO dto = productionPhaseService.reviewProductionPhase(id);
+
+        return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
     @Operation(

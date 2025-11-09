@@ -7,6 +7,7 @@ import com.enigcode.frozen_backend.batches.model.Batch;
 import com.enigcode.frozen_backend.batches.model.BatchStatus;
 import com.enigcode.frozen_backend.batches.repository.BatchRepository;
 import com.enigcode.frozen_backend.batches.specification.BatchSpecification;
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
@@ -15,6 +16,7 @@ import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhaseStatus;
+import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
 import com.enigcode.frozen_backend.production_phases.service.ProductionPhaseService;
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.sectors.model.Sector;
@@ -47,6 +49,7 @@ public class BatchServiceImpl implements BatchService{
     private final SystemConfigurationService systemConfigurationService;
     private final ProductionPhaseService productionPhaseService;
     private final SectorService sectorService;
+    private final ProductionPhaseRepository productionPhaseRepository;
 
 
     /**
@@ -141,6 +144,26 @@ public class BatchServiceImpl implements BatchService{
         return batchMapper.toResponseDTO(savedBatch);
     }
 
+    /**
+     * Dado un lote, suspende las fases no completas y devuelve la materia prima restante
+     *
+     * @param id
+     */
+    @Transactional
+    @Override
+    public void cancelBatch(Batch batch) {
+        batch.setStatus(BatchStatus.CANCELADO);
+
+        List<ProductionPhase> remainingProductionPhases = batch.getPhases().stream()
+                .filter(productionPhase ->
+                        productionPhase.getStatus().equals(ProductionPhaseStatus.PENDIENTE))
+                .toList();
+
+        productionPhaseService.suspendProductionPhases(remainingProductionPhases);
+
+        Batch savedBatch = batchRepository.save(batch);
+    }
+
     @Override
     public Page<BatchResponseDTO> findAll(BatchFilterDTO filterDTO, Pageable pageable) {
         Pageable pageRequest = PageRequest.of(
@@ -233,5 +256,46 @@ public class BatchServiceImpl implements BatchService{
         firstPhase.setSector(sector);
         firstPhase.setStatus(ProductionPhaseStatus.EN_PROCESO);
         firstPhase.setStartDate(OffsetDateTime.now());
+    }
+
+    /**
+     * Funcion que agarra la proxima fase y la pone en produccion o termina el lote en caso de ser la ultima fase
+     * TODO: NOTIFICACION AL SUPERVISOR DEL SECTOR ENCARGADO DE LA PROXIMA FASE
+     * @param batch
+     */
+    @Override
+    @Transactional
+    public void startNextPhase(Batch batch) {
+        Optional<ProductionPhase> nextProductionPhase =
+                batch.getPhases().stream()
+                .filter(productionPhase ->
+                        productionPhase.getStatus()
+                        .equals(ProductionPhaseStatus.PENDIENTE))
+                .findFirst();
+
+        if(nextProductionPhase.isEmpty()) {
+            boolean isComplete = batch.getPhases().stream()
+                                    .allMatch(productionPhase -> 
+                                            productionPhase.getStatus()
+                                                .equals(ProductionPhaseStatus.COMPLETADA));
+            if(isComplete) completeBatch(batch);
+        };
+
+        ProductionPhase productionPhase = nextProductionPhase.get();
+        List<Sector> sectors = sectorService.getAllSectorsAvailableByPhase(productionPhase.getPhase());
+        if(sectors.isEmpty()) throw new BadRequestException("Falta sector para la fase " + productionPhase.getPhase());
+
+        productionPhase.setStatus(ProductionPhaseStatus.EN_PROCESO);
+        productionPhase.setSector(sectors.get(0));
+        productionPhase.setStartDate(OffsetDateTime.now());
+
+        productionPhaseRepository.save(productionPhase);
+    }
+
+    private void completeBatch(Batch batch) {
+        batch.setStatus(BatchStatus.COMPLETADO);
+        batch.setCompletedDate(OffsetDateTime.now());
+
+        batchRepository.save(batch);
     }
 }

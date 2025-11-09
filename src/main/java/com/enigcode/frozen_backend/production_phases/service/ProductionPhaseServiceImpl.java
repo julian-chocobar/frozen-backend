@@ -1,5 +1,6 @@
 package com.enigcode.frozen_backend.production_phases.service;
 
+import com.enigcode.frozen_backend.batches.service.BatchService;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.movements.DTO.MovementCreateDTO;
@@ -15,6 +16,8 @@ import com.enigcode.frozen_backend.production_phases.mapper.ProductionPhaseMappe
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhaseStatus;
 import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
+import com.enigcode.frozen_backend.production_phases_qualities.model.ProductionPhaseQuality;
+import com.enigcode.frozen_backend.production_phases_qualities.repository.ProductionPhaseQualityRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,8 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService{
     private final ProductionPhaseMapper productionPhaseMapper;
     private final ProductionMaterialRepository productionMaterialRepository;
     private final MovementService movementService;
+    private final BatchService batchService;
+    private final ProductionPhaseQualityRepository productionPhaseQualityRepository;
 
     @Override
     @Transactional
@@ -95,5 +100,54 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService{
             productionPhaseRepository.save(productionPhase);
         });
         movementService.createMovements(materialsMovements);
+    }
+
+    @Override
+    @Transactional
+    public ProductionPhaseResponseDTO reviewProductionPhase(Long id) {
+        ProductionPhase productionPhase = productionPhaseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró production phase de id " + id));
+
+        if(!productionPhase.getStatus().equals(ProductionPhaseStatus.BAJO_REVISION))
+            throw new BadRequestException("La fase no se encuentra en estado " + ProductionPhaseStatus.BAJO_REVISION);
+
+        List<ProductionPhaseQuality> productionPhaseQualities = productionPhaseQualityRepository.findAllByProductionPhaseId(id);
+
+        if(productionPhaseQualities.isEmpty())
+            throw new BadRequestException("Debe haber al menos un parámetro de calidad asignado a la fase");
+
+        List<ProductionPhaseQuality> notApprovedPhaseQualities = 
+                productionPhaseQualities.stream()
+                .filter(productionPhaseQuality -> !productionPhaseQuality.getIsApproved()).toList();
+        
+        if(notApprovedPhaseQualities.isEmpty()) completeProductionPhase(productionPhase);
+
+        boolean isCriticalError =
+                notApprovedPhaseQualities.stream()
+                        .allMatch(productionPhaseQuality -> {
+                            return productionPhaseQuality.getQualityParameter().getIsCritical().equals(Boolean.FALSE);
+                        });
+
+        if(isCriticalError) rejectProductionPhase(productionPhase);
+
+        adjustProductionPhase(productionPhase);
+
+        ProductionPhase savedProductionPhase = productionPhaseRepository.save(productionPhase);
+
+        return productionPhaseMapper.toResponseDTO(savedProductionPhase);
+    }
+
+    private void adjustProductionPhase(ProductionPhase productionPhase) {
+        productionPhase.setStatus(ProductionPhaseStatus.SIENDO_AJUSTADA);
+    }
+
+    private void rejectProductionPhase(ProductionPhase productionPhase) {
+        productionPhase.setStatus(ProductionPhaseStatus.RECHAZADA);
+        batchService.cancelBatch(productionPhase.getBatch());
+    }
+
+    private void completeProductionPhase(ProductionPhase productionPhase) {
+        productionPhase.setStatus(ProductionPhaseStatus.COMPLETADA);
+        batchService.startNextPhase(productionPhase.getBatch());
     }
 }

@@ -8,15 +8,16 @@ import com.enigcode.frozen_backend.products.model.Product;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Scheduled;
 
 public interface BatchService {
     Batch createBatch(ProductionOrderCreateDTO createDTO, Product product);
+
+    @Transactional
+    void cancelBatch(Batch batch);
+
     Page<BatchResponseDTO> findAll(BatchFilterDTO filterDTO, Pageable pageable);
     BatchResponseDTO getBatch(Long id);
     BatchResponseDTO cancelBatch(Long id);
-
-    @Scheduled(cron = "0 5 0 * * *")
-    @Transactional
     void processBatchesForToday();
+    void startNextPhase(Batch batch);
 }

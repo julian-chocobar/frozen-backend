@@ -4,7 +4,6 @@ import com.enigcode.frozen_backend.production_phases_qualities.DTO.ProductionPha
 import com.enigcode.frozen_backend.production_phases_qualities.DTO.ProductionPhaseQualityResponseDTO;
 import com.enigcode.frozen_backend.production_phases_qualities.DTO.ProductionPhaseQualityUpdateDTO;
 import com.enigcode.frozen_backend.production_phases_qualities.service.ProductionPhaseQualityService;
-import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -77,5 +76,4 @@ public class ProductionPhaseQualityController {
 
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
-
 }
