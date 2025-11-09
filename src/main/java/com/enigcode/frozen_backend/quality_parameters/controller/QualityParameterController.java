@@ -35,7 +35,7 @@ public class QualityParameterController {
     @Operation(
             summary = "Update parámetro de calidad",
             description = "Modifica la descripción de un parámetro de calidad existente")
-    @PatchMapping("/id")
+    @PatchMapping("/{id}")
     @PreAuthorize("hasRole('SUPERVISOR_DE_CALIDAD')")
     public ResponseEntity<QualityParameterResponseDTO> updateQualityParameter(
             @PathVariable Long id,
@@ -48,7 +48,7 @@ public class QualityParameterController {
     @Operation(
             summary = "Cambiar activo en parámetro de calidad",
             description = "Cambia el estado activo de un parámetro de calidad existente")
-    @PatchMapping("/id")
+    @PatchMapping("/{id}/toggle-active")
     @PreAuthorize("hasRole('SUPERVISOR_DE_CALIDAD')")
     public ResponseEntity<QualityParameterResponseDTO> toggleActive(@PathVariable Long id){
         QualityParameterResponseDTO dto = qualityParameterService.toggleActive(id);

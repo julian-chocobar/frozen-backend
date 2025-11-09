@@ -44,10 +44,10 @@ class QualityParameterServiceImplTest {
         qualityParameter = QualityParameter.builder()
                 .id(1L)
                 .phase(Phase.MOLIENDA)
-                .critical(true)
+                .isCritical(true)
                 .name("pH")
                 .description("Medición de acidez")
-                .active(true)
+                .isActive(true)
                 .build();
 
         responseDTO = QualityParameterResponseDTO.builder()
@@ -94,9 +94,9 @@ class QualityParameterServiceImplTest {
         QualityParameter minimalParam = QualityParameter.builder()
                 .id(2L)
                 .phase(Phase.FERMENTACION)
-                .critical(false)
+                .isCritical(false)
                 .name("Temperatura")
-                .active(true)
+                .isActive(true)
                 .build();
 
         QualityParameterResponseDTO minimalResponse = QualityParameterResponseDTO.builder()
@@ -126,10 +126,10 @@ class QualityParameterServiceImplTest {
         QualityParameter updatedParameter = QualityParameter.builder()
                 .id(1L)
                 .phase(Phase.MOLIENDA)
-                .critical(true)
+                .isCritical(true)
                 .name("pH")
                 .description("Nueva descripción actualizada")
-                .active(true)
+                .isActive(true)
                 .build();
 
         QualityParameterResponseDTO updatedResponse = QualityParameterResponseDTO.builder()
@@ -199,10 +199,10 @@ class QualityParameterServiceImplTest {
         QualityParameter toggledParameter = QualityParameter.builder()
                 .id(1L)
                 .phase(Phase.MOLIENDA)
-                .critical(true)
+                .isCritical(true)
                 .name("pH")
                 .description("Medición de acidez")
-                .active(false)
+                .isActive(false)
                 .build();
 
         QualityParameterResponseDTO toggledResponse = QualityParameterResponseDTO.builder()
@@ -229,9 +229,9 @@ class QualityParameterServiceImplTest {
         QualityParameter inactiveParameter = QualityParameter.builder()
                 .id(2L)
                 .phase(Phase.FERMENTACION)
-                .critical(false)
+                .isCritical(false)
                 .name("Temperatura")
-                .active(false)
+                .isActive(false)
                 .build();
 
         when(qualityParameterRepository.findById(2L)).thenReturn(Optional.of(inactiveParameter));
@@ -239,9 +239,9 @@ class QualityParameterServiceImplTest {
         QualityParameter toggledParameter = QualityParameter.builder()
                 .id(2L)
                 .phase(Phase.FERMENTACION)
-                .critical(false)
+                .isCritical(false)
                 .name("Temperatura")
-                .active(true)
+                .isActive(true)
                 .build();
 
         QualityParameterResponseDTO toggledResponse = QualityParameterResponseDTO.builder()
@@ -277,17 +277,17 @@ class QualityParameterServiceImplTest {
         QualityParameter param1 = QualityParameter.builder()
                 .id(1L)
                 .phase(Phase.MOLIENDA)
-                .critical(true)
+                .isCritical(true)
                 .name("pH")
-                .active(true)
+                .isActive(true)
                 .build();
 
         QualityParameter param2 = QualityParameter.builder()
                 .id(2L)
                 .phase(Phase.FERMENTACION)
-                .critical(false)
+                .isCritical(false)
                 .name("Temperatura")
-                .active(true)
+                .isActive(true)
                 .build();
 
         List<QualityParameter> parameters = Arrays.asList(param1, param2);
@@ -336,7 +336,7 @@ class QualityParameterServiceImplTest {
         QualityParameter newParameter = new QualityParameter();
         newParameter.setPhase(Phase.MOLIENDA);
         newParameter.setName("Test");
-                newParameter.setCritical(true);
+        newParameter.setCritical(true);
         
         // Simular el @PrePersist
         newParameter.setIsActive();
@@ -356,10 +356,10 @@ class QualityParameterServiceImplTest {
         QualityParameter criticalParam = QualityParameter.builder()
                 .id(3L)
                 .phase(Phase.COCCION)
-                .critical(true)
+                .isCritical(true)
                 .name("Densidad Crítica")
                 .description("Parámetro crítico de control")
-                .active(true)
+                .isActive(true)
                 .build();
 
         QualityParameterResponseDTO criticalResponse = QualityParameterResponseDTO.builder()

@@ -11,6 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class QualityParameterResponseDTO {
+    private Long id;
     private Phase phase;
     private Boolean isCritical;
     private String name;

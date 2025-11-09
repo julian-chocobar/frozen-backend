@@ -56,10 +56,10 @@ class QualityParameterMapperTest {
         QualityParameter entity = QualityParameter.builder()
                 .id(1L)
                 .phase(Phase.COCCION)
-                .critical(true)
+                .isCritical(true)
                 .name("Densidad")
                 .description("Control de densidad del mosto")
-                .active(true)
+                .isActive(true)
                 .build();
 
         QualityParameterResponseDTO responseDTO = mapper.toResponseDTO(entity);
@@ -80,10 +80,10 @@ class QualityParameterMapperTest {
         QualityParameter entity = QualityParameter.builder()
                 .id(2L)
                 .phase(Phase.ENVASADO)
-                .critical(false)
+                .isCritical(false)
                 .name("Color")
                 .description("Inspección visual del color")
-                .active(false)
+                .isActive(false)
                 .build();
 
         QualityParameterResponseDTO responseDTO = mapper.toResponseDTO(entity);
@@ -100,9 +100,9 @@ class QualityParameterMapperTest {
         QualityParameter entity = QualityParameter.builder()
                 .id(3L)
                 .phase(Phase.MOLIENDA)
-                .critical(true)
+                .isCritical(true)
                 .name("Granulometría")
-                .active(true)
+                .isActive(true)
                 .build();
 
         QualityParameterResponseDTO responseDTO = mapper.toResponseDTO(entity);
@@ -118,17 +118,17 @@ class QualityParameterMapperTest {
         QualityParameter param1 = QualityParameter.builder()
                 .id(1L)
                 .phase(Phase.MOLIENDA)
-                .critical(true)
+                .isCritical(true)
                 .name("pH")
-                .active(true)
+                .isActive(true)
                 .build();
 
         QualityParameter param2 = QualityParameter.builder()
                 .id(2L)
                 .phase(Phase.FERMENTACION)
-                .critical(false)
+                .isCritical(false)
                 .name("Temperatura")
-                .active(true)
+                .isActive(true)
                 .build();
 
         List<QualityParameter> entities = Arrays.asList(param1, param2);
