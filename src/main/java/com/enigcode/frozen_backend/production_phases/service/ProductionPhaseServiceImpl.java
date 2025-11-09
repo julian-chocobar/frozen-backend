@@ -137,10 +137,12 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService{
         return productionPhaseMapper.toResponseDTO(savedProductionPhase);
     }
 
+    //TODO: enviar notificacion a supervisor de produccion del sector que se requiere ajuste de phase
     private void adjustProductionPhase(ProductionPhase productionPhase) {
         productionPhase.setStatus(ProductionPhaseStatus.SIENDO_AJUSTADA);
     }
 
+    //TODO: enviar notificacion a supervisor de produccion del sector que se rechazo la fase y cancelo el lote
     private void rejectProductionPhase(ProductionPhase productionPhase) {
         productionPhase.setStatus(ProductionPhaseStatus.RECHAZADA);
         batchService.cancelBatch(productionPhase.getBatch());
