@@ -25,9 +25,7 @@ public class MaterialResponseDTO {
     private Boolean isActive;
 
     // Ubicación en el almacén
-    private Double warehouseX;
-    private Double warehouseY;
-    private String warehouseZone;
+    private com.enigcode.frozen_backend.materials.model.WarehouseZone warehouseZone;
     private String warehouseSection;
     private Integer warehouseLevel;
 }

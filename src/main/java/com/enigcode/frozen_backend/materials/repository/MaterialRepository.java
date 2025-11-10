@@ -2,6 +2,7 @@ package com.enigcode.frozen_backend.materials.repository;
 
 import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.materials.model.MaterialType;
+import com.enigcode.frozen_backend.materials.model.WarehouseZone;
 
 import java.util.List;
 
@@ -40,17 +41,19 @@ public interface MaterialRepository extends JpaRepository<Material, Long>, JpaSp
       String name);
 
   // Métodos para consultas de ubicación del almacén
-  List<Material> findByWarehouseZoneAndIsActiveTrue(String zone);
+  List<Material> findByWarehouseZoneAndIsActiveTrue(WarehouseZone zone);
 
-  List<Material> findByWarehouseZone(String zone);
+  List<Material> findByWarehouseZone(WarehouseZone zone);
 
-  List<Material> findByIsActiveTrueAndWarehouseXIsNotNullAndWarehouseYIsNotNull();
+  List<Material> findByIsActiveTrueAndWarehouseZoneIsNotNull();
 
-  List<Material> findByWarehouseXIsNotNullAndWarehouseYIsNotNull();
+  List<Material> findByWarehouseZoneIsNotNull();
+
+  Long countByWarehouseZone(WarehouseZone zone);
 
   boolean existsByCode(String code);
 
   @org.springframework.data.jpa.repository.Query("SELECT DISTINCT m.warehouseSection FROM Material m WHERE m.warehouseZone = :zone AND m.warehouseSection IS NOT NULL")
-  List<String> findWarehouseSectionsByZone(@org.springframework.data.repository.query.Param("zone") String zone);
+  List<String> findWarehouseSectionsByZone(@org.springframework.data.repository.query.Param("zone") WarehouseZone zone);
 
 }

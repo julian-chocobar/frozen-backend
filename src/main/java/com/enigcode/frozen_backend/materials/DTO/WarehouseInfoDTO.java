@@ -11,9 +11,23 @@ import java.util.Map;
 @AllArgsConstructor
 @Builder
 public class WarehouseInfoDTO {
-    private List<String> availableZones;
-    private Map<String, List<String>> sectionsByZone;
+    private List<ZoneInfoDTO> availableZones;
     private SuggestedLocationDTO suggestedLocation;
+    private Map<String, Long> materialsByZone;
+    private Long totalMaterials;
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ZoneInfoDTO {
+        private String name;
+        private String displayName;
+        private Integer totalSections;
+        private Integer occupiedSections;
+        private List<String> availableSections;
+    }
 
     @Getter
     @Setter
@@ -23,8 +37,6 @@ public class WarehouseInfoDTO {
     public static class SuggestedLocationDTO {
         private String zone;
         private String section;
-        private Double x;
-        private Double y;
         private Integer level;
     }
 }

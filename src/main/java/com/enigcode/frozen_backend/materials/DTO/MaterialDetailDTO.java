@@ -28,9 +28,7 @@ public class MaterialDetailDTO {
     private OffsetDateTime lastUpdateDate;
 
     // Información de ubicación
-    private Double warehouseX;
-    private Double warehouseY;
-    private String warehouseZone;
+    private com.enigcode.frozen_backend.materials.model.WarehouseZone warehouseZone;
     private String warehouseSection;
     private Integer warehouseLevel;
 }

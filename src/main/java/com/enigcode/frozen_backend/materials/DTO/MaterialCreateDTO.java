@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import com.enigcode.frozen_backend.materials.model.MaterialType;
 import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
+import com.enigcode.frozen_backend.materials.model.WarehouseZone;
 
 @Getter
 @Setter
@@ -37,18 +38,12 @@ public class MaterialCreateDTO {
 
     // Ubicación opcional al crear - el sistema asignará valores por defecto si no
     // se proporciona
-    @DecimalMin(value = "0.0", message = "La coordenada X debe ser mayor o igual a 0")
-    private Double warehouseX;
-
-    @DecimalMin(value = "0.0", message = "La coordenada Y debe ser mayor o igual a 0")
-    private Double warehouseY;
-
-    @Size(max = 50, message = "La zona del almacén no puede tener más de 50 caracteres")
-    private String warehouseZone;
+    private WarehouseZone warehouseZone;
 
     @Size(max = 10, message = "La sección del almacén no puede tener más de 10 caracteres")
     private String warehouseSection;
 
-    @Min(value = 1, message = "El nivel del almacén debe ser mayor a 0")
+    @Min(value = 1, message = "El nivel debe estar entre 1 y 3")
+    @DecimalMin(value = "1", message = "El nivel debe estar entre 1 y 3")
     private Integer warehouseLevel;
 }

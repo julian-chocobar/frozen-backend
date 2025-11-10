@@ -9,18 +9,15 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class MaterialLocationUpdateDTO {
-    @DecimalMin(value = "0.0", message = "La coordenada X debe ser mayor o igual a 0")
-    private Double warehouseX;
+    @NotNull(message = "La zona del almacén es obligatoria")
+    private com.enigcode.frozen_backend.materials.model.WarehouseZone warehouseZone;
 
-    @DecimalMin(value = "0.0", message = "La coordenada Y debe ser mayor o igual a 0")
-    private Double warehouseY;
-
-    @Size(max = 50, message = "La zona del almacén no puede tener más de 50 caracteres")
-    private String warehouseZone;
-
+    @NotBlank(message = "La sección del almacén es obligatoria")
     @Size(max = 10, message = "La sección del almacén no puede tener más de 10 caracteres")
     private String warehouseSection;
 
-    @Min(value = 1, message = "El nivel del almacén debe ser mayor a 0")
+    @NotNull(message = "El nivel es obligatorio")
+    @Min(value = 1, message = "El nivel debe estar entre 1 y 3")
+    @Max(value = 3, message = "El nivel debe estar entre 1 y 3")
     private Integer warehouseLevel;
 }

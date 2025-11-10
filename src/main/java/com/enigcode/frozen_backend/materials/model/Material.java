@@ -63,14 +63,9 @@ public class Material {
     private OffsetDateTime creationDate;
 
     // Campos de ubicación en el almacén
-    @Column(name = "warehouse_x")
-    private Double warehouseX;
-
-    @Column(name = "warehouse_y")
-    private Double warehouseY;
-
-    @Column(name = "warehouse_zone", length = 50)
-    private String warehouseZone;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "warehouse_zone")
+    private WarehouseZone warehouseZone;
 
     @Column(name = "warehouse_section", length = 10)
     private String warehouseSection;

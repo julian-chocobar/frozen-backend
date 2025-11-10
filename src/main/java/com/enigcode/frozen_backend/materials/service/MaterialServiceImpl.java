@@ -4,6 +4,7 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadReque
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.materials.DTO.*;
 import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
+import com.enigcode.frozen_backend.materials.model.WarehouseZone;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ import jakarta.transaction.Transactional;
 
 import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.materials.model.MaterialType;
-import com.enigcode.frozen_backend.materials.model.WarehouseCoordinates;
+import com.enigcode.frozen_backend.materials.model.WarehouseZone;
 import com.enigcode.frozen_backend.warehouse.service.WarehouseLayoutService;
 
 @Service
@@ -286,21 +287,41 @@ public class MaterialServiceImpl implements MaterialService {
         List<Material> materials;
 
         if (zone != null && !zone.trim().isEmpty()) {
-            if (activeOnly) {
-                materials = materialRepository.findByWarehouseZoneAndIsActiveTrue(zone);
-            } else {
-                materials = materialRepository.findByWarehouseZone(zone);
+            try {
+                WarehouseZone warehouseZone = WarehouseZone.valueOf(zone.toUpperCase());
+
+                if (activeOnly) {
+                    materials = materialRepository.findByWarehouseZoneAndIsActiveTrue(warehouseZone);
+                } else {
+                    materials = materialRepository.findByWarehouseZone(warehouseZone);
+                }
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Zona de almacén no válida: " + zone);
             }
         } else {
             if (activeOnly) {
-                materials = materialRepository.findByIsActiveTrueAndWarehouseXIsNotNullAndWarehouseYIsNotNull();
+                materials = materialRepository.findByIsActiveTrueAndWarehouseZoneIsNotNull();
             } else {
-                materials = materialRepository.findByWarehouseXIsNotNullAndWarehouseYIsNotNull();
+                materials = materialRepository.findByWarehouseZoneIsNotNull();
             }
         }
 
         return materials.stream()
-                .map(materialMapper::toWarehouseLocationDTO)
+                .map(material -> {
+                    MaterialWarehouseLocationDTO dto = materialMapper.toWarehouseLocationDTO(material);
+
+                    // Calcular coordenadas usando el WarehouseLayoutService
+                    Double[] coordinates = warehouseLayoutService.calculateCoordinates(
+                            material.getWarehouseZone(),
+                            material.getWarehouseSection(),
+                            material.getWarehouseLevel());
+
+                    dto.setWarehouseX(coordinates[0]);
+                    dto.setWarehouseY(coordinates[1]);
+                    dto.setLevelDisplay(warehouseLayoutService.getLevelDisplay(material.getWarehouseLevel()));
+
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -310,8 +331,14 @@ public class MaterialServiceImpl implements MaterialService {
         Material material = materialRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
 
-        material.setWarehouseX(locationUpdateDTO.getWarehouseX());
-        material.setWarehouseY(locationUpdateDTO.getWarehouseY());
+        // Validar ubicación
+        if (!warehouseLayoutService.isValidLocation(
+                locationUpdateDTO.getWarehouseZone(),
+                locationUpdateDTO.getWarehouseSection(),
+                locationUpdateDTO.getWarehouseLevel())) {
+            throw new BadRequestException("La ubicación especificada no es válida");
+        }
+
         material.setWarehouseZone(locationUpdateDTO.getWarehouseZone());
         material.setWarehouseSection(locationUpdateDTO.getWarehouseSection());
         material.setWarehouseLevel(locationUpdateDTO.getWarehouseLevel());
@@ -323,87 +350,94 @@ public class MaterialServiceImpl implements MaterialService {
 
     @Override
     public WarehouseInfoDTO getWarehouseInfo(MaterialType materialType) {
-        List<String> availableZones = List.of(
-                "ZONA_MALTA", "ZONA_LUPULO", "ZONA_AGUA",
-                "ZONA_LEVADURA", "ZONA_ENVASE", "ZONA_ETIQUETADO", "ZONA_OTROS");
-
-        Map<String, List<String>> sectionsByZone = availableZones.stream()
-                .collect(Collectors.toMap(
-                        zone -> zone,
-                        zone -> materialRepository.findWarehouseSectionsByZone(zone)));
+        // Obtener zonas disponibles con información
+        List<WarehouseInfoDTO.ZoneInfoDTO> availableZones = java.util.Arrays.stream(
+                WarehouseZone.values())
+                .map(zone -> {
+                    List<String> usedSections = materialRepository.findWarehouseSectionsByZone(zone);
+                    return WarehouseInfoDTO.ZoneInfoDTO.builder()
+                            .name(zone.name())
+                            .displayName(zone.getDisplayName())
+                            .totalSections(zone.getAvailableSections().size())
+                            .occupiedSections(usedSections.size())
+                            .availableSections(zone.getAvailableSections())
+                            .build();
+                })
+                .collect(Collectors.toList());
 
         // Sugerir ubicación para el tipo de material
         WarehouseInfoDTO.SuggestedLocationDTO suggestedLocation = null;
         if (materialType != null) {
-            String suggestedZone = warehouseLayoutService.getDefaultZoneForMaterialType(materialType);
+            WarehouseZone suggestedZone = WarehouseZone.getDefaultZoneForMaterialType(materialType);
             String suggestedSection = getNextAvailableSection(suggestedZone);
-            WarehouseCoordinates coords = warehouseLayoutService.calculateCoordinatesForSection(suggestedZone,
-                    suggestedSection);
 
             suggestedLocation = WarehouseInfoDTO.SuggestedLocationDTO.builder()
-                    .zone(suggestedZone)
+                    .zone(suggestedZone.name())
                     .section(suggestedSection)
-                    .x(coords.getX())
-                    .y(coords.getY())
                     .level(1)
                     .build();
         }
 
+        // Contar materiales por zona
+        Map<String, Long> materialsByZone = java.util.Arrays.stream(WarehouseZone.values())
+                .collect(Collectors.toMap(
+                        zone -> zone.name(),
+                        zone -> materialRepository.countByWarehouseZone(zone)));
+
         return WarehouseInfoDTO.builder()
                 .availableZones(availableZones)
-                .sectionsByZone(sectionsByZone)
                 .suggestedLocation(suggestedLocation)
+                .materialsByZone(materialsByZone)
+                .totalMaterials(materialRepository.count())
                 .build();
     }
 
-    private String getNextAvailableSection(String zone) {
-        // Buscar la siguiente sección disponible en la zona
+    private String getNextAvailableSection(WarehouseZone zone) {
+        // Obtener secciones ocupadas en esta zona
         List<String> usedSections = materialRepository.findWarehouseSectionsByZone(zone);
 
-        // Generar secciones A1, A2, A3... B1, B2, B3... etc.
-        char letter = 'A';
-        int number = 1;
-
-        while (letter <= 'Z') {
-            String section = letter + String.valueOf(number);
+        // Buscar la primera sección disponible de las predefinidas para esta zona
+        for (String section : zone.getAvailableSections()) {
             if (!usedSections.contains(section)) {
                 return section;
             }
-
-            number++;
-            if (number > 20) { // Máximo 20 secciones por letra
-                letter++;
-                number = 1;
-            }
         }
 
-        return "Z99"; // Fallback si todas las secciones están tomadas
+        // Si todas las secciones están ocupadas, devolver la primera (permite múltiples
+        // niveles)
+        return zone.getAvailableSections().get(0);
     }
 
     // Método para asignar ubicación automática en la creación
     private void assignWarehouseLocationIfNeeded(Material material, MaterialCreateDTO dto) {
         // Si no se proporcionó zona, asignar por tipo de material
-        if (dto.getWarehouseZone() == null || dto.getWarehouseZone().trim().isEmpty()) {
-            material.setWarehouseZone(warehouseLayoutService.getDefaultZoneForMaterialType(dto.getType()));
+        if (dto.getWarehouseZone() == null) {
+            material.setWarehouseZone(WarehouseZone.getDefaultZoneForMaterialType(dto.getType()));
+        } else {
+            material.setWarehouseZone(dto.getWarehouseZone());
         }
 
-        // Si no se proporcionó sección, asignar la siguiente disponible
+        // Si no se proporcionó sección, asignar la primera disponible
         if (dto.getWarehouseSection() == null || dto.getWarehouseSection().trim().isEmpty()) {
             material.setWarehouseSection(getNextAvailableSection(material.getWarehouseZone()));
-        }
-
-        // Si no se proporcionaron coordenadas, calcular posición por defecto
-        if (dto.getWarehouseX() == null || dto.getWarehouseY() == null) {
-            WarehouseCoordinates coords = warehouseLayoutService.calculateCoordinatesForSection(
-                    material.getWarehouseZone(),
-                    material.getWarehouseSection());
-            material.setWarehouseX(coords.getX());
-            material.setWarehouseY(coords.getY());
+        } else {
+            // Validar que la sección es válida para la zona
+            if (!material.getWarehouseZone().isValidSection(dto.getWarehouseSection())) {
+                throw new BadRequestException("La sección " + dto.getWarehouseSection() +
+                        " no es válida para la zona " + material.getWarehouseZone().getDisplayName());
+            }
+            material.setWarehouseSection(dto.getWarehouseSection());
         }
 
         // Si no se proporcionó nivel, usar nivel 1
         if (dto.getWarehouseLevel() == null) {
             material.setWarehouseLevel(1);
+        } else {
+            // Validar que el nivel es válido
+            if (!WarehouseZone.isValidLevel(dto.getWarehouseLevel())) {
+                throw new BadRequestException("El nivel debe estar entre 1 y 3");
+            }
+            material.setWarehouseLevel(dto.getWarehouseLevel());
         }
     }
 }

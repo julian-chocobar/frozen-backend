@@ -34,6 +34,9 @@ public interface MaterialMapper {
         // Mappings para funcionalidad de almacén
         @Mapping(target = "isBelowThreshold", expression = "java(material.getStock() != null && material.getThreshold() != null "
                         + "&& material.getStock() <= material.getThreshold())")
+        @Mapping(target = "warehouseX", ignore = true)
+        @Mapping(target = "warehouseY", ignore = true)
+        @Mapping(target = "levelDisplay", ignore = true)
         com.enigcode.frozen_backend.materials.DTO.MaterialWarehouseLocationDTO toWarehouseLocationDTO(
                         Material material);
 }
