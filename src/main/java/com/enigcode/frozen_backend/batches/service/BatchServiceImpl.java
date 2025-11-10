@@ -94,6 +94,8 @@ public class BatchServiceImpl implements BatchService {
                 .estimatedCompletedDate(estimatedEndDate)
                 .build();
 
+        batchPhases.forEach(phase -> phase.setBatch(batch));
+
         Batch savedBatch = batchRepository.saveAndFlush(batch);
         savedBatch.setCode(generateCode(savedBatch));
         return savedBatch;

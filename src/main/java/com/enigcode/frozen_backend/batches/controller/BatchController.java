@@ -26,19 +26,16 @@ public class BatchController {
 
         final BatchService batchService;
 
-        @Operation(
-                summary = "Cancelar un lote en especifico",
-                description = "Se cancela la producción de un lote dado por id")
+        @Operation(summary = "Cancelar un lote en especifico", description = "Se cancela la producción de un lote dado por id")
         @PatchMapping("/cancel-batch/{id}")
         @PreAuthorize("hasRole('GERENTE_DE_PLANTA')")
-        public ResponseEntity<BatchResponseDTO> cancelBatch(@PathVariable Long id){
+        public ResponseEntity<BatchResponseDTO> cancelBatch(@PathVariable Long id) {
                 BatchResponseDTO dto = batchService.cancelBatch(id);
 
                 return new ResponseEntity<>(dto, HttpStatus.OK);
         }
 
-        @Operation(summary = "Recibir informacion sobre los lotes",
-                description = "Devuelve la informacion sobre un lote especificado segun id")
+        @Operation(summary = "Recibir informacion sobre los lotes", description = "Devuelve la informacion sobre un lote especificado segun id")
         @GetMapping("/{id}")
         @PreAuthorize("hasRole('OPERARIO_DE_PRODUCCION') or hasRole('SUPERVISOR_DE_PRODUCCION') or hasRole('GERENTE_DE_PLANTA')")
         public ResponseEntity<BatchResponseDTO> getBatch(@PathVariable Long id) {
@@ -47,8 +44,7 @@ public class BatchController {
                 return new ResponseEntity<>(dto, HttpStatus.OK);
         }
 
-        @Operation(summary = "Obtener lotes",
-                description = "Obtiene todos los lotes con paginación y filtros")
+        @Operation(summary = "Obtener lotes", description = "Obtiene todos los lotes con paginación y filtros")
         @GetMapping
         @PreAuthorize("hasRole('OPERARIO_DE_PRODUCCION') or hasRole('SUPERVISOR_DE_PRODUCCION') or hasRole('GERENTE_DE_PLANTA')")
         public ResponseEntity<Map<String, Object>> getBatches(
@@ -68,6 +64,14 @@ public class BatchController {
                 response.put("isFirst", pageResponse.isFirst());
                 response.put("isLast", pageResponse.isLast());
                 return ResponseEntity.ok(response);
+        }
+
+        @Operation(summary = "Procesar lotes programados para hoy", description = "Ejecuta manualmente el proceso que inicia los lotes planificados para la fecha actual. Útil para pruebas.")
+        @PostMapping("/process-today")
+        @PreAuthorize("hasRole('GERENTE_DE_PLANTA')")
+        public ResponseEntity<Void> processBatchesForToday() {
+                batchService.processBatchesForToday();
+                return ResponseEntity.noContent().build();
         }
 
 }

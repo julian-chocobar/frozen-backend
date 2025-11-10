@@ -1,6 +1,7 @@
 package com.enigcode.frozen_backend.production_orders.DTO;
 
 import jakarta.validation.constraints.DecimalMin;
+import com.enigcode.frozen_backend.common.validation.FutureOrPresentDate;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -23,5 +24,6 @@ public class ProductionOrderCreateDTO {
     private Long packagingId;
 
     @NotNull
+    @FutureOrPresentDate(message = "La fecha de planificación debe ser una fecha futura o presente")
     private OffsetDateTime plannedDate;
 }
