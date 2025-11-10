@@ -130,7 +130,7 @@ public class MaterialServiceImpl implements MaterialService {
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado con ID: " + id));
 
         String newCode = null;
-        if (!originalMaterial.getType().equals(materialUpdateDTO.getType()))
+        if (materialUpdateDTO.getType() != null && !originalMaterial.getType().equals(materialUpdateDTO.getType()))
             newCode = generateCode(materialUpdateDTO.getType(), originalMaterial.getId());
 
         Material updatedMaterial = materialMapper.partialUpdate(materialUpdateDTO, originalMaterial);
@@ -138,6 +138,11 @@ public class MaterialServiceImpl implements MaterialService {
 
         if (newCode != null)
             updatedMaterial.setCode(newCode);
+
+        // Actualizar ubicación del almacén si se proporciona
+        if (hasWarehouseLocationData(materialUpdateDTO)) {
+            updateMaterialLocationFromDTO(updatedMaterial, materialUpdateDTO);
+        }
 
         materialUnitVerification(updatedMaterial);
 
@@ -438,6 +443,57 @@ public class MaterialServiceImpl implements MaterialService {
                 throw new BadRequestException("El nivel debe estar entre 1 y 3");
             }
             material.setWarehouseLevel(dto.getWarehouseLevel());
+        }
+    }
+
+    /**
+     * Verifica si el DTO contiene datos de ubicación del almacén
+     */
+    private boolean hasWarehouseLocationData(MaterialUpdateDTO dto) {
+        return dto.getWarehouseZone() != null ||
+                dto.getWarehouseSection() != null ||
+                dto.getWarehouseLevel() != null;
+    }
+
+    /**
+     * Actualiza la ubicación del material desde el DTO de actualización
+     */
+    private void updateMaterialLocationFromDTO(Material material, MaterialUpdateDTO dto) {
+        // Actualizar zona si se proporciona
+        if (dto.getWarehouseZone() != null) {
+            material.setWarehouseZone(dto.getWarehouseZone());
+        }
+
+        // Actualizar sección si se proporciona
+        if (dto.getWarehouseSection() != null) {
+            // Validar que la sección es válida para la zona actual
+            if (material.getWarehouseZone() != null &&
+                    !material.getWarehouseZone().isValidSection(dto.getWarehouseSection())) {
+                throw new BadRequestException("La sección " + dto.getWarehouseSection() +
+                        " no es válida para la zona " + material.getWarehouseZone().getDisplayName());
+            }
+            material.setWarehouseSection(dto.getWarehouseSection());
+        }
+
+        // Actualizar nivel si se proporciona
+        if (dto.getWarehouseLevel() != null) {
+            if (!WarehouseZone.isValidLevel(dto.getWarehouseLevel())) {
+                throw new BadRequestException("El nivel debe estar entre 1 y 3");
+            }
+            material.setWarehouseLevel(dto.getWarehouseLevel());
+        }
+
+        // Validar ubicación completa si todos los campos están presentes
+        if (material.getWarehouseZone() != null &&
+                material.getWarehouseSection() != null &&
+                material.getWarehouseLevel() != null) {
+
+            if (!warehouseLayoutService.isValidLocation(
+                    material.getWarehouseZone(),
+                    material.getWarehouseSection(),
+                    material.getWarehouseLevel())) {
+                throw new BadRequestException("La ubicación especificada no es válida en el mapa del almacén");
+            }
         }
     }
 }

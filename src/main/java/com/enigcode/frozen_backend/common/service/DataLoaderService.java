@@ -304,7 +304,7 @@ public class DataLoaderService {
                                         .threshold(50.0)
                                         .warehouseZone(WarehouseZone.MALTA)
                                         .warehouseSection("A1")
-                                        .warehouseLevel(1)
+                                        .warehouseLevel(2) // Nivel medio para fácil acceso
                                         .build();
                         MaterialResponseDTO maltaPaleResponse = materialService.createMaterial(maltaPale);
                         maltaPaleId = maltaPaleResponse.getId();
@@ -318,8 +318,8 @@ public class DataLoaderService {
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(10.0)
                                         .warehouseZone(WarehouseZone.MALTA)
-                                        .warehouseSection("A2")
-                                        .warehouseLevel(1)
+                                        .warehouseSection("A3")
+                                        .warehouseLevel(1) // Nivel bajo para stock mayor
                                         .build();
                         MaterialResponseDTO maltaCrystalResponse = materialService.createMaterial(maltaCrystal);
                         maltaCrystalId = maltaCrystalResponse.getId();
@@ -333,13 +333,13 @@ public class DataLoaderService {
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(5.0)
                                         .warehouseZone(WarehouseZone.MALTA)
-                                        .warehouseSection("B1")
-                                        .warehouseLevel(1)
+                                        .warehouseSection("B2")
+                                        .warehouseLevel(3) // Nivel alto, menor rotación
                                         .build();
                         MaterialResponseDTO maltaChocolateResponse = materialService.createMaterial(maltaChocolate);
                         maltaChocolateId = maltaChocolateResponse.getId();
 
-                        // Lúpulos - Stock suficiente para múltiples órdenes
+                        // Lúpulos - Stock suficiente para múltiples órdenes (zona refrigerada)
                         MaterialCreateDTO lupuloCitra = MaterialCreateDTO.builder()
                                         .name("Lúpulo Citra")
                                         .type(MaterialType.LUPULO)
@@ -349,8 +349,8 @@ public class DataLoaderService {
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(1.0)
                                         .warehouseZone(WarehouseZone.LUPULO)
-                                        .warehouseSection("A1")
-                                        .warehouseLevel(1)
+                                        .warehouseSection("A2")
+                                        .warehouseLevel(2) // Nivel medio, refrigerado
                                         .build();
                         MaterialResponseDTO lupuloCitraResponse = materialService.createMaterial(lupuloCitra);
                         lupuloCitraId = lupuloCitraResponse.getId();
@@ -364,13 +364,13 @@ public class DataLoaderService {
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(1.0)
                                         .warehouseZone(WarehouseZone.LUPULO)
-                                        .warehouseSection("A2")
-                                        .warehouseLevel(1)
+                                        .warehouseSection("B3")
+                                        .warehouseLevel(1) // Nivel bajo para conservación
                                         .build();
                         MaterialResponseDTO lupuloSimcoeResponse = materialService.createMaterial(lupuloSimcoe);
                         lupuloSimcoeId = lupuloSimcoeResponse.getId();
 
-                        // Levaduras - Stock suficiente para múltiples fermentaciones
+                        // Levaduras - Stock suficiente para múltiples fermentaciones (zona controlada)
                         MaterialCreateDTO levaduraAle = MaterialCreateDTO.builder()
                                         .name("Levadura Ale")
                                         .type(MaterialType.LEVADURA)
@@ -381,7 +381,7 @@ public class DataLoaderService {
                                         .threshold(0.2)
                                         .warehouseZone(WarehouseZone.LEVADURA)
                                         .warehouseSection("A1")
-                                        .warehouseLevel(1)
+                                        .warehouseLevel(2) // Nivel medio, fácil acceso
                                         .build();
                         MaterialResponseDTO levaduraAleResponse = materialService.createMaterial(levaduraAle);
                         levaduraAleId = levaduraAleResponse.getId();
@@ -395,13 +395,13 @@ public class DataLoaderService {
                                         .unitMeasurement(UnitMeasurement.KG)
                                         .threshold(0.2)
                                         .warehouseZone(WarehouseZone.LEVADURA)
-                                        .warehouseSection("A2")
-                                        .warehouseLevel(1)
+                                        .warehouseSection("B2")
+                                        .warehouseLevel(3) // Nivel alto, menor rotación
                                         .build();
                         MaterialResponseDTO levaduraLagerResponse = materialService.createMaterial(levaduraLager);
                         levaduraLagerId = levaduraLagerResponse.getId();
 
-                        // Agua - Stock muy grande, recurso principal
+                        // Agua - Stock muy grande, recurso principal (tanques grandes)
                         MaterialCreateDTO agua = MaterialCreateDTO.builder()
                                         .name("Agua potable")
                                         .type(MaterialType.AGUA)
@@ -411,8 +411,8 @@ public class DataLoaderService {
                                         .unitMeasurement(UnitMeasurement.LT)
                                         .threshold(500.0)
                                         .warehouseZone(WarehouseZone.AGUA)
-                                        .warehouseSection("A1")
-                                        .warehouseLevel(1)
+                                        .warehouseSection("B1")
+                                        .warehouseLevel(1) // Nivel bajo, tanques grandes
                                         .build();
                         MaterialResponseDTO aguaResponse = materialService.createMaterial(agua);
                         aguaId = aguaResponse.getId();
@@ -474,7 +474,7 @@ public class DataLoaderService {
                                         .threshold(200.0)
                                         .warehouseZone(WarehouseZone.ENVASE)
                                         .warehouseSection("A1")
-                                        .warehouseLevel(1)
+                                        .warehouseLevel(2) // Nivel medio, alta rotación
                                         .build();
                         MaterialResponseDTO botella330Response = materialService.createMaterial(botella330);
                         botella330Id = botella330Response.getId();
@@ -488,13 +488,13 @@ public class DataLoaderService {
                                         .unitMeasurement(UnitMeasurement.UNIDAD)
                                         .threshold(5.0)
                                         .warehouseZone(WarehouseZone.ENVASE)
-                                        .warehouseSection("A2")
-                                        .warehouseLevel(1)
+                                        .warehouseSection("C1")
+                                        .warehouseLevel(1) // Nivel bajo, más pesados
                                         .build();
                         MaterialResponseDTO barril20LResponse = materialService.createMaterial(barril20L);
                         barril20LId = barril20LResponse.getId();
 
-                        // Etiquetado
+                        // Etiquetado - Materiales ligeros
                         MaterialCreateDTO etiquetaBotella = MaterialCreateDTO.builder()
                                         .name("Etiqueta para Botella 330ml")
                                         .type(MaterialType.ETIQUETADO)
@@ -504,8 +504,8 @@ public class DataLoaderService {
                                         .unitMeasurement(UnitMeasurement.UNIDAD)
                                         .threshold(200.0)
                                         .warehouseZone(WarehouseZone.ETIQUETADO)
-                                        .warehouseSection("A1")
-                                        .warehouseLevel(1)
+                                        .warehouseSection("A2")
+                                        .warehouseLevel(3) // Nivel alto, material ligero
                                         .build();
                         MaterialResponseDTO etiquetaBotellaResponse = materialService.createMaterial(etiquetaBotella);
                         etiquetaBotellaId = etiquetaBotellaResponse.getId();
@@ -519,8 +519,8 @@ public class DataLoaderService {
                                         .unitMeasurement(UnitMeasurement.UNIDAD)
                                         .threshold(5.0)
                                         .warehouseZone(WarehouseZone.ETIQUETADO)
-                                        .warehouseSection("A2")
-                                        .warehouseLevel(1)
+                                        .warehouseSection("B1")
+                                        .warehouseLevel(2) // Nivel medio
                                         .build();
 
                         MaterialResponseDTO etiquetaBarrilResponse = materialService.createMaterial(etiquetaBarril);

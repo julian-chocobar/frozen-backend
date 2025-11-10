@@ -49,26 +49,23 @@ public class WarehouseLayoutService {
 
     /**
      * Calcula las coordenadas X/Y para el frontend basado en zona, sección y nivel
+     * usando las coordenadas exactas del SVG actualizado
      */
     public Double[] calculateCoordinates(WarehouseZone zone, String section, Integer level) {
         if (zone == null || section == null || level == null) {
             return new Double[] { null, null };
         }
 
-        // Coordenadas base por zona (centros aproximados de cada zona en el SVG)
-        double baseX = getBaseX(zone);
-        double baseY = getBaseY(zone);
+        // Obtener coordenadas exactas de la sección desde el mapeo del SVG
+        Double[] baseCoords = getSectionCoordinates(zone, section);
+        if (baseCoords[0] == null || baseCoords[1] == null) {
+            return new Double[] { null, null };
+        }
 
-        // Ajustes por sección dentro de la zona
-        double[] sectionOffset = getSectionOffset(section);
+        // Ajuste por nivel (desplazamiento vertical pequeño)
+        double levelOffset = (level - 2) * 3.0; // Nivel 1: -3, Nivel 2: 0, Nivel 3: +3
 
-        // Ajuste por nivel (desplazamiento vertical mínimo)
-        double levelOffset = (level - 2) * 5.0; // Nivel 1: -5, Nivel 2: 0, Nivel 3: +5
-
-        double finalX = baseX + sectionOffset[0];
-        double finalY = baseY + sectionOffset[1] + levelOffset;
-
-        return new Double[] { finalX, finalY };
+        return new Double[] { baseCoords[0], baseCoords[1] + levelOffset };
     }
 
     /**
@@ -78,41 +75,85 @@ public class WarehouseLayoutService {
         return level != null ? "Nivel " + level : null;
     }
 
-    private double getBaseX(WarehouseZone zone) {
-        return switch (zone) {
-            case MALTA -> 100.0;
-            case LUPULO -> 300.0;
-            case LEVADURA -> 500.0;
-            case AGUA -> 700.0;
-            case ENVASE -> 200.0;
-            case ETIQUETADO -> 400.0;
-            case OTROS -> 600.0;
+    /**
+     * Obtiene las coordenadas exactas de una sección específica basadas en el SVG
+     */
+    private Double[] getSectionCoordinates(WarehouseZone zone, String section) {
+        String key = zone.name() + "-" + section;
+
+        return switch (key) {
+            // ZONA MALTA
+            case "MALTA-A1" -> new Double[] { 65.0, 85.0 };
+            case "MALTA-A2" -> new Double[] { 145.0, 85.0 };
+            case "MALTA-A3" -> new Double[] { 225.0, 85.0 };
+            case "MALTA-A4" -> new Double[] { 305.0, 85.0 };
+            case "MALTA-A5" -> new Double[] { 385.0, 85.0 };
+            case "MALTA-B1" -> new Double[] { 65.0, 145.0 };
+            case "MALTA-B2" -> new Double[] { 145.0, 145.0 };
+            case "MALTA-B3" -> new Double[] { 225.0, 145.0 };
+            case "MALTA-B4" -> new Double[] { 305.0, 145.0 };
+            case "MALTA-B5" -> new Double[] { 385.0, 145.0 };
+            case "MALTA-C1" -> new Double[] { 65.0, 205.0 };
+            case "MALTA-C2" -> new Double[] { 145.0, 205.0 };
+            case "MALTA-C3" -> new Double[] { 225.0, 205.0 };
+            case "MALTA-C4" -> new Double[] { 305.0, 205.0 };
+            case "MALTA-C5" -> new Double[] { 385.0, 205.0 };
+
+            // ZONA LUPULO
+            case "LUPULO-A1" -> new Double[] { 565.0, 85.0 };
+            case "LUPULO-A2" -> new Double[] { 645.0, 85.0 };
+            case "LUPULO-A3" -> new Double[] { 725.0, 85.0 };
+            case "LUPULO-A4" -> new Double[] { 805.0, 85.0 };
+            case "LUPULO-A5" -> new Double[] { 885.0, 85.0 };
+            case "LUPULO-B1" -> new Double[] { 565.0, 145.0 };
+            case "LUPULO-B2" -> new Double[] { 645.0, 145.0 };
+            case "LUPULO-B3" -> new Double[] { 725.0, 145.0 };
+            case "LUPULO-B4" -> new Double[] { 805.0, 145.0 };
+            case "LUPULO-B5" -> new Double[] { 885.0, 145.0 };
+            case "LUPULO-C1" -> new Double[] { 565.0, 205.0 };
+            case "LUPULO-C2" -> new Double[] { 645.0, 205.0 };
+            case "LUPULO-C3" -> new Double[] { 725.0, 205.0 };
+            case "LUPULO-C4" -> new Double[] { 805.0, 205.0 };
+            case "LUPULO-C5" -> new Double[] { 885.0, 205.0 };
+
+            // ZONA LEVADURA
+            case "LEVADURA-A1" -> new Double[] { 75.0, 395.0 };
+            case "LEVADURA-A2" -> new Double[] { 165.0, 395.0 };
+            case "LEVADURA-B1" -> new Double[] { 75.0, 465.0 };
+            case "LEVADURA-B2" -> new Double[] { 165.0, 465.0 };
+            case "LEVADURA-C1" -> new Double[] { 75.0, 535.0 };
+            case "LEVADURA-C2" -> new Double[] { 165.0, 535.0 };
+
+            // ZONA AGUA
+            case "AGUA-A1" -> new Double[] { 305.0, 395.0 };
+            case "AGUA-A2" -> new Double[] { 395.0, 395.0 };
+            case "AGUA-B1" -> new Double[] { 305.0, 465.0 };
+            case "AGUA-B2" -> new Double[] { 395.0, 465.0 };
+            case "AGUA-C1" -> new Double[] { 305.0, 535.0 };
+            case "AGUA-C2" -> new Double[] { 395.0, 535.0 };
+
+            // ZONA ENVASE
+            case "ENVASE-A1" -> new Double[] { 815.0, 395.0 };
+            case "ENVASE-A2" -> new Double[] { 905.0, 395.0 };
+            case "ENVASE-B1" -> new Double[] { 815.0, 465.0 };
+            case "ENVASE-B2" -> new Double[] { 905.0, 465.0 };
+            case "ENVASE-C1" -> new Double[] { 815.0, 535.0 };
+            case "ENVASE-C2" -> new Double[] { 905.0, 535.0 };
+
+            // ZONA ETIQUETADO
+            case "ETIQUETADO-A1" -> new Double[] { 585.0, 380.0 };
+            case "ETIQUETADO-A2" -> new Double[] { 675.0, 380.0 };
+            case "ETIQUETADO-B1" -> new Double[] { 585.0, 430.0 };
+            case "ETIQUETADO-B2" -> new Double[] { 675.0, 430.0 };
+
+            // ZONA OTROS
+            case "OTROS-A1" -> new Double[] { 585.0, 510.0 };
+            case "OTROS-A2" -> new Double[] { 675.0, 510.0 };
+            case "OTROS-B1" -> new Double[] { 585.0, 560.0 };
+            case "OTROS-B2" -> new Double[] { 675.0, 560.0 };
+
+            default -> new Double[] { null, null };
         };
-    }
-
-    private double getBaseY(WarehouseZone zone) {
-        return switch (zone) {
-            case MALTA, LUPULO, LEVADURA, AGUA -> 100.0;
-            case ENVASE, ETIQUETADO, OTROS -> 300.0;
-        };
-    }
-
-    private double[] getSectionOffset(String section) {
-        if (section == null || section.length() < 2) {
-            return new double[] { 0.0, 0.0 };
-        }
-
-        // Extraer letra y número de la sección (ej: "A1" -> A=0, 1=0)
-        char letter = section.charAt(0);
-        char number = section.charAt(1);
-
-        // Offset horizontal por letra (A=0, B=50, C=100, etc.)
-        double letterOffset = (letter - 'A') * 50.0;
-
-        // Offset vertical por número (1=0, 2=30, 3=60, etc.)
-        double numberOffset = (Character.getNumericValue(number) - 1) * 30.0;
-
-        return new double[] { letterOffset, numberOffset };
     }
 
 }
