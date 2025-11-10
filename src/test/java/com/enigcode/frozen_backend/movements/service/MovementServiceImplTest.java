@@ -52,6 +52,9 @@ class MovementServiceImplTest {
     private Material material;
     private Movement movement;
     private MovementResponseDTO responseDTO;
+    private Movement pendingMovement;
+    private Movement inProcessMovement;
+    private Movement egresoMovementLowStock;
 
     @BeforeEach
     void setUp() {
@@ -59,6 +62,7 @@ class MovementServiceImplTest {
         material.setId(1L);
         material.setStock(50.0);
         material.setReservedStock(0.0);
+        material.setThreshold(10.0); // Para pruebas de low stock notification
 
         movement = Movement.builder()
                 .id(1L)
@@ -66,6 +70,34 @@ class MovementServiceImplTest {
                 .stock(10.0)
                 .material(material)
                 .build();
+
+    // Movimiento pendiente para pruebas de completeMovement
+    pendingMovement = Movement.builder()
+        .id(2L)
+        .type(MovementType.INGRESO)
+        .stock(5.0)
+        .material(material)
+        .status(com.enigcode.frozen_backend.movements.model.MovementStatus.PENDIENTE)
+        .build();
+
+    // Movimiento en proceso para pruebas de toggle y completion
+    inProcessMovement = Movement.builder()
+        .id(3L)
+        .type(MovementType.INGRESO)
+        .stock(7.0)
+        .material(material)
+        .status(com.enigcode.frozen_backend.movements.model.MovementStatus.EN_PROCESO)
+        .inProgressByUserId(1L)
+        .build();
+
+    // Movimiento EGRESO que dejará el stock bajo el umbral
+    egresoMovementLowStock = Movement.builder()
+        .id(4L)
+        .type(MovementType.EGRESO)
+        .stock(45.0) // dejará stock en 5 (< threshold 10)
+        .material(material)
+        .status(com.enigcode.frozen_backend.movements.model.MovementStatus.PENDIENTE)
+        .build();
 
         responseDTO = new MovementResponseDTO();
         responseDTO.setId(1L);
@@ -299,5 +331,95 @@ class MovementServiceImplTest {
 
         assertThrows(BadRequestException.class, 
             () -> movementService.confirmReservation(materials));
+    }
+
+    // --- Nuevos tests para completeMovement y toggleInProgressPending ---
+
+    @Test
+    void testCompleteMovement_Ingreso_Success() {
+        when(movementRepository.findById(2L)).thenReturn(Optional.of(pendingMovement));
+        when(movementMapper.toResponseDto(any(Movement.class))).thenReturn(responseDTO);
+        when(materialRepository.save(any(Material.class))).thenReturn(material);
+        when(movementRepository.save(any(Movement.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        MovementResponseDTO result = movementService.completeMovement(2L);
+
+        assertNotNull(result);
+        assertEquals(1L, responseDTO.getId());
+        assertEquals(55.0, material.getStock()); // ingreso aumenta stock
+        verify(notificationService, never()).createLowStockNotification(anyLong(), anyString(), anyDouble(), anyDouble());
+    }
+
+    @Test
+    void testCompleteMovement_Egreso_TriggersLowStockNotification() {
+        when(movementRepository.findById(4L)).thenReturn(Optional.of(egresoMovementLowStock));
+        when(movementMapper.toResponseDto(any(Movement.class))).thenReturn(responseDTO);
+        when(materialRepository.save(any(Material.class))).thenReturn(material);
+        when(movementRepository.save(any(Movement.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        movementService.completeMovement(4L);
+
+        assertEquals(5.0, material.getStock()); // egreso reduce stock
+        verify(notificationService).createLowStockNotification(material.getId(), material.getName(), 5.0, 10.0);
+    }
+
+    @Test
+    void testCompleteMovement_Egreso_StockInsuficienteAtCompletion() {
+        // Ajustamos material para que stock sea insuficiente al completar
+        material.setStock(40.0);
+        when(movementRepository.findById(4L)).thenReturn(Optional.of(egresoMovementLowStock));
+
+        assertThrows(BadRequestException.class, () -> movementService.completeMovement(4L));
+    }
+
+    @Test
+    void testToggleInProgress_FromPendienteToEnProceso() {
+        when(movementRepository.findById(2L)).thenReturn(Optional.of(pendingMovement));
+        when(movementRepository.save(any(Movement.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(movementMapper.toResponseDto(any(Movement.class))).thenReturn(responseDTO);
+
+        MovementResponseDTO result = movementService.toggleInProgressPending(2L);
+
+        assertNotNull(result);
+        assertEquals(com.enigcode.frozen_backend.movements.model.MovementStatus.EN_PROCESO, pendingMovement.getStatus());
+        assertEquals(1L, pendingMovement.getInProgressByUserId());
+    }
+
+    @Test
+    void testToggleInProgress_FromEnProcesoToPendiente_SameUser() {
+        when(movementRepository.findById(3L)).thenReturn(Optional.of(inProcessMovement));
+        when(movementRepository.save(any(Movement.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(movementMapper.toResponseDto(any(Movement.class))).thenReturn(responseDTO);
+
+        MovementResponseDTO result = movementService.toggleInProgressPending(3L);
+
+        assertNotNull(result);
+        assertEquals(com.enigcode.frozen_backend.movements.model.MovementStatus.PENDIENTE, inProcessMovement.getStatus());
+        assertNull(inProcessMovement.getInProgressByUserId());
+    }
+
+    @Test
+    void testToggleInProgress_CompletedMovementThrows() {
+        Movement completed = Movement.builder()
+                .id(5L)
+                .type(MovementType.INGRESO)
+                .stock(5.0)
+                .material(material)
+                .status(com.enigcode.frozen_backend.movements.model.MovementStatus.COMPLETADO)
+                .build();
+        when(movementRepository.findById(5L)).thenReturn(Optional.of(completed));
+
+        assertThrows(BadRequestException.class, () -> movementService.toggleInProgressPending(5L));
+    }
+
+    @Test
+    void testToggleInProgress_RevertByDifferentUserThrows() {
+        inProcessMovement.setInProgressByUserId(2L); // movimiento tomado por otro usuario
+        com.enigcode.frozen_backend.users.model.User mockUser = new com.enigcode.frozen_backend.users.model.User();
+        mockUser.setId(1L); // usuario actual distinto
+        when(userService.getCurrentUser()).thenReturn(mockUser);
+        when(movementRepository.findById(3L)).thenReturn(Optional.of(inProcessMovement));
+
+        assertThrows(BadRequestException.class, () -> movementService.toggleInProgressPending(3L));
     }
 }
