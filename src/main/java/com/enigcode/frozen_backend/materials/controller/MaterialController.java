@@ -104,7 +104,6 @@ public class MaterialController {
 
         @Operation(summary = "Obtener ubicaciones de materiales", description = "Obtiene las ubicaciones de todos los materiales activos para mostrar en el mapa del almacén")
         @GetMapping("/warehouse-map")
-        @PreAuthorize("hasRole('SUPERVISOR_DE_ALMACEN') or hasRole('OPERARIO_DE_ALMACEN')")
         public ResponseEntity<List<MaterialWarehouseLocationDTO>> getWarehouseMap(
                         @RequestParam(required = false) String zone,
                         @RequestParam(required = false, defaultValue = "true") Boolean activeOnly) {
@@ -124,7 +123,6 @@ public class MaterialController {
 
         @Operation(summary = "Obtener información del almacén", description = "Obtiene zonas disponibles y próxima ubicación sugerida")
         @GetMapping("/warehouse-info")
-        @PreAuthorize("hasRole('SUPERVISOR_DE_ALMACEN') or hasRole('OPERARIO_DE_ALMACEN')")
         public ResponseEntity<WarehouseInfoDTO> getWarehouseInfo(
                         @RequestParam(required = false) MaterialType materialType) {
                 WarehouseInfoDTO info = materialService.getWarehouseInfo(materialType);
