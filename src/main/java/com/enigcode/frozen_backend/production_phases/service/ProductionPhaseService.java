@@ -10,6 +10,5 @@ public interface ProductionPhaseService {
     ProductionPhaseResponseDTO setUnderReview(Long id, ProductionPhaseUnderReviewDTO dto);
     ProductionPhaseResponseDTO getProductionPhase(Long id);
     List<ProductionPhaseResponseDTO> getProductionPhasesByBatch(Long id);
-    void suspendProductionPhases(List<ProductionPhase> remainingProductionPhases);
     ProductionPhaseResponseDTO reviewProductionPhase(Long id);
 }

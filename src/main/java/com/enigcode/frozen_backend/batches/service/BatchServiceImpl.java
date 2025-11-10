@@ -9,10 +9,15 @@ import com.enigcode.frozen_backend.batches.repository.BatchRepository;
 import com.enigcode.frozen_backend.batches.specification.BatchSpecification;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+import com.enigcode.frozen_backend.movements.DTO.MovementInternalCreateDTO;
+import com.enigcode.frozen_backend.movements.model.MovementType;
+import com.enigcode.frozen_backend.movements.service.MovementService;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
 
 import com.enigcode.frozen_backend.product_phases.model.Phase;
+import com.enigcode.frozen_backend.production_materials.model.ProductionMaterial;
+import com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhaseStatus;
@@ -33,6 +38,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,11 +56,12 @@ public class BatchServiceImpl implements BatchService {
     private final ProductionPhaseService productionPhaseService;
     private final SectorService sectorService;
     private final ProductionPhaseRepository productionPhaseRepository;
+    private final ProductionMaterialRepository productionMaterialRepository;
+    private final MovementService movementService;
 
     /**
      * Crea un Lote cuando se crea una orden de produccion, la misma tiene que ser
      * transactional
-     * TODO: Cuando se cree el lote se deben crear automaticamente sus fases
      * 
      * @param createDTO
      * @return
@@ -144,7 +151,7 @@ public class BatchServiceImpl implements BatchService {
                 .filter(productionPhase -> productionPhase.getStatus().equals(ProductionPhaseStatus.PENDIENTE))
                 .toList();
 
-        productionPhaseService.suspendProductionPhases(remainingProductionPhases);
+        this.suspendProductionPhases(remainingProductionPhases);
 
         Batch savedBatch = batchRepository.save(batch);
         return batchMapper.toResponseDTO(savedBatch);
@@ -165,7 +172,7 @@ public class BatchServiceImpl implements BatchService {
                 .filter(productionPhase -> productionPhase.getStatus().equals(ProductionPhaseStatus.PENDIENTE))
                 .toList();
 
-        productionPhaseService.suspendProductionPhases(remainingProductionPhases);
+        this.suspendProductionPhases(remainingProductionPhases);
 
         Batch savedBatch = batchRepository.save(batch);
     }
@@ -181,11 +188,41 @@ public class BatchServiceImpl implements BatchService {
     }
 
     /**
+     * Marca como suspendida las production fases y devuelve los materiales de las
+     * mismas
+     *
+     * @param remainingProductionPhases
+     */
+    @Transactional
+    @Override
+    public void suspendProductionPhases(List<ProductionPhase> remainingProductionPhases) {
+        List<MovementInternalCreateDTO> materialsMovements = new ArrayList<>();
+
+        remainingProductionPhases.forEach(productionPhase -> {
+            productionPhase.setStatus(ProductionPhaseStatus.SUSPENDIDA);
+            List<ProductionMaterial> materials = productionMaterialRepository
+                    .findAllByProductionPhaseId(productionPhase.getId());
+
+            if (!materials.isEmpty()) {
+                materialsMovements.addAll(materials.stream().map(productionMaterial -> {
+                    return MovementInternalCreateDTO.builder()
+                            .type(MovementType.INGRESO)
+                            .stock(productionMaterial.getQuantity())
+                            .material(productionMaterial.getMaterial())
+                            .reason("Cancelación de lote, material devuelto")
+                            .location("Almacen de materias primas")
+                            .build();
+                }).toList());
+            }
+            productionPhaseRepository.save(productionPhase);
+        });
+        movementService.createMovements(materialsMovements);
+    }
+
+    /**
      * Automatizacion de inicializacion de lotes de la fecha programado para las 8
      * am
      * En caso de estar llena la producción se postergan hacia el proximo dia
-     * TODO: AGREGAR TAMBIEN EN ESPERA EN CASO DE SER POSTERGADO Y AÑADIRLO A LA
-     * CREACION?
      */
     @Scheduled(cron = "0 0 8 * * *", zone = "America/Argentina/Buenos_Aires")
     @Transactional

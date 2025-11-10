@@ -28,9 +28,7 @@ import java.util.List;
 public class ProductionPhaseServiceImpl implements ProductionPhaseService {
     private final ProductionPhaseRepository productionPhaseRepository;
     private final ProductionPhaseMapper productionPhaseMapper;
-    private final ProductionMaterialRepository productionMaterialRepository;
-    private final MovementService movementService;
-    // private final BatchService batchService;
+    private final BatchService batchService;
     private final ProductionPhaseQualityRepository productionPhaseQualityRepository;
 
     @Override
@@ -68,38 +66,6 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
             throw new ResourceNotFoundException("No se encontraron production phases asociados al batch " + id);
 
         return productionPhases.stream().map(productionPhaseMapper::toResponseDTO).toList();
-    }
-
-    /**
-     * Marca como suspendida las production fases y devuelve los materiales de las
-     * mismas
-     * 
-     * @param remainingProductionPhases
-     */
-    @Override
-    @Transactional
-    public void suspendProductionPhases(List<ProductionPhase> remainingProductionPhases) {
-        List<MovementInternalCreateDTO> materialsMovements = new ArrayList<>();
-
-        remainingProductionPhases.forEach(productionPhase -> {
-            productionPhase.setStatus(ProductionPhaseStatus.SUSPENDIDA);
-            List<ProductionMaterial> materials = productionMaterialRepository
-                    .findAllByProductionPhaseId(productionPhase.getId());
-
-            if (!materials.isEmpty()) {
-                materialsMovements.addAll(materials.stream().map(productionMaterial -> {
-                    return MovementInternalCreateDTO.builder()
-                            .type(MovementType.INGRESO)
-                            .stock(productionMaterial.getQuantity())
-                            .material(productionMaterial.getMaterial())
-                            .reason("Cancelación de lote, material devuelto")
-                            .location("Almacen de materias primas")
-                            .build();
-                }).toList());
-            }
-            productionPhaseRepository.save(productionPhase);
-        });
-        movementService.createMovements(materialsMovements);
     }
 
     @Override
@@ -148,11 +114,11 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
     // rechazo la fase y cancelo el lote
     private void rejectProductionPhase(ProductionPhase productionPhase) {
         productionPhase.setStatus(ProductionPhaseStatus.RECHAZADA);
-        // batchService.cancelBatch(productionPhase.getBatch());
+        batchService.cancelBatch(productionPhase.getBatch());
     }
 
     private void completeProductionPhase(ProductionPhase productionPhase) {
         productionPhase.setStatus(ProductionPhaseStatus.COMPLETADA);
-        // batchService.startNextPhase(productionPhase.getBatch());
+        batchService.startNextPhase(productionPhase.getBatch());
     }
 }
