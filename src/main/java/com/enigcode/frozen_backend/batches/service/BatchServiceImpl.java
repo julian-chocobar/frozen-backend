@@ -53,7 +53,6 @@ public class BatchServiceImpl implements BatchService {
     private final BatchMapper batchMapper;
     private final PackagingRepository packagingRepository;
     private final SystemConfigurationService systemConfigurationService;
-    private final ProductionPhaseService productionPhaseService;
     private final SectorService sectorService;
     private final ProductionPhaseRepository productionPhaseRepository;
     private final ProductionMaterialRepository productionMaterialRepository;
