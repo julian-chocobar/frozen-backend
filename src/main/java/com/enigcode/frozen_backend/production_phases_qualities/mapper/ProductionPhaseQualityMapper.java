@@ -9,6 +9,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(config = GlobalMapperConfig.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ProductionPhaseQualityMapper {
@@ -17,5 +18,12 @@ public interface ProductionPhaseQualityMapper {
     @Mapping(target = "productionPhase", source = "productionPhase.phase")
     ProductionPhaseQualityResponseDTO toResponseDTO (ProductionPhaseQuality productionPhaseQuality);
     ProductionPhaseQuality toEntity(ProductionPhaseQualityCreateDTO dto);
+    
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "productionPhase", ignore = true)
+    @Mapping(target = "qualityParameter", ignore = true)
+    @Mapping(target = "realizationDate", ignore = true)
+    @Mapping(target = "value", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "isApproved", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     ProductionPhaseQuality partialUpdate(ProductionPhaseQualityUpdateDTO dto, @MappingTarget ProductionPhaseQuality productionPhaseQuality);
 }
