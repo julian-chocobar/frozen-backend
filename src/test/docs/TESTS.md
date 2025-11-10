@@ -692,3 +692,199 @@ Tests de integración end-to-end de sectores.
 - **createSector_withNonExistentSupervisor_returns404**: Testea que retorna 404 cuando el supervisor no existe
 - **createSector_withUnauthorizedRole_returns403**: Testea que usuarios sin autorización reciben 403
 - **updateSector_withUnauthorizedRole_returns403**: Testea que usuarios sin autorización reciben 403 al actualizar
+
+---
+
+## Production Phase Qualities Tests
+
+### ProductionPhaseQualityMapperTest
+**Propósito**: Validación del mapper MapStruct para conversiones entity ↔ DTOs y actualización parcial segura.
+
+#### Funciones de Test:
+- **`toEntity_fromCreateDTO_mapsSimpleFields()`**: Mapea campos simples desde CreateDTO; relaciones se setean en el servicio.
+- **`toResponseDTO_mapsNestedFields()`**: Mapea campos anidados (productionPhaseId, productionPhase y qualityParameterName).
+- **`partialUpdate_updatesOnlyNonNullFields()`**: Actualización parcial aplica solo campos provistos (no-null).
+- **`partialUpdate_nullFields_doNotOverwrite()`**: Campos null en UpdateDTO no sobrescriben valores existentes (usa NullValuePropertyMappingStrategy.IGNORE).
+
+### ProductionPhaseQualityServiceImplTest
+**Propósito**: Pruebas unitarias del servicio, validando creación, actualización, obtención y listados por fase/lote.
+
+#### Funciones de Test:
+- **`createProductionPhaseQuality_success()`**: Crea registro asociando correctamente ProductionPhase y QualityParameter con fase compatible.
+- **`createProductionPhaseQuality_phaseMismatch_throwsBadRequest()`**: Rechaza si la fase del parámetro de calidad no coincide con la de la producción.
+- **`createProductionPhaseQuality_phaseNotFound_throws()`**: Lanza 404 si no existe la ProductionPhase.
+- **`createProductionPhaseQuality_qualityParamNotFound_throws()`**: Lanza 404 si no existe el QualityParameter.
+- **`updateProductionPhaseQuality_success()`**: Actualiza valor y aprobación preservando campos no enviados (parcial).
+- **`updateProductionPhaseQuality_notFound_throws()`**: Lanza 404 si el registro no existe.
+- **`getProductionPhaseQuality_success()`**: Obtiene registro por ID y lo mapea a DTO.
+- **`getProductionPhaseQuality_notFound_throws()`**: Lanza 404 si no existe.
+- **`getByPhase_success()`**: Lista por id de ProductionPhase.
+- **`getByPhase_notFound_throws()`**: Lanza 404 si la ProductionPhase no existe.
+- **`getByBatch_success()`**: Lista por id de Batch.
+- **`getByBatch_notFound_throws()`**: Lanza 404 si el Batch no existe.
+
+### ProductionPhaseQualityControllerTest
+**Propósito**: Tests del controlador con @WebMvcTest y MockMvc, validando endpoints y manejo de errores.
+
+#### Funciones de Test:
+- **`create_validRequest_returns201()`**: POST /production-phases-qualities crea registro retorna 201.
+- **`create_missingFields_returns400()`**: Request inválido retorna 400.
+- **`update_validRequest_returns200()`**: PATCH actualiza y retorna 200.
+- **`update_notFound_returns404()`**: PATCH sobre ID inexistente retorna 404.
+- **`getById_returns200()`**: GET por ID retorna 200.
+- **`getById_notFound_returns404()`**: GET por ID inexistente retorna 404.
+- **`getByPhase_returns200_andArray()`**: GET por fase retorna array 200.
+- **`getByBatch_returns200_andArray()`**: GET por lote retorna array 200.
+
+### ProductionPhaseQualityControllerSecurityTest
+**Propósito**: Pruebas de autenticación/autorización con @SpringBootTest + MockMvc.
+
+#### Funciones de Test:
+- **`create_withoutAuth_returns401()`**: POST sin autenticación retorna 401.
+- **`create_withWrongRole_returns403()`**: POST con rol incorrecto retorna 403.
+- **`create_withCorrectRole_acceptsRequest()`**: POST con rol correcto supera seguridad; permite 201/4xx funcional, nunca 401/403.
+- **`update_withoutAuth_returns401()`**: PATCH sin autenticación retorna 401.
+- **`update_withWrongRole_returns403()`**: PATCH con rol incorrecto retorna 403.
+- **`update_withCorrectRole_acceptsRequest()`**: PATCH con rol correcto supera seguridad; permite 200/404 funcional.
+- **`getById_withoutAuth_returns401()`**: GET sin autenticación retorna 401.
+- **`getById_withAuth_acceptsRequest()`**: GET autenticado supera seguridad; retorna 404 por inexistente.
+- **`getByPhase_withoutAuth_returns401()`**: GET lista por fase sin auth retorna 401.
+- **`getByPhase_withAuth_acceptsRequest()`**: GET lista por fase autenticado retorna 404 si fase no existe.
+- **`getByBatch_withoutAuth_returns401()`**: GET lista por lote sin auth retorna 401.
+- **`getByBatch_withAuth_acceptsRequest()`**: GET lista por lote autenticado retorna 404 si lote no existe.
+
+### ProductionPhaseQualityIntegrationTest
+**Propósito**: Tests de integración con contexto completo y reglas mínimas, enfocadas a escenarios de error controlado.
+
+#### Funciones de Test:
+- **`getProductionPhaseQuality_notFound()`**: GET por ID inexistente retorna 404.
+- **`updateProductionPhaseQuality_notFound()`**: PATCH por ID inexistente retorna 404.
+- **`listByPhase_invalidPhase()`**: GET por fase inválida retorna 404 (validación de existencia previa).
+- **`listByBatch_invalidBatch()`**: GET por lote inválido retorna 404.
+
+---
+
+## Quality Parameters Tests
+
+### QualityParameterMapperTest
+**Propósito**: Validación de mapeos entre QualityParameter y sus DTOs, incluyendo campos opcionales y listas.
+
+#### Funciones de Test:
+- **`testToEntity_fromCreateDTO()`**: Convierte CreateDTO completo a entidad (phase, isCritical, name, description).
+- **`testToEntity_withMinimalData()`**: Mapeo con datos mínimos (sin description) mantiene null correctamente.
+- **`testToResponseDTO()`**: Convierte entidad activa y crítica a ResponseDTO preservando flags.
+- **`testToResponseDTO_withInactiveParameter()`**: Verifica mapeo cuando isActive=false.
+- **`testToResponseDTO_handlesNullDescription()`**: Description null se mantiene null en el DTO.
+- **`testListMapping()`**: Mapea lista de entidades a lista de DTOs.
+- **`testMapping_preservesCriticalFlag()`**: Verifica que el flag isCritical se conserva (true y false).
+
+---
+
+## Production Materials Tests
+
+### ProductionMaterialMapperTest
+**Propósito**: Validación del mapper MapStruct para conversión de entidad ProductionMaterial a ProductionMaterialResponseDTO, incluyendo mapeo de campos anidados.
+
+#### Funciones de Test:
+- **`toResponseDTO_mapsNestedFields()`**: Mapea correctamente los campos de relaciones: `material.id` → `materialId`, `material.code` → `materialCode`, `productionPhase.id` → `productionPhaseId`, y `quantity` directamente.
+
+### ProductionMaterialServiceImplTest
+**Propósito**: Pruebas unitarias del servicio de materiales de producción, validando lógica de negocio para obtención por ID, por fase de producción y por lote.
+
+#### Funciones de Test:
+- **`getProductionMaterial_success()`**: Obtiene ProductionMaterial por ID y lo mapea a ResponseDTO correctamente.
+- **`getProductionMaterial_notFound_throws()`**: Lanza ResourceNotFoundException cuando el ID no existe.
+- **`getProductionMaterialByPhase_success()`**: Obtiene lista de materiales asociados a una fase de producción específica.
+- **`getProductionMaterialByPhase_empty_returnsEmptyList()`**: Retorna lista vacía cuando no hay materiales asociados a la fase.
+- **`getProductionMaterialByBatch_success()`**: Obtiene lista de materiales asociados a un lote (batch) específico.
+- **`getProductionMaterialByBatch_empty_returnsEmptyList()`**: Retorna lista vacía cuando no hay materiales asociados al lote.
+
+### ProductionMaterialControllerTest
+**Propósito**: Tests del controlador REST de materiales de producción con @WebMvcTest y MockMvc, validando endpoints de solo lectura.
+
+#### Funciones de Test:
+- **`getProductionMaterial_returns200()`**: GET /production-materials/{id} retorna 200 con el material solicitado.
+- **`getProductionMaterial_notFound_returns404()`**: GET por ID inexistente retorna 404.
+- **`getByPhase_returns200_andArray()`**: GET /production-materials/by-production-phase/{id} retorna array 200 con materiales de la fase.
+- **`getByBatch_returns200_andArray()`**: GET /production-materials/by-batch/{id} retorna array 200 con materiales del lote.
+
+### ProductionMaterialIntegrationTest
+**Propósito**: Tests de integración end-to-end para materiales de producción con @SpringBootTest, validando comportamiento real con base de datos H2.
+
+#### Funciones de Test:
+- **`getProductionMaterial_notFound_returns404()`**: GET por ID inexistente retorna 404 en entorno real.
+- **`getProductionMaterialByPhase_emptyOrNotFound_returns200Or404()`**: GET por fase puede retornar 200 con lista vacía o 404 según implementación del controlador.
+- **`getProductionMaterialByBatch_emptyOrNotFound_returns200Or404()`**: GET por lote puede retornar 200 con lista vacía o 404 según implementación del controlador.
+
+### QualityParameterServiceImplTest
+**Propósito**: Pruebas unitarias de la lógica de negocio: creación, actualización, toggle y consultas.
+
+#### Funciones de Test:
+- **`testCreateQualityParameter_success()`**: Crea parámetro completo y verifica persistencia y mapeo.
+- **`testCreateQualityParameter_withMinimalData()`**: Crea parámetro sin description (opcional).
+- **`testUpdateQualityParameter_success()`**: Actualiza description preservando otros campos.
+- **`testUpdateQualityParameter_notFound_throwsException()`**: ID inexistente lanza ResourceNotFoundException.
+- **`testGetQualityParameter_success()`**: Obtiene parámetro por ID.
+- **`testGetQualityParameter_notFound_throwsException()`**: Obtener inexistente lanza excepción.
+- **`testToggleActive_fromTrueToFalse()`**: Cambia isActive true→false.
+- **`testToggleActive_fromFalseToTrue()`**: Cambia isActive false→true.
+- **`testToggleActive_notFound_throwsException()`**: Toggle sobre ID inexistente lanza excepción.
+- **`testGetQualityParameters_returnsAll()`**: Lista con resultados.
+- **`testGetQualityParameters_emptyList()`**: Lista vacía retorna lista vacía.
+- **`testIsActiveDefault_shouldBeTrue()`**: Verifica default isActive=true en @PrePersist.
+- **`testCriticalParameter_creation()`**: Parámetro crítico conserva flag.
+
+### QualityParameterControllerTest
+**Propósito**: Validación HTTP con @WebMvcTest: creación, validaciones, actualización, toggle y listados.
+
+#### Funciones de Test:
+- **`testCreateQualityParameter_validRequest_returns201()`**: POST válido retorna 201 con campos esperados.
+- **`testCreateQualityParameter_missingName_returns400()`**: Falta name → 400.
+- **`testCreateQualityParameter_missingPhase_returns400()`**: Falta phase → 400.
+- **`testCreateQualityParameter_missingIsCritical_returns400()`**: Falta isCritical → 400.
+- **`testCreateQualityParameter_invalidPhase_returns400()`**: Enum inválido → 400.
+- **`testCreateQualityParameter_nameTooLong_returns400()`**: Validación longitud name.
+- **`testUpdateQualityParameter_validRequest_returns200()`**: PATCH OK.
+- **`testUpdateQualityParameter_descriptionTooLong_returns400()`**: Description excede longitud → 400.
+- **`testGetQualityParameter_exists_returns200()`**: GET existente 200.
+- **`testGetQualityParameter_notFound_returns404()`**: GET inexistente 404.
+- **`testToggleActive_success_returns200()`**: Toggle activo/desactivo exitoso.
+- **`testToggleActive_notFound_returns404()`**: Toggle sobre ID inexistente.
+- **`testListQualityParameters_returns200()`**: Lista con elementos.
+- **`testListQualityParameters_emptyList_returns200()`**: Lista vacía.
+- **`testCreateQualityParameter_withNullDescription_success()`**: Create sin description válido.
+
+### QualityParameterControllerSecurityTest
+**Propósito**: Reglas de autorización/autenticación sobre CRUD (roles de calidad) y accesos de lectura.
+
+#### Funciones de Test:
+- **`testCreate_withoutAuth_returns401()`**: POST sin auth → 401.
+- **`testCreate_withWrongRole_returns403()`**: Rol no autorizado → 403.
+- **`testCreate_withCorrectRole_success()`**: Rol SUPERVISOR_DE_CALIDAD crea 201.
+- **`testUpdate_withoutAuth_returns401()`**: PATCH sin auth.
+- **`testUpdate_withWrongRole_returns403()`**: PATCH rol incorrecto.
+- **`testUpdate_withCorrectRole_successOrNotFound()`**: PATCH autorizado (200 o 404 funcional).
+- **`testToggleActive_withoutAuth_returns401()`**: Toggle sin auth.
+- **`testToggleActive_withWrongRole_returns403()`**: Toggle rol incorrecto.
+- **`testToggleActive_withCorrectRole_success()`**: Toggle autorizado OK.
+- **`testGet_withAnyRole_success()`**: GET listado accesible con cualquier rol autenticado.
+- **`testGet_withDifferentRole_success()`**: Otro rol autenticado también accede.
+- **`testGet_withoutAuth_shouldBeAccessible()`**: Verifica que GET sea público (retorna 200 anonimizado).
+- **`testCreate_withMultipleRoles_success()`**: POST con múltiples roles válidos crea.
+
+### QualityParameterIntegrationTest
+**Propósito**: Flujo end-to-end: crear, listar, actualizar, toggle, validar uniqueness por fase y manejo de errores.
+
+#### Funciones de Test:
+- **`createQualityParameter_andGetById_happyPath()`**: Crea y recupera por ID.
+- **`createMultipleParameters_andListAll_happyPath()`**: Varías creaciones y verificación en listado.
+- **`createParameter_toggleActive_andVerify()`**: Toggle persistente (true→false→true) verificado por GET.
+- **`updateParameter_description_success()`**: Actualiza description preservando otros campos.
+- **`createParameter_withMinimalData_success()`**: Creación sin description.
+- **`createParameter_withSameName_differentPhase_success()`**: Permite mismo nombre en fases distintas.
+- **`getParameter_notFound_returns404()`**: GET inexistente.
+- **`updateParameter_notFound_returns404()`**: PATCH inexistente.
+- **`toggleActive_notFound_returns404()`**: Toggle inexistente.
+- **`createCriticalParameter_andVerify()`**: Crea parámetro crítico y verifica flag.
+
+
