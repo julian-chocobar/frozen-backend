@@ -15,7 +15,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class QualityParameterServiceImpl implements QualityParameterService{
+public class QualityParameterServiceImpl implements QualityParameterService {
     private final QualityParameterMapper qualityParameterMapper;
     private final QualityParameterRepository qualityParameterRepository;
 
@@ -33,7 +33,7 @@ public class QualityParameterServiceImpl implements QualityParameterService{
     @Transactional
     public QualityParameterResponseDTO updateQualityParameter(Long id, QualityParameterUpdateDTO updateDto) {
         QualityParameter qualityParameter = qualityParameterRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("No se encontró parámetro de calidad con id " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró parámetro de calidad con id " + id));
         qualityParameter.setDescription(updateDto.getDescription());
 
         QualityParameter savedParameter = qualityParameterRepository.save(qualityParameter);
@@ -44,7 +44,7 @@ public class QualityParameterServiceImpl implements QualityParameterService{
     @Transactional
     public QualityParameterResponseDTO toggleActive(Long id) {
         QualityParameter qualityParameter = qualityParameterRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("No se encontró parámetro de calidad con id " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró parámetro de calidad con id " + id));
         qualityParameter.toggleActive();
 
         QualityParameter savedParameter = qualityParameterRepository.save(qualityParameter);
@@ -55,7 +55,7 @@ public class QualityParameterServiceImpl implements QualityParameterService{
     @Transactional
     public QualityParameterResponseDTO getQualityParameter(Long id) {
         QualityParameter qualityParameter = qualityParameterRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("No se encontró parámetro de calidad con id " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró parámetro de calidad con id " + id));
         return qualityParameterMapper.toResponseDTO(qualityParameter);
     }
 
@@ -66,6 +66,5 @@ public class QualityParameterServiceImpl implements QualityParameterService{
 
         return qualityParameters.stream().map(qualityParameterMapper::toResponseDTO).toList();
     }
-
 
 }
