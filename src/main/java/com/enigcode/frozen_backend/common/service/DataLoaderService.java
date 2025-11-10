@@ -13,6 +13,7 @@ import com.enigcode.frozen_backend.packagings.service.PackagingService;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseResponseDTO;
 import com.enigcode.frozen_backend.product_phases.DTO.ProductPhaseUpdateDTO;
 import com.enigcode.frozen_backend.product_phases.service.ProductPhaseService;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.products.DTO.ProductCreateDTO;
 import com.enigcode.frozen_backend.products.DTO.ProductResponseDTO;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
@@ -24,6 +25,9 @@ import com.enigcode.frozen_backend.sectors.DTO.SectorCreateDTO;
 import com.enigcode.frozen_backend.sectors.model.SectorType;
 import com.enigcode.frozen_backend.sectors.repository.SectorRepository;
 import com.enigcode.frozen_backend.sectors.service.SectorService;
+import com.enigcode.frozen_backend.quality_parameters.repository.QualityParameterRepository;
+import com.enigcode.frozen_backend.quality_parameters.service.QualityParameterService;
+import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterCreateDTO;
 import com.enigcode.frozen_backend.users.DTO.UserCreateDTO;
 import com.enigcode.frozen_backend.users.DTO.UserResponseDTO;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
@@ -51,6 +55,7 @@ public class DataLoaderService {
         private final PackagingRepository packagingRepository;
         private final SectorRepository sectorRepository;
         private final ProductionOrderRepository productionOrderRepository;
+        private final QualityParameterRepository qualityParameterRepository;
 
         private final UserService userService;
         private final MaterialService materialService;
@@ -60,6 +65,7 @@ public class DataLoaderService {
         private final PackagingService packagingService;
         private final SectorService sectorService;
         private final SystemConfigurationService systemConfigurationService;
+        private final QualityParameterService qualityParameterService;
 
         // IDs de materiales creados para usar en recipes
         private Long maltaPaleId;
@@ -156,12 +162,15 @@ public class DataLoaderService {
                                 loadSystemConfiguration();
                                 log.info("SystemConfiguration creada/actualizada exitosamente.");
 
-                                /*
-                                 * // Paso 8: Crear sectores
-                                 * log.info("Iniciando carga de sectores...");
-                                 * loadSectors();
-                                 * log.info("Sectores cargados exitosamente.");
-                                 */
+                                // Paso 9: Crear sectores de producción disponibles
+                                log.info("Iniciando carga de sectores de producción...");
+                                loadSectors();
+                                log.info("Sectores cargados exitosamente.");
+
+                                // Paso 10: Crear parámetros de calidad para las fases
+                                log.info("Iniciando carga de parámetros de calidad...");
+                                loadQualityParameters();
+                                log.info("Parámetros de calidad cargados exitosamente.");
                                 log.info("Datos de ejemplo cargados exitosamente siguiendo reglas de negocio!");
 
                         } catch (Exception e) {
@@ -944,7 +953,6 @@ public class DataLoaderService {
                 systemConfigurationService.updateWorkingDays(updates);
         }
 
-        @SuppressWarnings("unused")
         private void loadSectors() {
                 if (sectorRepository.count() == 0) {
                         log.info("Cargando sectores de ejemplo...");
@@ -953,31 +961,48 @@ public class DataLoaderService {
                                         .name("Almacén Principal")
                                         .supervisorId(supervisorAlmacenId)
                                         .type(SectorType.ALMACEN)
-                                        .productionCapacity(1000.0)
-                                        .isTimeActive(true)
                                         .build();
                         sectorService.createSector(almacen);
 
-                        SectorCreateDTO produccion = SectorCreateDTO.builder()
-                                        .name("Línea de Producción")
-                                        .supervisorId(supervisorProduccionId)
-                                        .type(SectorType.PRODUCCION)
-                                        .productionCapacity(500.0)
-                                        .isTimeActive(true)
-                                        .build();
-                        sectorService.createSector(produccion);
+                        double highCapacity = 5000.0; // Permite múltiples lotes simultáneos
+                        for (Phase phase : Phase.values()) {
+                                if (Phase.MADURACION.equals(phase) || Phase.FERMENTACION.equals(phase)) {
+                                        // Permitir procesos pasivos con capacidad amplia
+                                        createProductionSector(
+                                                        "Sector " + capitalize(phase.name().toLowerCase()),
+                                                        supervisorProduccionId,
+                                                        phase,
+                                                        6000.0);
+                                } else {
+                                        createProductionSector(
+                                                        "Sector " + capitalize(phase.name().toLowerCase()),
+                                                        supervisorProduccionId,
+                                                        phase,
+                                                        highCapacity);
+                                }
+                        }
 
                         SectorCreateDTO calidad = SectorCreateDTO.builder()
-                                        .name("Control de Calidad")
+                                        .name("Control de Calidad Central")
                                         .supervisorId(supervisorCalidadId)
                                         .type(SectorType.CALIDAD)
-                                        .productionCapacity(200.0)
-                                        .isTimeActive(true)
                                         .build();
                         sectorService.createSector(calidad);
 
                         log.info("Sectores cargados.");
                 }
+        }
+
+        private void createProductionSector(String name, Long supervisorId, Phase phase, Double capacity) {
+                SectorCreateDTO dto = SectorCreateDTO.builder()
+                                .name(name)
+                                .supervisorId(supervisorId)
+                                .type(SectorType.PRODUCCION)
+                                .phase(phase)
+                                .productionCapacity(capacity)
+                                .isTimeActive(phase.getIsTimeActive())
+                                .build();
+                sectorService.createSector(dto);
         }
 
         private void markAllPhasesAsReady(List<ProductResponseDTO> products) {
@@ -1013,6 +1038,163 @@ public class DataLoaderService {
                 }
 
                 log.info("Proceso de marcado de fases completado.");
+        }
+
+        private void loadQualityParameters() {
+                if (qualityParameterRepository.count() > 0)
+                        return;
+
+                log.info("Generando parámetros de calidad por fase...");
+                List<QualityParameterCreateDTO> parameters = List.of(
+                                // Molienda
+                                // value válido: "350 μm" (granulometría media), cualquier valor mayor a 500 μm
+                                // sería rechazado
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.MOLIENDA)
+                                                .name("Granulometria")
+                                                .description("Molienda homogénea, base para extracción eficiente.")
+                                                .isCritical(true)
+                                                .build(),
+                                // value válido: "4.5 %", por encima de 6 % se considera húmedo en exceso
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.MOLIENDA)
+                                                .name("Humedad Malta")
+                                                .description("Control de humedad post molienda para evitar compactación.")
+                                                .isCritical(false)
+                                                .build(),
+                                // Maceración
+                                // value válido: "66 °C", menos de 60 °C afecta conversión enzimática
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.MACERACION)
+                                                .name("Temp Macerac")
+                                                .description("Temperatura de maceración en rango objetivo.")
+                                                .isCritical(true)
+                                                .build(),
+                                // value válido: "5.4 pH", si supera 5.8 pH se considera fuera de rango
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.MACERACION)
+                                                .name("pH Macerac")
+                                                .description("pH del mosto entre 5.2 - 5.6.")
+                                                .isCritical(true)
+                                                .build(),
+                                // Filtración
+                                // value válido: "15 NTU", mayor a 50 NTU indicaría turbidez elevada
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.FILTRACION)
+                                                .name("Claridad")
+                                                .description("Nivel de turbidez permisible del mosto filtrado.")
+                                                .isCritical(false)
+                                                .build(),
+                                // value válido: "78 °C", menos de 70 °C podría afectar separación
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.FILTRACION)
+                                                .name("Temp Filtrado")
+                                                .description("Temperatura de salida tras filtrado.")
+                                                .isCritical(false)
+                                                .build(),
+                                // Cocción
+                                // value válido: "12.5 °P", por debajo de 10 °P indica falta de evaporación
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.COCCION)
+                                                .name("Plato Final")
+                                                .description("Grados plato finales tras evaporación.")
+                                                .isCritical(true)
+                                                .build(),
+                                // value válido: "10 min", menos de 5 min reduce el aporte aromático
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.COCCION)
+                                                .name("Tiempo Lupulo")
+                                                .description("Tiempo exacto de adición de lúpulo aromático.")
+                                                .isCritical(false)
+                                                .build(),
+                                // Fermentación
+                                // value válido: "19 °C", más de 24 °C para ales se considera fuera de rango
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.FERMENTACION)
+                                                .name("Temp Ferm")
+                                                .description("Temperatura controlada según perfil de levadura.")
+                                                .isCritical(true)
+                                                .build(),
+                                // value válido: "1.010 SG", si queda por encima de 1.020 SG indica fermentación
+                                // incompleta
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.FERMENTACION)
+                                                .name("Densidad Ferm")
+                                                .description("Densidad específica diaria para seguimiento de atenuación.")
+                                                .isCritical(true)
+                                                .build(),
+                                // Desalcoholización
+                                // value válido: "0.4 % ABV", por encima de 0.5 % ABV no cumple sin alcohol
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.DESALCOHOLIZACION)
+                                                .name("Alcohol Final")
+                                                .description("Porcentaje de alcohol residual en cerveza sin alcohol.")
+                                                .isCritical(true)
+                                                .build(),
+                                // value válido: "65 °C", más de 75 °C afecta aromas
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.DESALCOHOLIZACION)
+                                                .name("Temp Columna")
+                                                .description("Temperatura de columna de adsorción.")
+                                                .isCritical(false)
+                                                .build(),
+                                // Maduración
+                                // value válido: "0.08 ppm", superar 0.15 ppm genera sabores mantecosos
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.MADURACION)
+                                                .name("Diacetilo")
+                                                .description("Nivel de diacetilo por debajo del umbral sensorial.")
+                                                .isCritical(true)
+                                                .build(),
+                                // value válido: "5 EBC", mayor a 20 EBC sugiere sedimentos en suspensión
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.MADURACION)
+                                                .name("Turbidez")
+                                                .description("Control visual de sedimentos previos a gasificación.")
+                                                .isCritical(false)
+                                                .build(),
+                                // Gasificación
+                                // value válido: "2.4 vol CO2", menos de 1.8 vol produce carbonatación
+                                // insuficiente
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.GASIFICACION)
+                                                .name("CO2 Volumen")
+                                                .description("Volumen final de CO2 disuelto.")
+                                                .isCritical(true)
+                                                .build(),
+                                // value válido: "18 psi", pasar de 25 psi puede comprometer válvulas
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.GASIFICACION)
+                                                .name("Presion Tank")
+                                                .description("Presión alcanzada en tanques de gasificación.")
+                                                .isCritical(false)
+                                                .build(),
+                                // Envasado
+                                // value válido: "Hermético", cualquier anotación diferente implica fallo de
+                                // sellado
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.ENVASADO)
+                                                .name("Sellado")
+                                                .description("Integridad del cierre en botellas o barriles.")
+                                                .isCritical(true)
+                                                .build(),
+                                // value válido: "OK", valores como "Desalineada" o "Sin lote" marcan rechazo
+                                // visual
+                                QualityParameterCreateDTO.builder()
+                                                .phase(Phase.ENVASADO)
+                                                .name("Etiquetado")
+                                                .description("Revisión visual de etiquetado y codificación.")
+                                                .isCritical(false)
+                                                .build());
+
+                parameters.forEach(qualityParameterService::createQualityParameter);
+        }
+
+        private String capitalize(String value) {
+                if (value == null || value.isBlank()) {
+                        return value;
+                }
+                return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
         }
 
 }
