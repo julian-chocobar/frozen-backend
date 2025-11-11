@@ -91,6 +91,56 @@ class SectorIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    // --- Nuevas pruebas enfocadas en capacidad de producción ---
+
+    @Test
+    void createSector_produccion_missingRequiredFields_returns400() throws Exception {
+        // Falta productionCapacity (y/o otros), debe responder 400 por validación de negocio
+        String requestBody = """
+        {
+            "name": "Sector Producción Incompleto",
+            "supervisorId": 1,
+            "type": "PRODUCCION",
+            "phase": "MOLIENDA",
+            "isTimeActive": true
+        }
+        """;
+
+        mockMvc.perform(post("/sectors")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createSector_produccion_withNonExistentSupervisor_returns404() throws Exception {
+        String requestBody = """
+        {
+            "name": "Sector Producción",
+            "supervisorId": 999999,
+            "type": "PRODUCCION",
+            "phase": "MOLIENDA",
+            "productionCapacity": 500.0,
+            "isTimeActive": true
+        }
+        """;
+
+        mockMvc.perform(post("/sectors")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateSector_nonExistentId_returns404() throws Exception {
+        String patchBody = "{\"productionCapacity\": 250.0}";
+
+        mockMvc.perform(patch("/sectors/{id}", 987654)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(patchBody))
+                .andExpect(status().isNotFound());
+    }
+
     // NOTA IMPORTANTE:
     // Los siguientes escenarios están cubiertos en SectorServiceImplTest:
     // - createSector con datos válidos (PRODUCCION, ALMACEN, CALIDAD)

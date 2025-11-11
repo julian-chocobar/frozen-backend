@@ -231,4 +231,124 @@ class SectorServiceImplTest {
 
         assertThrows(BadRequestException.class, () -> sectorService.updateDTO(updateDTO, 1L));
     }
+
+    // --- Nuevas pruebas relacionadas a capacidad de producción ---
+
+    @Test
+    void getAllSectorsAvailableByPhase_returnsOrderedList() {
+        // given
+        Sector s1 = new Sector();
+        s1.setId(10L);
+        s1.setType(SectorType.PRODUCCION);
+        s1.setPhase(Phase.MOLIENDA);
+        s1.setIsActive(true);
+        s1.setProductionCapacity(500.0);
+        s1.setActualProduction(100.0);
+
+        Sector s2 = new Sector();
+        s2.setId(11L);
+        s2.setType(SectorType.PRODUCCION);
+        s2.setPhase(Phase.MOLIENDA);
+        s2.setIsActive(true);
+        s2.setProductionCapacity(500.0);
+        s2.setActualProduction(200.0);
+
+        when(sectorRepository.findAvailableProductionSectorsByPhase(Phase.MOLIENDA))
+                .thenReturn(java.util.List.of(s1, s2));
+
+        // when
+        var result = sectorService.getAllSectorsAvailableByPhase(Phase.MOLIENDA);
+
+        // then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals(10L, result.get(0).getId());
+        assertEquals(11L, result.get(1).getId());
+        verify(sectorRepository).findAvailableProductionSectorsByPhase(Phase.MOLIENDA);
+    }
+
+    @Test
+    void getAllSectorsAvailableByPhase_emptyList_returnsEmpty() {
+        when(sectorRepository.findAvailableProductionSectorsByPhase(Phase.COCCION))
+                .thenReturn(java.util.List.of());
+
+        var result = sectorService.getAllSectorsAvailableByPhase(Phase.COCCION);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(sectorRepository).findAvailableProductionSectorsByPhase(Phase.COCCION);
+    }
+
+    @Test
+    void saveAll_delegatesToRepository() {
+        java.util.List<Sector> list = java.util.List.of(sector);
+        sectorService.saveAll(list);
+        verify(sectorRepository).saveAll(list);
+    }
+
+    @Test
+    void createSector_produccion_setsIsActiveAndCreationDate() {
+        // Arrange: el mapper devolverá una entidad sin isActive/creationDate seteados
+        SectorCreateDTO createDTO = new SectorCreateDTO();
+        createDTO.setName("Sector Fermentación");
+        createDTO.setSupervisorId(1L);
+        createDTO.setType(SectorType.PRODUCCION);
+        createDTO.setPhase(Phase.FERMENTACION);
+        createDTO.setProductionCapacity(300.0);
+        createDTO.setIsTimeActive(true);
+
+        Sector toSave = new Sector();
+        toSave.setName("Sector Fermentación");
+        toSave.setType(SectorType.PRODUCCION);
+        toSave.setPhase(Phase.FERMENTACION);
+        toSave.setProductionCapacity(300.0);
+        // isActive y creationDate deberían setearse en el service
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(supervisor));
+        when(sectorMapper.toEntity(createDTO)).thenReturn(toSave);
+
+        // capturar la entidad que se persiste
+        org.mockito.ArgumentCaptor<Sector> captor = org.mockito.ArgumentCaptor.forClass(Sector.class);
+        when(sectorRepository.saveAndFlush(any(Sector.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(sectorMapper.toResponseDTO(any(Sector.class))).thenReturn(responseDTO);
+
+        // Act
+        SectorResponseDTO result = sectorService.createSector(createDTO);
+
+        // Assert
+        assertNotNull(result);
+        verify(sectorRepository).saveAndFlush(captor.capture());
+        Sector saved = captor.getValue();
+        assertEquals(Boolean.TRUE, saved.getIsActive(), "isActive debe ser true al crear");
+        assertNotNull(saved.getCreationDate(), "creationDate debe setearse");
+    }
+
+    @Test
+    void createSector_produccion_missingOnlyCapacity_throwsBadRequest() {
+        SectorCreateDTO createDTO = new SectorCreateDTO();
+        createDTO.setName("Sector Incompleto");
+        createDTO.setSupervisorId(1L);
+        createDTO.setType(SectorType.PRODUCCION);
+        createDTO.setPhase(Phase.MADURACION);
+        // falta productionCapacity
+        createDTO.setIsTimeActive(true);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(supervisor));
+
+        assertThrows(BadRequestException.class, () -> sectorService.createSector(createDTO));
+    }
+
+    @Test
+    void updateSector_toAlmacen_withProductionFields_throwsBadRequest() {
+        // Cambiar a ALMACEN pero enviando campos de PRODUCCION debería fallar
+        SectorUpdateDTO updateDTO = new SectorUpdateDTO();
+        updateDTO.setType(SectorType.ALMACEN);
+        updateDTO.setPhase(Phase.MOLIENDA);
+        updateDTO.setProductionCapacity(100.0);
+        updateDTO.setIsTimeActive(true);
+
+        when(sectorRepository.findById(1L)).thenReturn(Optional.of(sector));
+
+        assertThrows(BadRequestException.class, () -> sectorService.updateDTO(updateDTO, 1L));
+    }
 }
