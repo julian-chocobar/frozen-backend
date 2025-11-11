@@ -167,11 +167,10 @@ class QualityParameterControllerSecurityTest {
 
     @Test
     @WithAnonymousUser
-    void testGet_withoutAuth_shouldBeAccessible() throws Exception {
-        // Verificar si GET es público o requiere autenticación
-        // Si falla con 401, significa que requiere autenticación
+    void testGet_withoutAuth_returns401() throws Exception {
+        // Endpoint requiere autenticación según configuración de seguridad actual
         mockMvc.perform(get("/quality-parameters"))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

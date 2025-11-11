@@ -105,21 +105,21 @@ class ProductPhaseServiceImplTest {
 
     @Test
     void testGetByProduct_Success() {
-        when(productPhaseRepository.findByProductIdOrderByIdAsc(10L))
-                .thenReturn(List.of(productPhase));
+    when(productPhaseRepository.findByProductIdOrderByPhaseOrderAsc(10L))
+        .thenReturn(List.of(productPhase));
         when(productRepository.existsById(10L)).thenReturn(true);
         when(productPhaseMapper.toResponseDto(any(ProductPhase.class))).thenReturn(responseDTO);
 
         List<ProductPhaseResponseDTO> result = productPhaseService.getByProduct(10L);
 
         assertEquals(1, result.size());
-        verify(productPhaseRepository).findByProductIdOrderByIdAsc(10L);
+    verify(productPhaseRepository).findByProductIdOrderByPhaseOrderAsc(10L);
     }
 
     @Test
     void testGetByProduct_EmptyAndProductNotExists() {
-        when(productPhaseRepository.findByProductIdOrderByIdAsc(10L))
-                .thenReturn(Collections.emptyList());
+    when(productPhaseRepository.findByProductIdOrderByPhaseOrderAsc(10L))
+        .thenReturn(Collections.emptyList());
         when(productRepository.existsById(10L)).thenReturn(false);
 
         assertThrows(ResourceNotFoundException.class, () -> productPhaseService.getByProduct(10L));
@@ -180,7 +180,8 @@ class ProductPhaseServiceImplTest {
         // Choose a phase that requires AGUA
         productPhase.setPhase(Phase.MACERACION);
 
-        when(recipeRepository.existsByMaterial_Type(MaterialType.AGUA)).thenReturn(false);
+        // El servicio consulta recipeRepository.existsByProductPhaseIdAndMaterial_Type(productPhaseId, type)
+        when(recipeRepository.existsByProductPhaseIdAndMaterial_Type(1L, MaterialType.AGUA)).thenReturn(false);
 
         assertThrows(BadRequestException.class, () -> productPhaseService.toggleReady(1L));
     }

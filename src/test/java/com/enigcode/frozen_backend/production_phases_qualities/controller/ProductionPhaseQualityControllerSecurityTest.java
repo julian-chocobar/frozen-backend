@@ -14,10 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
-/**
- * Security tests for ProductionPhaseQualityController.
- * Uses full Spring context to validate @PreAuthorize annotations and authentication requirements.
- */
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional

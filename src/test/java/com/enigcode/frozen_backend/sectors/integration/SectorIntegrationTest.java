@@ -12,20 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Tests de integración para el módulo de Sectors.
- * 
- * IMPORTANTE: Los tests de creación exitosa y validación de roles de supervisores
- * están completamente cubiertos en SectorServiceImplTest (tests unitarios).
- * 
- * Estos tests de integración se enfocan ÚNICAMENTE en:
- * - Validación de autorización a nivel de endpoint (403 Forbidden)
- * - Validación de que endpoints existen y están configurados correctamente
- * - Validación de errores básicos (404 Not Found)
- * 
- * La validación de lógica de negocio (roles de supervisores, campos requeridos, etc.)
- * se realiza en los tests unitarios del servicio.
- */
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -141,12 +128,5 @@ class SectorIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
-    // NOTA IMPORTANTE:
-    // Los siguientes escenarios están cubiertos en SectorServiceImplTest:
-    // - createSector con datos válidos (PRODUCCION, ALMACEN, CALIDAD)
-    // - createSector sin campos requeridos para PRODUCCION (phase, capacity, isTimeActive)
-    // - createSector con supervisor que no tiene el rol correcto
-    // - updateSector cambiando supervisor a uno con rol incorrecto
-    // - getSector by ID
-    // - Validación de que supervisor tiene rol correcto para tipo de sector
+
 }

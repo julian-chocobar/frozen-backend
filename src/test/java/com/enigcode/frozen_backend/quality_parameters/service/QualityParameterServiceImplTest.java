@@ -336,7 +336,7 @@ class QualityParameterServiceImplTest {
         QualityParameter newParameter = new QualityParameter();
         newParameter.setPhase(Phase.MOLIENDA);
         newParameter.setName("Test");
-        newParameter.setCritical(true);
+        newParameter.setIsCritical(true);
         
         // Simular el @PrePersist
         newParameter.setIsActive();

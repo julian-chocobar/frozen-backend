@@ -1,11 +1,11 @@
 package com.enigcode.frozen_backend.production_phases.service;
 
 import com.enigcode.frozen_backend.batches.model.Batch;
+import com.enigcode.frozen_backend.batches.service.BatchService;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.movements.service.MovementService;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
-import com.enigcode.frozen_backend.production_materials.model.ProductionMaterial;
 import com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseResponseDTO;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseUnderReviewDTO;
@@ -48,6 +48,9 @@ class ProductionPhaseServiceImplTest {
 
     @Mock
     private ProductionPhaseQualityRepository productionPhaseQualityRepository;
+
+        @Mock
+        private BatchService batchService;
 
     @InjectMocks
     private ProductionPhaseServiceImpl productionPhaseService;
@@ -162,19 +165,19 @@ class ProductionPhaseServiceImplTest {
     void testGetProductionPhasesByBatch_Success() {
         List<ProductionPhase> phases = List.of(productionPhase);
 
-        when(productionPhaseRepository.findAllByBatchId(1L)).thenReturn(phases);
+        when(productionPhaseRepository.findAllByBatchIdOrderByPhaseOrderAsc(1L)).thenReturn(phases);
         when(productionPhaseMapper.toResponseDTO(any(ProductionPhase.class))).thenReturn(responseDTO);
 
         List<ProductionPhaseResponseDTO> result = productionPhaseService.getProductionPhasesByBatch(1L);
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        verify(productionPhaseRepository).findAllByBatchId(1L);
+                verify(productionPhaseRepository).findAllByBatchIdOrderByPhaseOrderAsc(1L);
     }
 
     @Test
     void testGetProductionPhasesByBatch_NotFound() {
-        when(productionPhaseRepository.findAllByBatchId(999L)).thenReturn(Collections.emptyList());
+                when(productionPhaseRepository.findAllByBatchIdOrderByPhaseOrderAsc(999L)).thenReturn(Collections.emptyList());
 
         assertThrows(ResourceNotFoundException.class, 
             () -> productionPhaseService.getProductionPhasesByBatch(999L));
@@ -295,36 +298,5 @@ class ProductionPhaseServiceImplTest {
 
         assertThrows(BadRequestException.class, 
             () -> productionPhaseService.reviewProductionPhase(1L));
-    }
-
-    @Test
-    void testSuspendProductionPhases_WithMaterials() {
-        ProductionMaterial material = ProductionMaterial.builder()
-                .id(1L)
-                .quantity(50.0)
-                .build();
-
-        when(productionMaterialRepository.findAllByProductionPhaseId(1L))
-                .thenReturn(List.of(material));
-        when(productionPhaseRepository.save(any(ProductionPhase.class))).thenReturn(productionPhase);
-
-        productionPhaseService.suspendProductionPhases(List.of(productionPhase));
-
-        assertEquals(ProductionPhaseStatus.SUSPENDIDA, productionPhase.getStatus());
-        verify(movementService).createMovements(anyList());
-        verify(productionPhaseRepository).save(productionPhase);
-    }
-
-    @Test
-    void testSuspendProductionPhases_WithoutMaterials() {
-        when(productionMaterialRepository.findAllByProductionPhaseId(1L))
-                .thenReturn(Collections.emptyList());
-        when(productionPhaseRepository.save(any(ProductionPhase.class))).thenReturn(productionPhase);
-
-        productionPhaseService.suspendProductionPhases(List.of(productionPhase));
-
-        assertEquals(ProductionPhaseStatus.SUSPENDIDA, productionPhase.getStatus());
-        verify(movementService).createMovements(anyList());
-        verify(productionPhaseRepository).save(productionPhase);
     }
 }

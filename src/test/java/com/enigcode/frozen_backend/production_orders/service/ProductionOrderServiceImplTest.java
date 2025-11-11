@@ -21,6 +21,10 @@ import com.enigcode.frozen_backend.production_orders.Repository.ProductionOrderR
 import com.enigcode.frozen_backend.production_orders.Service.ProductionOrderServiceImpl;
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
+import com.enigcode.frozen_backend.production_materials.model.ProductionMaterial;
+import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
+import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.recipes.model.Recipe;
 import com.enigcode.frozen_backend.recipes.service.RecipeService;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,6 +63,8 @@ class ProductionOrderServiceImplTest {
         private ProductionOrderRepository productionOrderRepository;
         @Mock
         private com.enigcode.frozen_backend.notifications.service.NotificationService notificationService;
+        @Mock
+        private com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository productionMaterialRepository;
 
         @InjectMocks
         private ProductionOrderServiceImpl service;
@@ -104,10 +110,16 @@ class ProductionOrderServiceImplTest {
                                 .type(MaterialType.MALTA)
                                 .build();
 
+                ProductPhase productPhase1 = ProductPhase.builder()
+                                .id(1L)
+                                .phase(Phase.MOLIENDA)
+                                .build();
+
                 Recipe recipe1 = Recipe.builder()
                                 .id(1L)
                                 .material(material1)
                                 .quantity(5.0)
+                                .productPhase(productPhase1)
                                 .build();
 
                 ProductionOrder productionOrder = ProductionOrder.builder()
@@ -261,10 +273,16 @@ class ProductionOrderServiceImplTest {
                                 .type(MaterialType.MALTA)
                                 .build();
 
+                ProductPhase productPhase1 = ProductPhase.builder()
+                                .id(1L)
+                                .phase(Phase.MOLIENDA)
+                                .build();
+
                 Recipe recipe1 = Recipe.builder()
                                 .id(1L)
                                 .material(material1)
                                 .quantity(2.0) // 2.0 units of material per standard quantity
+                                .productPhase(productPhase1)
                                 .build();
 
                 ProductionOrder productionOrder = ProductionOrder.builder()
@@ -288,7 +306,8 @@ class ProductionOrderServiceImplTest {
                 service.createProductionOrder(createDTO);
 
                 // Assert - Verify the material reservation
-                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = ArgumentCaptor.forClass(List.class);
+                @SuppressWarnings("unchecked")
+                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = ArgumentCaptor.forClass((Class) List.class);
                 verify(movementService).createReserveOrReturn(eq(MovementType.RESERVA), movementsCaptor.capture());
 
                 List<MovementSimpleCreateDTO> reservedMaterials = movementsCaptor.getValue();
@@ -313,8 +332,10 @@ class ProductionOrderServiceImplTest {
                                 .unitMeasurement(UnitMeasurement.UNIDAD)
                                 .build();
 
+                Batch batch = Batch.builder().id(10L).quantity(10).build();
                 ProductionOrder productionOrder = ProductionOrder.builder()
                                 .id(orderId)
+                                .batch(batch)
                                 .product(product)
                                 .status(OrderStatus.PENDIENTE)
                                 .quantity(100.0)
@@ -336,6 +357,7 @@ class ProductionOrderServiceImplTest {
                 ProductionOrderResponseDTO responseDTO = new ProductionOrderResponseDTO();
 
                 when(productionOrderRepository.findById(orderId)).thenReturn(Optional.of(productionOrder));
+                when(productionMaterialRepository.findAllByBatchId(10L)).thenReturn(List.of());
                 when(recipeService.getRecipeByProduct(1L)).thenReturn(List.of(recipe1));
                 when(productionOrderRepository.save(any(ProductionOrder.class))).thenReturn(productionOrder);
                 when(productionOrderMapper.toResponseDTO(productionOrder)).thenReturn(responseDTO);
@@ -348,7 +370,6 @@ class ProductionOrderServiceImplTest {
                 assertEquals(OrderStatus.APROBADA, productionOrder.getStatus());
                 assertNotNull(productionOrder.getValidationDate());
                 verify(productionOrderRepository).findById(orderId);
-                verify(recipeService).getRecipeByProduct(1L);
                 verify(movementService).confirmReservation(anyList());
                 verify(productionOrderRepository).save(productionOrder);
         }
@@ -405,8 +426,10 @@ class ProductionOrderServiceImplTest {
                                 .unitMeasurement(UnitMeasurement.UNIDAD)
                                 .build();
 
+                Batch batch = Batch.builder().id(10L).quantity(10).build();
                 ProductionOrder productionOrder = ProductionOrder.builder()
                                 .id(orderId)
+                                .batch(batch)
                                 .product(product)
                                 .status(OrderStatus.PENDIENTE)
                                 .quantity(100.0)
@@ -439,7 +462,18 @@ class ProductionOrderServiceImplTest {
 
                 ProductionOrderResponseDTO responseDTO = new ProductionOrderResponseDTO();
 
+                // Mock ProductionMaterial for confirmApprovedMaterials
+                ProductionMaterial pm1 = ProductionMaterial.builder()
+                                .material(material1)
+                                .quantity(20.0)
+                                .build();
+                ProductionMaterial pm2 = ProductionMaterial.builder()
+                                .material(material2)
+                                .quantity(15.0)
+                                .build();
+
                 when(productionOrderRepository.findById(orderId)).thenReturn(Optional.of(productionOrder));
+                when(productionMaterialRepository.findAllByBatchId(10L)).thenReturn(List.of(pm1, pm2));
                 when(recipeService.getRecipeByProduct(1L)).thenReturn(List.of(recipe1, recipe2));
                 when(productionOrderRepository.save(any(ProductionOrder.class))).thenReturn(productionOrder);
                 when(productionOrderMapper.toResponseDTO(productionOrder)).thenReturn(responseDTO);
@@ -448,7 +482,8 @@ class ProductionOrderServiceImplTest {
                 service.approveOrder(orderId);
 
                 // Assert - Verify the material confirmation
-                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = ArgumentCaptor.forClass(List.class);
+                @SuppressWarnings("unchecked")
+                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = ArgumentCaptor.forClass((Class) List.class);
                 verify(movementService).confirmReservation(movementsCaptor.capture());
 
                 List<MovementSimpleCreateDTO> confirmedMaterials = movementsCaptor.getValue();
@@ -473,8 +508,10 @@ class ProductionOrderServiceImplTest {
                                 .unitMeasurement(UnitMeasurement.UNIDAD)
                                 .build();
 
+                Batch batch = Batch.builder().id(10L).quantity(10).build();
                 ProductionOrder productionOrder = ProductionOrder.builder()
                                 .id(orderId)
+                                .batch(batch)
                                 .product(product)
                                 .status(OrderStatus.PENDIENTE)
                                 .quantity(100.0)
@@ -496,6 +533,7 @@ class ProductionOrderServiceImplTest {
                 ProductionOrderResponseDTO responseDTO = new ProductionOrderResponseDTO();
 
                 when(productionOrderRepository.findById(orderId)).thenReturn(Optional.of(productionOrder));
+                when(productionMaterialRepository.findAllByBatchId(10L)).thenReturn(List.of());
                 when(recipeService.getRecipeByProduct(1L)).thenReturn(List.of(recipe1));
                 when(productionOrderRepository.save(any(ProductionOrder.class))).thenReturn(productionOrder);
                 when(productionOrderMapper.toResponseDTO(productionOrder)).thenReturn(responseDTO);
@@ -508,7 +546,6 @@ class ProductionOrderServiceImplTest {
                 assertEquals(OrderStatus.CANCELADA, productionOrder.getStatus());
                 assertNotNull(productionOrder.getValidationDate());
                 verify(productionOrderRepository).findById(orderId);
-                verify(recipeService).getRecipeByProduct(1L);
                 verify(movementService).createReserveOrReturn(eq(MovementType.DEVUELTO), anyList());
                 verify(productionOrderRepository).save(productionOrder);
         }
@@ -525,8 +562,10 @@ class ProductionOrderServiceImplTest {
                                 .unitMeasurement(UnitMeasurement.UNIDAD)
                                 .build();
 
+                Batch batch = Batch.builder().id(10L).quantity(10).build();
                 ProductionOrder productionOrder = ProductionOrder.builder()
                                 .id(orderId)
+                                .batch(batch)
                                 .product(product)
                                 .status(OrderStatus.PENDIENTE)
                                 .quantity(100.0)
@@ -548,6 +587,7 @@ class ProductionOrderServiceImplTest {
                 ProductionOrderResponseDTO responseDTO = new ProductionOrderResponseDTO();
 
                 when(productionOrderRepository.findById(orderId)).thenReturn(Optional.of(productionOrder));
+                when(productionMaterialRepository.findAllByBatchId(10L)).thenReturn(List.of());
                 when(recipeService.getRecipeByProduct(1L)).thenReturn(List.of(recipe1));
                 when(productionOrderRepository.save(any(ProductionOrder.class))).thenReturn(productionOrder);
                 when(productionOrderMapper.toResponseDTO(productionOrder)).thenReturn(responseDTO);
@@ -640,8 +680,10 @@ class ProductionOrderServiceImplTest {
                                 .unitMeasurement(UnitMeasurement.UNIDAD)
                                 .build();
 
+                Batch batch = Batch.builder().id(10L).quantity(10).build();
                 ProductionOrder productionOrder = ProductionOrder.builder()
                                 .id(orderId)
+                                .batch(batch)
                                 .product(product)
                                 .status(OrderStatus.PENDIENTE)
                                 .quantity(100.0)
@@ -662,7 +704,14 @@ class ProductionOrderServiceImplTest {
 
                 ProductionOrderResponseDTO responseDTO = new ProductionOrderResponseDTO();
 
+                // Mock ProductionMaterial for returnReservedMaterials
+                ProductionMaterial pm1 = ProductionMaterial.builder()
+                                .material(material1)
+                                .quantity(30.0)
+                                .build();
+
                 when(productionOrderRepository.findById(orderId)).thenReturn(Optional.of(productionOrder));
+                when(productionMaterialRepository.findAllByBatchId(10L)).thenReturn(List.of(pm1));
                 when(recipeService.getRecipeByProduct(1L)).thenReturn(List.of(recipe1));
                 when(productionOrderRepository.save(any(ProductionOrder.class))).thenReturn(productionOrder);
                 when(productionOrderMapper.toResponseDTO(productionOrder)).thenReturn(responseDTO);
@@ -671,7 +720,8 @@ class ProductionOrderServiceImplTest {
                 service.returnOrder(orderId, OrderStatus.CANCELADA);
 
                 // Assert - Verify the material return
-                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = ArgumentCaptor.forClass(List.class);
+                @SuppressWarnings("unchecked")
+                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = ArgumentCaptor.forClass((Class) List.class);
                 verify(movementService).createReserveOrReturn(eq(MovementType.DEVUELTO), movementsCaptor.capture());
 
                 List<MovementSimpleCreateDTO> returnedMaterials = movementsCaptor.getValue();

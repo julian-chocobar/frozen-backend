@@ -13,12 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * Integration tests for ProductionPhaseQuality module.
- * Simplified to test endpoint availability and error handling.
- * Full CRUD flows are covered by service/controller unit tests since we can't create
- * ProductionPhase entities without additional infrastructure.
- */
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional

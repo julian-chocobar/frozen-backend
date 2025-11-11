@@ -327,7 +327,7 @@ class BatchServiceImplTest {
 
         // Then
         assertEquals(BatchStatus.PENDIENTE, batch1.getStatus()); // No inicia
-        assertNotNull(batch1.getStartDate()); // Pero se aplaza
+        assertNotNull(batch1.getPlannedDate()); // Pero se aplaza (plannedDate se mueve al siguiente día)
         verify(sectorService).getAllSectorsAvailableByPhase(Phase.MOLIENDA); // Se llama aunque no sea día laborable
         verify(batchRepository).saveAll(anyList());
     }
@@ -350,7 +350,7 @@ class BatchServiceImplTest {
         // Then
         assertEquals(BatchStatus.EN_PRODUCCION, batch1.getStatus()); // Cabe
         assertEquals(BatchStatus.PENDIENTE, batch2.getStatus()); // No cabe
-        assertNotNull(batch2.getStartDate()); // Aplazado
+        assertNotNull(batch2.getPlannedDate()); // Aplazado (plannedDate se mueve al siguiente día)
     }
 
     @Test

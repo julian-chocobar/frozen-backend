@@ -29,7 +29,7 @@ class QualityParameterMapperTest {
 
         assertNotNull(entity);
         assertEquals(Phase.MOLIENDA, entity.getPhase());
-        assertTrue(entity.isCritical()); // Lombok getter still isCritical() for primitive
+        assertTrue(entity.getIsCritical());
         assertEquals("pH", entity.getName());
         assertEquals("Medición de acidez", entity.getDescription());
     }
@@ -46,7 +46,7 @@ class QualityParameterMapperTest {
 
         assertNotNull(entity);
         assertEquals(Phase.FERMENTACION, entity.getPhase());
-        assertFalse(entity.isCritical());
+        assertFalse(entity.getIsCritical());
         assertEquals("Temperatura", entity.getName());
         assertNull(entity.getDescription());
     }
@@ -151,7 +151,7 @@ class QualityParameterMapperTest {
                 .build();
 
         QualityParameter entity = mapper.toEntity(createDTO);
-        assertTrue(entity.isCritical(), "El flag critical debe mantenerse como true");
+        assertTrue(entity.getIsCritical(), "El flag critical debe mantenerse como true");
 
         QualityParameterCreateDTO createDTO2 = QualityParameterCreateDTO.builder()
                 .phase(Phase.MOLIENDA)
@@ -160,6 +160,6 @@ class QualityParameterMapperTest {
                 .build();
 
         QualityParameter entity2 = mapper.toEntity(createDTO2);
-        assertFalse(entity2.isCritical(), "El flag critical debe mantenerse como false");
+        assertFalse(entity2.getIsCritical(), "El flag critical debe mantenerse como false");
     }
 }

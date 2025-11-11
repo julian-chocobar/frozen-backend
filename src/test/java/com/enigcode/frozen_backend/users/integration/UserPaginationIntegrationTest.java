@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.enigcode.frozen_backend.sectors.repository.SectorRepository;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,10 +40,14 @@ class UserPaginationIntegrationTest {
   @Autowired
   private PasswordEncoder passwordEncoder;
 
+  @Autowired
+  private SectorRepository sectorRepository;
+
   
 
   @BeforeEach
   void seedUsers() {
+    sectorRepository.deleteAll();
     userRepository.deleteAll();
 
   for (int i = 1; i <= 7; i++) {

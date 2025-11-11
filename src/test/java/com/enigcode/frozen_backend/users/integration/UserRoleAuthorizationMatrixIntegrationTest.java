@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import com.enigcode.frozen_backend.sectors.repository.SectorRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -39,6 +40,8 @@ class UserRoleAuthorizationMatrixIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SectorRepository sectorRepository;
     
 
     @Autowired
@@ -49,6 +52,8 @@ class UserRoleAuthorizationMatrixIntegrationTest {
 
     @BeforeEach
     void setup() {
+        // Limpiar dependencias primero para evitar violaciones de FK (sectors -> users)
+        sectorRepository.deleteAll();
         userRepository.deleteAll();
 
         // Seed one user per role: username = "user_" + roleName
