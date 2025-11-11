@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface ProductionPhaseRepository extends JpaRepository<ProductionPhase, Long> {
     boolean existsByIdAndSector_Supervisor_Id(Long phaseId, Long userId);
-    List<ProductionPhase> findAllByBatchId(Long id);
+
+    List<ProductionPhase> findAllByBatchIdOrderByPhaseOrderAsc(Long id);
 }

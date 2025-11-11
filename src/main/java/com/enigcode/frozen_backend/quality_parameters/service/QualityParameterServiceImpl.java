@@ -3,6 +3,7 @@ package com.enigcode.frozen_backend.quality_parameters.service;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterCreateDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
+import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterSimpleDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterUpdateDTO;
 import com.enigcode.frozen_backend.quality_parameters.mapper.QualityParameterMapper;
 import com.enigcode.frozen_backend.quality_parameters.model.QualityParameter;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +67,26 @@ public class QualityParameterServiceImpl implements QualityParameterService {
         List<QualityParameter> qualityParameters = qualityParameterRepository.findAll();
 
         return qualityParameters.stream().map(qualityParameterMapper::toResponseDTO).toList();
+    }
+
+    @Override
+    @Transactional
+    public List<QualityParameterSimpleDTO> getActiveQualityParameters() {
+        List<QualityParameter> activeParameters = qualityParameterRepository.findByIsActiveTrueOrderByNameAsc();
+        return activeParameters.stream()
+                .map(qualityParameterMapper::toSimpleDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public List<QualityParameterSimpleDTO> getActiveQualityParametersByPhase(
+            com.enigcode.frozen_backend.product_phases.model.Phase phase) {
+        List<QualityParameter> activeParameters = qualityParameterRepository
+                .findByPhaseAndIsActiveTrueOrderByNameAsc(phase);
+        return activeParameters.stream()
+                .map(qualityParameterMapper::toSimpleDTO)
+                .collect(Collectors.toList());
     }
 
 }

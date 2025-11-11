@@ -266,7 +266,10 @@ public class BatchServiceImpl implements BatchService {
                 .atStartOfDay()
                 .atOffset(OffsetDateTime.now().getOffset());
 
-        remainingBatches.forEach(batch -> batch.setStartDate(tomorrowStart));
+        remainingBatches.forEach(batch -> {
+            batch.setPlannedDate(tomorrowStart);
+            // startDate sigue siendo null hasta que realmente inicie la producción
+        });
     }
 
     /**

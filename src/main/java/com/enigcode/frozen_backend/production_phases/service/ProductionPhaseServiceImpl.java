@@ -61,7 +61,7 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
     @Override
     @Transactional
     public List<ProductionPhaseResponseDTO> getProductionPhasesByBatch(Long id) {
-        List<ProductionPhase> productionPhases = productionPhaseRepository.findAllByBatchId(id);
+        List<ProductionPhase> productionPhases = productionPhaseRepository.findAllByBatchIdOrderByPhaseOrderAsc(id);
         if (productionPhases.isEmpty())
             throw new ResourceNotFoundException("No se encontraron production phases asociados al batch " + id);
 

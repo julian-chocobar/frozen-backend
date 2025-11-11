@@ -12,15 +12,15 @@ import java.util.List;
 
 @Repository
 public interface BatchRepository extends JpaRepository<Batch, Long>, JpaSpecificationExecutor<Batch> {
-    @Query("""
-    SELECT b
-    FROM Batch b
-    WHERE b.startDate >= :startOfDay
-      AND b.startDate < :endOfDay
-      AND b.status = 'PENDIENTE'
-      ORDER BY b.id ASC
-    """)
-    List<Batch> findAllStartingToday(@Param("startOfDay") OffsetDateTime startOfDay,
-                                         @Param("endOfDay") OffsetDateTime endOfDay);
+  @Query("""
+      SELECT b
+      FROM Batch b
+      WHERE b.plannedDate >= :startOfDay
+        AND b.plannedDate < :endOfDay
+        AND b.status = 'PENDIENTE'
+        ORDER BY b.id ASC
+      """)
+  List<Batch> findAllStartingToday(@Param("startOfDay") OffsetDateTime startOfDay,
+      @Param("endOfDay") OffsetDateTime endOfDay);
 
 }

@@ -37,7 +37,8 @@ public class BatchController {
 
         @Operation(summary = "Recibir informacion sobre los lotes", description = "Devuelve la informacion sobre un lote especificado segun id")
         @GetMapping("/{id}")
-        @PreAuthorize("hasRole('OPERARIO_DE_PRODUCCION') or hasRole('SUPERVISOR_DE_PRODUCCION') or hasRole('GERENTE_DE_PLANTA')")
+        @PreAuthorize("hasRole('OPERARIO_DE_PRODUCCION') or hasRole('SUPERVISOR_DE_PRODUCCION') or hasRole('GERENTE_DE_PLANTA')"
+                        + " or hasRole('SUPERVISOR_DE_CALIDAD') or hasRole('OPERARIO_DE_CALIDAD')")
         public ResponseEntity<BatchResponseDTO> getBatch(@PathVariable Long id) {
                 BatchResponseDTO dto = batchService.getBatch(id);
 
@@ -46,7 +47,8 @@ public class BatchController {
 
         @Operation(summary = "Obtener lotes", description = "Obtiene todos los lotes con paginación y filtros")
         @GetMapping
-        @PreAuthorize("hasRole('OPERARIO_DE_PRODUCCION') or hasRole('SUPERVISOR_DE_PRODUCCION') or hasRole('GERENTE_DE_PLANTA')")
+        @PreAuthorize("hasRole('OPERARIO_DE_PRODUCCION') or hasRole('SUPERVISOR_DE_PRODUCCION') or hasRole('GERENTE_DE_PLANTA')"
+                        + " or hasRole('SUPERVISOR_DE_CALIDAD') or hasRole('OPERARIO_DE_CALIDAD')")
         public ResponseEntity<Map<String, Object>> getBatches(
                         BatchFilterDTO filterDTO,
                         @PageableDefault(size = 10, sort = "creationDate", direction = Sort.Direction.DESC) Pageable pageable) {
