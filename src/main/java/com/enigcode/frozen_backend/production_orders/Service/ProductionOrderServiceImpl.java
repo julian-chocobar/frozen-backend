@@ -23,6 +23,8 @@ import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
 import com.enigcode.frozen_backend.recipes.service.RecipeService;
+import com.enigcode.frozen_backend.users.model.User;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
     private final ProductionOrderRepository productionOrderRepository;
     private final NotificationService notificationService;
     private final ProductionMaterialRepository productionMaterialRepository;
+    private final com.enigcode.frozen_backend.users.service.UserService userService;
 
     /**
      * Funcion que crea una nueva orden de produccion en estado pendiente junto al
@@ -80,13 +83,20 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
 
         reserveMaterials(batch, product.getId(), materialQuantityMultiplier);
 
+        // Obtener usuario actual del contexto de seguridad
+        User currentUser = userService.getCurrentUser();
+
         ProductionOrder productionOrder = ProductionOrder.builder()
                 .batch(batch)
                 .product(product)
                 .status(OrderStatus.PENDIENTE)
                 .quantity(quantity)
                 .creationDate(OffsetDateTime.now())
+                .createdByUser(currentUser)
                 .build();
+
+        // Asignar el usuario creador al batch también
+        batch.setAssignedUser(currentUser);
 
         ProductionOrder savedProductionOrder = productionOrderRepository.saveAndFlush(productionOrder);
 
@@ -100,6 +110,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
 
     /**
      * Funcion auxiliar para reservar materiales segun id de producto
+     * 
      * @param batch
      * @param productId
      * @param materialQuantityMultiplier
@@ -115,9 +126,9 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
 
                     reserveMaterialMovements.add(
                             MovementSimpleCreateDTO.builder()
-                            .material(recipe.getMaterial())
-                            .stock(quantity)
-                            .build());
+                                    .material(recipe.getMaterial())
+                                    .stock(quantity)
+                                    .build());
 
                     productionMaterials.add(
                             ProductionMaterial.builder()
@@ -133,6 +144,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
 
     /**
      * Funcion que permite aprobar una orden de produccion
+     * 
      * @param id
      * @return
      */
@@ -147,8 +159,12 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
 
         confirmApprovedMaterials(productionOrder.getBatch().getId());
 
+        // Obtener usuario actual (aprobador) del contexto de seguridad
+        User currentUser = userService.getCurrentUser();
+
         productionOrder.setStatus(OrderStatus.APROBADA);
         productionOrder.setValidationDate(OffsetDateTime.now());
+        productionOrder.setApprovedByUser(currentUser);
 
         ProductionOrder savedProductionOrder = productionOrderRepository.save(productionOrder);
 

@@ -24,7 +24,7 @@ public class ProductionOrder {
     private Long id;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_batch",referencedColumnName = "id")
+    @JoinColumn(name = "id_batch", referencedColumnName = "id")
     @NotNull
     private Batch batch;
 
@@ -48,4 +48,12 @@ public class ProductionOrder {
     @Column(name = "creation_date")
     @NotNull
     private OffsetDateTime creationDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_user_id")
+    private com.enigcode.frozen_backend.users.model.User createdByUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by_user_id")
+    private com.enigcode.frozen_backend.users.model.User approvedByUser;
 }

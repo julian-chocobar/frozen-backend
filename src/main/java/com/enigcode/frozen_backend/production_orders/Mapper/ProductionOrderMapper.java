@@ -19,5 +19,9 @@ public interface ProductionOrderMapper {
     @Mapping(target = "startDate", source = "batch.startDate")
     @Mapping(target = "completedDate", source = "batch.completedDate")
     @Mapping(target = "estimatedCompletedDate", source = "batch.estimatedCompletedDate")
+    @Mapping(target = "createdByUserName", source = "createdByUser.name")
+    @Mapping(target = "createdByUserId", source = "createdByUser.id")
+    @Mapping(target = "approvedByUserName", source = "approvedByUser.name")
+    @Mapping(target = "approvedByUserId", source = "approvedByUser.id")
     ProductionOrderResponseDTO toResponseDTO(ProductionOrder productionOrder);
 }

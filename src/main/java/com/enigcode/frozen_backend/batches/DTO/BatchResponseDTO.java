@@ -23,4 +23,6 @@ public class BatchResponseDTO {
     private OffsetDateTime startDate;
     private OffsetDateTime estimatedCompletedDate;
     private OffsetDateTime completedDate;
+    private String assignedUserName;
+    private Long assignedUserId;
 }

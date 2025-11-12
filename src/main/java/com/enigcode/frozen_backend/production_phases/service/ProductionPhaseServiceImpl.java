@@ -3,11 +3,6 @@ package com.enigcode.frozen_backend.production_phases.service;
 import com.enigcode.frozen_backend.batches.service.BatchService;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
-import com.enigcode.frozen_backend.movements.DTO.MovementInternalCreateDTO;
-import com.enigcode.frozen_backend.movements.model.MovementType;
-import com.enigcode.frozen_backend.movements.service.MovementService;
-import com.enigcode.frozen_backend.production_materials.model.ProductionMaterial;
-import com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseResponseDTO;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseUnderReviewDTO;
 import com.enigcode.frozen_backend.production_phases.mapper.ProductionPhaseMapper;
@@ -20,7 +15,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service

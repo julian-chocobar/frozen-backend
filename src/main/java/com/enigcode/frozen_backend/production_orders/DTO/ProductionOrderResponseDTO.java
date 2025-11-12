@@ -25,4 +25,9 @@ public class ProductionOrderResponseDTO {
     private OffsetDateTime startDate;
     private OffsetDateTime estimatedCompletedDate;
     private OffsetDateTime completedDate;
+    private OffsetDateTime creationDate;
+    private String createdByUserName;
+    private Long createdByUserId;
+    private String approvedByUserName;
+    private Long approvedByUserId;
 }

@@ -12,5 +12,7 @@ public interface BatchMapper {
     @Mapping(source = "packaging.name", target = "packagingName")
     @Mapping(source = "productionOrder.product.name", target = "productName")
     @Mapping(source = "productionOrder.id", target = "orderId")
+    @Mapping(source = "assignedUser.name", target = "assignedUserName")
+    @Mapping(source = "assignedUser.id", target = "assignedUserId")
     BatchResponseDTO toResponseDTO(Batch batch);
 }

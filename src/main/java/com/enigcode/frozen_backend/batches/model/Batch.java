@@ -4,6 +4,8 @@ import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.production_orders.Model.ProductionOrder;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
+import com.enigcode.frozen_backend.users.model.User;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -69,6 +71,10 @@ public class Batch {
     @Column(name = "estimated_completed_date")
     private OffsetDateTime estimatedCompletedDate;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_user_id")
+    private User assignedUser;
+
     public Map<Phase, ProductionPhase> getPhasesAsMap() {
         if (phases == null || phases.isEmpty()) {
             return Map.of();
@@ -77,7 +83,6 @@ public class Batch {
         return phases.stream()
                 .collect(Collectors.toMap(
                         ProductionPhase::getPhase,
-                        phase -> phase
-                ));
+                        phase -> phase));
     }
 }
