@@ -106,6 +106,8 @@ public class DataLoaderService {
         private Long operarioCalidadId;
         @SuppressWarnings("unused")
         private Long operarioAlmacenId;
+        @SuppressWarnings("unused")
+        private Long superUserId;
 
         public void loadSampleDataIfEmpty() {
                 log.info("Verificando si es necesario cargar datos de ejemplo...");
@@ -293,6 +295,21 @@ public class DataLoaderService {
                                         .build();
                         UserResponseDTO operarioAlmacenResponse = userService.createUser(operarioAlmacen);
                         operarioAlmacenId = operarioAlmacenResponse.getId();
+
+                        // Super Usuario
+                        UserCreateDTO superUser = UserCreateDTO.builder()
+                                        .username("super")
+                                        .password("EnigCode123")
+                                        .name("Super Usuario")
+                                        .email("super@frozen.com")
+                                        .phoneNumber("1234567890")
+                                        .roles(Set.of("ADMIN", "GERENTE_GENERAL", "GERENTE_DE_PLANTA",
+                                                        "SUPERVISOR_DE_PRODUCCION", "SUPERVISOR_DE_CALIDAD",
+                                                        "SUPERVISOR_DE_ALMACEN", "OPERARIO_DE_PRODUCCION",
+                                                        "OPERARIO_DE_CALIDAD", "OPERARIO_DE_ALMACEN"))
+                                        .build();
+                        UserResponseDTO superUserResponse = userService.createUser(superUser);
+                        superUserId = superUserResponse.getId();
 
                         log.info("Usuarios cargados.");
                 }
