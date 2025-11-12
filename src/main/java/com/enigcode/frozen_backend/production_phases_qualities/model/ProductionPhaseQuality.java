@@ -10,11 +10,9 @@ import lombok.*;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "production_phases_qualities",
-        uniqueConstraints = {
-        @UniqueConstraint(
-                name = "uq_production_phase_quality_parameter",
-                columnNames = {"id_production_phase", "id_quality_parameter"})
+@Table(name = "production_phases_qualities", uniqueConstraints = {
+        @UniqueConstraint(name = "uq_production_phase_quality_parameter_version", columnNames = { "id_production_phase",
+                "id_quality_parameter", "version" })
 })
 @Getter
 @Setter
@@ -47,6 +45,42 @@ public class ProductionPhaseQuality {
 
     private OffsetDateTime realizationDate;
 
+    /**
+     * Versión del parámetro de calidad.
+     * Cada vez que se requiere ajuste de la fase, se crea una nueva versión.
+     * La versión 1 es la medición inicial, versión 2 después del primer ajuste,
+     * etc.
+     */
+    @NotNull
+    @Builder.Default
+    private Integer version = 1;
+
+    /**
+     * Indica si este parámetro está activo o es histórico.
+     * Solo los parámetros activos se consideran en las evaluaciones.
+     * Los históricos se mantienen para trazabilidad.
+     */
+    @NotNull
+    @Builder.Default
+    private Boolean isActive = true;
+
     @PrePersist
-    public void setRealizationDate(){if(realizationDate == null) realizationDate = OffsetDateTime.now();}
+    public void setRealizationDate() {
+        if (realizationDate == null)
+            realizationDate = OffsetDateTime.now();
+    }
+
+    /**
+     * Marca este parámetro como histórico (no activo)
+     */
+    public void markAsHistorical() {
+        this.isActive = false;
+    }
+
+    /**
+     * Marca este parámetro como activo
+     */
+    public void markAsActive() {
+        this.isActive = true;
+    }
 }

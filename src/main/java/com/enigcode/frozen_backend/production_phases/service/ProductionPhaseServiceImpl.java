@@ -24,6 +24,7 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
     private final ProductionPhaseMapper productionPhaseMapper;
     private final BatchService batchService;
     private final ProductionPhaseQualityRepository productionPhaseQualityRepository;
+    private final com.enigcode.frozen_backend.production_phases_qualities.service.ProductionPhaseQualityService productionPhaseQualityService;
 
     @Override
     @Transactional
@@ -71,8 +72,9 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
         if (!productionPhase.getStatus().equals(ProductionPhaseStatus.BAJO_REVISION))
             throw new BadRequestException("La fase no se encuentra en estado " + ProductionPhaseStatus.BAJO_REVISION);
 
+        // Solo evaluar parámetros activos (no históricos)
         List<ProductionPhaseQuality> productionPhaseQualities = productionPhaseQualityRepository
-                .findAllByProductionPhaseId(id);
+                .findAllByProductionPhaseIdAndIsActiveTrue(id);
 
         if (productionPhaseQualities.isEmpty())
             throw new BadRequestException("Debe haber al menos un parámetro de calidad asignado a la fase");
@@ -82,16 +84,17 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
 
         if (notApprovedPhaseQualities.isEmpty())
             completeProductionPhase(productionPhase);
+        else {
+            boolean isNotCriticalError = notApprovedPhaseQualities.stream()
+                    .allMatch(productionPhaseQuality -> {
+                        return productionPhaseQuality.getQualityParameter().getIsCritical().equals(Boolean.FALSE);
+                    });
 
-        boolean isCriticalError = notApprovedPhaseQualities.stream()
-                .allMatch(productionPhaseQuality -> {
-                    return productionPhaseQuality.getQualityParameter().getIsCritical().equals(Boolean.FALSE);
-                });
-
-        if (isCriticalError)
-            rejectProductionPhase(productionPhase);
-
-        adjustProductionPhase(productionPhase);
+            if (isNotCriticalError)
+                adjustProductionPhase(productionPhase);
+            else
+                rejectProductionPhase(productionPhase);
+        }
 
         ProductionPhase savedProductionPhase = productionPhaseRepository.save(productionPhase);
 
@@ -102,6 +105,9 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
     // requiere ajuste de phase
     private void adjustProductionPhase(ProductionPhase productionPhase) {
         productionPhase.setStatus(ProductionPhaseStatus.SIENDO_AJUSTADA);
+
+        // Crear nueva versión de parámetros para permitir nuevas mediciones
+        productionPhaseQualityService.createNewVersionForPhase(productionPhase.getId());
     }
 
     // TODO: enviar notificacion a supervisor de produccion del sector que se

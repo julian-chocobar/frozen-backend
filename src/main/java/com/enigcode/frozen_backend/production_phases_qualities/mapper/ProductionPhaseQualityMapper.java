@@ -16,14 +16,18 @@ public interface ProductionPhaseQualityMapper {
     @Mapping(target = "qualityParameterName", source = "qualityParameter.name")
     @Mapping(target = "productionPhaseId", source = "productionPhase.id")
     @Mapping(target = "productionPhase", source = "productionPhase.phase")
-    ProductionPhaseQualityResponseDTO toResponseDTO (ProductionPhaseQuality productionPhaseQuality);
+    ProductionPhaseQualityResponseDTO toResponseDTO(ProductionPhaseQuality productionPhaseQuality);
+
     ProductionPhaseQuality toEntity(ProductionPhaseQualityCreateDTO dto);
-    
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "productionPhase", ignore = true)
     @Mapping(target = "qualityParameter", ignore = true)
     @Mapping(target = "realizationDate", ignore = true)
+    @Mapping(target = "version", ignore = true) // La versión no se actualiza mediante update
     @Mapping(target = "value", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "isApproved", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    ProductionPhaseQuality partialUpdate(ProductionPhaseQualityUpdateDTO dto, @MappingTarget ProductionPhaseQuality productionPhaseQuality);
+    @Mapping(target = "isActive", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    ProductionPhaseQuality partialUpdate(ProductionPhaseQualityUpdateDTO dto,
+            @MappingTarget ProductionPhaseQuality productionPhaseQuality);
 }

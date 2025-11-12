@@ -23,4 +23,18 @@ public class ProductionPhaseQualityCreateDTO {
 
     @NotNull
     private Boolean isApproved;
+
+    /**
+     * Versión del parámetro. Si no se especifica, se tomará la versión actual + 1
+     * para la fase correspondiente. Generalmente manejado automáticamente por el
+     * servicio.
+     */
+    private Integer version;
+
+    /**
+     * Si el parámetro está activo. Por defecto true.
+     * Generalmente manejado automáticamente por el servicio.
+     */
+    @Builder.Default
+    private Boolean isActive = true;
 }

@@ -987,13 +987,13 @@ public class DataLoaderService {
                                         // Permitir procesos pasivos con capacidad amplia
                                         createProductionSector(
                                                         "Sector " + capitalize(phase.name().toLowerCase()),
-                                                        supervisorProduccionId,
+                                                        superUserId,
                                                         phase,
                                                         6000.0);
                                 } else {
                                         createProductionSector(
                                                         "Sector " + capitalize(phase.name().toLowerCase()),
-                                                        supervisorProduccionId,
+                                                        superUserId,
                                                         phase,
                                                         highCapacity);
                                 }

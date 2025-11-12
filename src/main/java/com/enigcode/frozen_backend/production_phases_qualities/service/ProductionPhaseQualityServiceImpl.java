@@ -22,80 +22,193 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ProductionPhaseQualityServiceImpl implements ProductionPhaseQualityService{
-    private final ProductionPhaseQualityMapper productionPhaseQualityMapper;
-    private final ProductionPhaseQualityRepository productionPhaseQualityRepository;
-    private final ProductionPhaseRepository productionPhaseRepository;
-    private final QualityParameterRepository qualityParameterRepository;
-    private final BatchRepository batchRepository;
+public class ProductionPhaseQualityServiceImpl implements ProductionPhaseQualityService {
+        private final ProductionPhaseQualityMapper productionPhaseQualityMapper;
+        private final ProductionPhaseQualityRepository productionPhaseQualityRepository;
+        private final ProductionPhaseRepository productionPhaseRepository;
+        private final QualityParameterRepository qualityParameterRepository;
+        private final BatchRepository batchRepository;
 
-    @Override
-    @Transactional
-    public ProductionPhaseQualityResponseDTO createProductionPhaseQuality(ProductionPhaseQualityCreateDTO dto) {
-        ProductionPhase productionPhase = productionPhaseRepository.findById(dto.getProductionPhaseId())
-                .orElseThrow(()-> new ResourceNotFoundException("No se encontró production phase con id "
-                        + dto.getProductionPhaseId()));
+        @Override
+        @Transactional
+        public ProductionPhaseQualityResponseDTO createProductionPhaseQuality(ProductionPhaseQualityCreateDTO dto) {
+                ProductionPhase productionPhase = productionPhaseRepository.findById(dto.getProductionPhaseId())
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No se encontró production phase con id "
+                                                                + dto.getProductionPhaseId()));
 
-        QualityParameter qualityParameter = qualityParameterRepository.findById(dto.getQualityParameterId())
-                .orElseThrow(()-> new ResourceNotFoundException("No se encontró quality parameter con id "
-                        + dto.getQualityParameterId()));
+                QualityParameter qualityParameter = qualityParameterRepository.findById(dto.getQualityParameterId())
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No se encontró quality parameter con id "
+                                                                + dto.getQualityParameterId()));
 
-        if(!productionPhase.getPhase().equals(qualityParameter.getPhase()))
-            throw new BadRequestException("La fase de la production phase: " + productionPhase.getPhase() +
-                    "no coincide con la fase del parámetro: " + qualityParameter.getPhase());
+                if (!productionPhase.getPhase().equals(qualityParameter.getPhase()))
+                        throw new BadRequestException("La fase de la production phase: " + productionPhase.getPhase() +
+                                        "no coincide con la fase del parámetro: " + qualityParameter.getPhase());
 
-        ProductionPhaseQuality productionPhaseQuality = productionPhaseQualityMapper.toEntity(dto);
-        productionPhaseQuality.setProductionPhase(productionPhase);
-        productionPhaseQuality.setQualityParameter(qualityParameter);
+                ProductionPhaseQuality productionPhaseQuality = productionPhaseQualityMapper.toEntity(dto);
+                productionPhaseQuality.setProductionPhase(productionPhase);
+                productionPhaseQuality.setQualityParameter(qualityParameter);
 
-        ProductionPhaseQuality savedPhaseQuality =  productionPhaseQualityRepository.save(productionPhaseQuality);
-        return productionPhaseQualityMapper.toResponseDTO(savedPhaseQuality);
-    }
+                // Si no se especifica versión, obtener la versión actual para la fase
+                if (dto.getVersion() == null) {
+                        Integer currentVersion = getCurrentVersionForPhase(dto.getProductionPhaseId());
+                        productionPhaseQuality.setVersion(currentVersion);
+                }
 
-    @Override
-    @Transactional
-    public ProductionPhaseQualityResponseDTO updateProductionPhaseQuality(Long id, ProductionPhaseQualityUpdateDTO dto) {
-        ProductionPhaseQuality productionPhaseQuality = productionPhaseQualityRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("No se encontró fase de calidad con id " + id));
+                ProductionPhaseQuality savedPhaseQuality = productionPhaseQualityRepository
+                                .save(productionPhaseQuality);
+                return productionPhaseQualityMapper.toResponseDTO(savedPhaseQuality);
+        }
 
-        ProductionPhaseQuality updatedPhaseQuality = productionPhaseQualityMapper.partialUpdate(dto, productionPhaseQuality);
+        @Override
+        @Transactional
+        public ProductionPhaseQualityResponseDTO updateProductionPhaseQuality(Long id,
+                        ProductionPhaseQualityUpdateDTO dto) {
+                ProductionPhaseQuality productionPhaseQuality = productionPhaseQualityRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No se encontró fase de calidad con id " + id));
 
-        ProductionPhaseQuality savedPhaseQuality = productionPhaseQualityRepository.save(updatedPhaseQuality);
+                ProductionPhaseQuality updatedPhaseQuality = productionPhaseQualityMapper.partialUpdate(dto,
+                                productionPhaseQuality);
 
-        return productionPhaseQualityMapper.toResponseDTO(savedPhaseQuality);
-    }
+                ProductionPhaseQuality savedPhaseQuality = productionPhaseQualityRepository.save(updatedPhaseQuality);
 
-    @Override
-    @Transactional
-    public List<ProductionPhaseQualityResponseDTO> getProductionPhaseQualityByPhase(Long id) {
-        ProductionPhase productionPhase = productionPhaseRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("No se encontró production phase con id " + id));
+                return productionPhaseQualityMapper.toResponseDTO(savedPhaseQuality);
+        }
 
-        List<ProductionPhaseQuality> productionPhaseQualities =
-                productionPhaseQualityRepository.findAllByProductionPhaseId(id);
+        @Override
+        @Transactional
+        public List<ProductionPhaseQualityResponseDTO> getProductionPhaseQualityByPhase(Long id) {
+                ProductionPhase productionPhase = productionPhaseRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No se encontró production phase con id " + id));
 
-        return productionPhaseQualities.stream().map(productionPhaseQualityMapper::toResponseDTO).toList();
-    }
+                List<ProductionPhaseQuality> productionPhaseQualities = productionPhaseQualityRepository
+                                .findAllByProductionPhaseId(id);
 
-    @Override
-    @Transactional
-    public List<ProductionPhaseQualityResponseDTO> getProductionPhaseQualityByBatch(Long id) {
-        Batch batch = batchRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("No se encontró batch con id " + id));
+                return productionPhaseQualities.stream().map(productionPhaseQualityMapper::toResponseDTO).toList();
+        }
 
-        List<ProductionPhaseQuality> productionPhaseQualities =
-                productionPhaseQualityRepository.findAllByProductionPhase_Batch_Id(id);
+        @Override
+        @Transactional
+        public List<ProductionPhaseQualityResponseDTO> getProductionPhaseQualityByBatch(Long id) {
+                Batch batch = batchRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("No se encontró batch con id " + id));
 
-        return productionPhaseQualities.stream().map(productionPhaseQualityMapper::toResponseDTO).toList();
-    }
+                List<ProductionPhaseQuality> productionPhaseQualities = productionPhaseQualityRepository
+                                .findAllByProductionPhase_Batch_Id(id);
 
-    @Override
-    @Transactional
-    public ProductionPhaseQualityResponseDTO getProductionPhaseQuality(Long id) {
-        ProductionPhaseQuality productionPhaseQuality = productionPhaseQualityRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("No se encontró fase de calidad con id " + id));
+                return productionPhaseQualities.stream().map(productionPhaseQualityMapper::toResponseDTO).toList();
+        }
 
-        return productionPhaseQualityMapper.toResponseDTO(productionPhaseQuality);
-    }
+        @Override
+        @Transactional
+        public ProductionPhaseQualityResponseDTO getProductionPhaseQuality(Long id) {
+                ProductionPhaseQuality productionPhaseQuality = productionPhaseQualityRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No se encontró fase de calidad con id " + id));
+
+                return productionPhaseQualityMapper.toResponseDTO(productionPhaseQuality);
+        }
+
+        @Override
+        @Transactional
+        public List<ProductionPhaseQualityResponseDTO> getActiveProductionPhaseQualityByPhase(Long phaseId) {
+                productionPhaseRepository.findById(phaseId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No se encontró production phase con id " + phaseId));
+
+                List<ProductionPhaseQuality> activeQualities = productionPhaseQualityRepository
+                                .findAllByProductionPhaseIdAndIsActiveTrue(phaseId);
+
+                return activeQualities.stream()
+                                .map(productionPhaseQualityMapper::toResponseDTO)
+                                .toList();
+        }
+
+        @Override
+        @Transactional
+        public List<ProductionPhaseQualityResponseDTO> getActiveProductionPhaseQualityByBatch(Long batchId) {
+                batchRepository.findById(batchId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No se encontró batch con id " + batchId));
+
+                List<ProductionPhaseQuality> activeQualities = productionPhaseQualityRepository
+                                .findAllByProductionPhase_Batch_IdAndIsActiveTrue(batchId);
+
+                return activeQualities.stream()
+                                .map(productionPhaseQualityMapper::toResponseDTO)
+                                .toList();
+        }
+
+        @Override
+        @Transactional
+        public void createNewVersionForPhase(Long phaseId) {
+                // Verificar que la fase existe
+                productionPhaseRepository.findById(phaseId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No se encontró production phase con id " + phaseId));
+
+                // Marcar todos los parámetros actuales como históricos (no activos)
+                List<ProductionPhaseQuality> currentActiveQualities = productionPhaseQualityRepository
+                                .findAllByProductionPhaseIdAndIsActiveTrue(phaseId);
+
+                currentActiveQualities.forEach(quality -> {
+                        quality.markAsHistorical();
+                        productionPhaseQualityRepository.save(quality);
+                });
+
+                // El siguiente parámetro que se cree tendrá version = currentVersion + 1
+                // esto se maneja automáticamente en createProductionPhaseQuality
+        }
+
+        @Override
+        @Transactional
+        public Integer getCurrentVersionForPhase(Long phaseId) {
+                Integer maxVersion = productionPhaseQualityRepository.findMaxVersionByProductionPhaseId(phaseId);
+
+                // Si no hay parámetros, la primera versión es 1
+                if (maxVersion == null) {
+                        return 1;
+                }
+
+                // Si hay parámetros activos, mantener la versión actual
+                // Si no hay parámetros activos, crear nueva versión
+                List<ProductionPhaseQuality> activeQualities = productionPhaseQualityRepository
+                                .findAllByProductionPhaseIdAndIsActiveTrue(phaseId);
+
+                if (activeQualities.isEmpty()) {
+                        return maxVersion + 1; // Nueva versión
+                } else {
+                        return maxVersion; // Versión actual
+                }
+        }
+
+        @Override
+        @Transactional
+        public ProductionPhaseQualityResponseDTO approveProductionPhaseQuality(Long id) {
+                ProductionPhaseQuality productionPhaseQuality = productionPhaseQualityRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No se encontró parámetro de calidad con id " + id));
+
+                productionPhaseQuality.setIsApproved(true);
+                ProductionPhaseQuality saved = productionPhaseQualityRepository.save(productionPhaseQuality);
+
+                return productionPhaseQualityMapper.toResponseDTO(saved);
+        }
+
+        @Override
+        @Transactional
+        public ProductionPhaseQualityResponseDTO disapproveProductionPhaseQuality(Long id) {
+                ProductionPhaseQuality productionPhaseQuality = productionPhaseQualityRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No se encontró parámetro de calidad con id " + id));
+
+                productionPhaseQuality.setIsApproved(false);
+                ProductionPhaseQuality saved = productionPhaseQualityRepository.save(productionPhaseQuality);
+
+                return productionPhaseQualityMapper.toResponseDTO(saved);
+        }
 
 }

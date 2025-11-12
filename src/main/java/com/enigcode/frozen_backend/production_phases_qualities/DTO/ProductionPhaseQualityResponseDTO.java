@@ -18,4 +18,6 @@ public class ProductionPhaseQualityResponseDTO {
     private String value;
     private Boolean isApproved;
     private OffsetDateTime realizationDate;
+    private Integer version;
+    private Boolean isActive;
 }

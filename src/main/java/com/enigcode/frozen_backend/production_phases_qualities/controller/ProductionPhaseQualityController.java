@@ -70,4 +70,26 @@ public class ProductionPhaseQualityController {
 
                 return new ResponseEntity<>(dto, HttpStatus.OK);
         }
+
+        @Operation(summary = "Aprobar parámetro de calidad", description = "Aprueba un parámetro de calidad de fase")
+        @PatchMapping("/{id}/approve")
+        @PreAuthorize("hasRole('SUPERVISOR_DE_CALIDAD')")
+        public ResponseEntity<ProductionPhaseQualityResponseDTO> approveProductionPhaseQuality(
+                        @PathVariable Long id) {
+                ProductionPhaseQualityResponseDTO dto = productionPhaseQualityService
+                                .approveProductionPhaseQuality(id);
+
+                return new ResponseEntity<>(dto, HttpStatus.OK);
+        }
+
+        @Operation(summary = "Desaprobar parámetro de calidad", description = "Desaprueba un parámetro de calidad de fase")
+        @PatchMapping("/{id}/disapprove")
+        @PreAuthorize("hasRole('SUPERVISOR_DE_CALIDAD')")
+        public ResponseEntity<ProductionPhaseQualityResponseDTO> disapproveProductionPhaseQuality(
+                        @PathVariable Long id) {
+                ProductionPhaseQualityResponseDTO dto = productionPhaseQualityService
+                                .disapproveProductionPhaseQuality(id);
+
+                return new ResponseEntity<>(dto, HttpStatus.OK);
+        }
 }

@@ -10,4 +10,5 @@ import lombok.*;
 public class ProductionPhaseQualityUpdateDTO {
     private String value;
     private Boolean isApproved;
+    private Boolean isActive;
 }
