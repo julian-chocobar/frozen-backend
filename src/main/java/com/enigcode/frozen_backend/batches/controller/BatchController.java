@@ -3,6 +3,7 @@ package com.enigcode.frozen_backend.batches.controller;
 import com.enigcode.frozen_backend.batches.DTO.BatchFilterDTO;
 import com.enigcode.frozen_backend.batches.DTO.BatchResponseDTO;
 import com.enigcode.frozen_backend.batches.service.BatchService;
+import com.enigcode.frozen_backend.batches.service.BatchTraceabilityService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class BatchController {
 
         final BatchService batchService;
+        final BatchTraceabilityService batchTraceabilityService;
 
         @Operation(summary = "Cancelar un lote en especifico", description = "Se cancela la producción de un lote dado por id")
         @PatchMapping("/cancel-batch/{id}")
@@ -74,6 +78,20 @@ public class BatchController {
         public ResponseEntity<Void> processBatchesForToday() {
                 batchService.processBatchesForToday();
                 return ResponseEntity.noContent().build();
+        }
+
+        @Operation(summary = "Descargar PDF de trazabilidad de lote", description = "Genera y descarga un PDF completo con toda la información de trazabilidad del lote: fases, materiales, usuarios, parámetros de calidad, etc.")
+        @GetMapping("/{id}/traceability-pdf")
+        @PreAuthorize("hasRole('SUPERVISOR_DE_PRODUCCION') or hasRole('GERENTE_DE_PLANTA') or hasRole('SUPERVISOR_DE_CALIDAD')")
+        public ResponseEntity<byte[]> downloadTraceabilityPDF(@PathVariable Long id) {
+                byte[] pdfContent = batchTraceabilityService.generateTraceabilityPDF(id);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_PDF);
+                headers.setContentDispositionFormData("attachment", "trazabilidad_lote_" + id + ".pdf");
+                headers.setContentLength(pdfContent.length);
+
+                return new ResponseEntity<>(pdfContent, headers, HttpStatus.OK);
         }
 
 }
