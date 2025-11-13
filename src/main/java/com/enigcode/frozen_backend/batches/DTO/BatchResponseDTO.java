@@ -16,6 +16,7 @@ public class BatchResponseDTO {
     private String packagingName;
     private String productName;
     private String orderId;
+    private String productId;
     private BatchStatus status;
     private Integer quantity;
     private OffsetDateTime creationDate;

@@ -19,9 +19,16 @@ public interface BatchService {
     void cancelBatch(Batch batch);
 
     Page<BatchResponseDTO> findAll(BatchFilterDTO filterDTO, Pageable pageable);
+
     BatchResponseDTO getBatch(Long id);
+
     BatchResponseDTO cancelBatch(Long id);
+
     void suspendProductionPhases(List<ProductionPhase> remainingProductionPhases);
+
     void processBatchesForToday();
+
     void startNextPhase(Batch batch);
+
+    void completeBatch(Batch batch);
 }

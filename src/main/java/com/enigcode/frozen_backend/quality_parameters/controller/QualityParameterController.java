@@ -3,7 +3,7 @@ package com.enigcode.frozen_backend.quality_parameters.controller;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterCreateDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
-import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterSimpleDTO;
+import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterUpdateDTO;
 import com.enigcode.frozen_backend.quality_parameters.service.QualityParameterService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,11 +69,11 @@ public class QualityParameterController {
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
-    @Operation(summary = "Ver parámetros de calidad activos simplificados", description = "Obtiene una lista simplificada (id y nombre) de los parámetros de calidad activos, útil para formularios en el frontend. Opcionalmente filtrable por fase.")
-    @GetMapping("/active-simple")
-    public ResponseEntity<List<QualityParameterSimpleDTO>> getActiveQualityParametersSimple(
+    @Operation(summary = "Ver parámetros de calidad activos con información completa", description = "Obtiene una lista completa de los parámetros de calidad activos con unidades e información de validación, útil para formularios en el frontend. Opcionalmente filtrable por fase.")
+    @GetMapping("/active")
+    public ResponseEntity<List<QualityParameterResponseDTO>> getActiveQualityParameters(
             @Parameter(description = "Fase para filtrar los parámetros de calidad") @RequestParam(required = false) Phase phase) {
-        List<QualityParameterSimpleDTO> dto;
+        List<QualityParameterResponseDTO> dto;
 
         if (phase != null) {
             dto = qualityParameterService.getActiveQualityParametersByPhase(phase);

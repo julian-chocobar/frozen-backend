@@ -3,7 +3,7 @@ package com.enigcode.frozen_backend.quality_parameters.service;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterCreateDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
-import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterSimpleDTO;
+import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterUpdateDTO;
 import com.enigcode.frozen_backend.quality_parameters.mapper.QualityParameterMapper;
 import com.enigcode.frozen_backend.quality_parameters.model.QualityParameter;
@@ -71,21 +71,21 @@ public class QualityParameterServiceImpl implements QualityParameterService {
 
     @Override
     @Transactional
-    public List<QualityParameterSimpleDTO> getActiveQualityParameters() {
+    public List<QualityParameterResponseDTO> getActiveQualityParameters() {
         List<QualityParameter> activeParameters = qualityParameterRepository.findByIsActiveTrueOrderByNameAsc();
         return activeParameters.stream()
-                .map(qualityParameterMapper::toSimpleDTO)
+                .map(qualityParameterMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public List<QualityParameterSimpleDTO> getActiveQualityParametersByPhase(
+    public List<QualityParameterResponseDTO> getActiveQualityParametersByPhase(
             com.enigcode.frozen_backend.product_phases.model.Phase phase) {
         List<QualityParameter> activeParameters = qualityParameterRepository
                 .findByPhaseAndIsActiveTrueOrderByNameAsc(phase);
         return activeParameters.stream()
-                .map(qualityParameterMapper::toSimpleDTO)
+                .map(qualityParameterMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 

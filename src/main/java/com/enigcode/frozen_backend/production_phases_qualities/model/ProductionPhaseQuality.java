@@ -65,9 +65,11 @@ public class ProductionPhaseQuality {
     private Boolean isActive = true;
 
     @PrePersist
-    public void setRealizationDate() {
+    public void setDefaults() {
         if (realizationDate == null)
             realizationDate = OffsetDateTime.now();
+        if (isApproved == null)
+            isApproved = false;
     }
 
     /**

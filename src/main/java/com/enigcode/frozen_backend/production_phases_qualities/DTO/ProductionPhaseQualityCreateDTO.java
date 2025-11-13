@@ -21,8 +21,11 @@ public class ProductionPhaseQualityCreateDTO {
     @NotNull
     private String value;
 
-    @NotNull
-    private Boolean isApproved;
+    /**
+     * Si el parámetro está aprobado. Por defecto false si no se especifica.
+     */
+    @Builder.Default
+    private Boolean isApproved = false;
 
     /**
      * Versión del parámetro. Si no se especifica, se tomará la versión actual + 1

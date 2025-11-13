@@ -10,6 +10,7 @@ import org.mapstruct.MappingConstants;
 
 @Mapper(config = GlobalMapperConfig.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface QualityParameterMapper {
+
     QualityParameter toEntity(QualityParameterCreateDTO createDto);
 
     QualityParameterResponseDTO toResponseDTO(QualityParameter savedQualityParameter);

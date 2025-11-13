@@ -2,7 +2,6 @@ package com.enigcode.frozen_backend.quality_parameters.service;
 
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterCreateDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
-import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterSimpleDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterUpdateDTO;
 
 import java.util.List;
@@ -18,8 +17,8 @@ public interface QualityParameterService {
 
     List<QualityParameterResponseDTO> getQualityParameters();
 
-    List<QualityParameterSimpleDTO> getActiveQualityParameters();
+    List<QualityParameterResponseDTO> getActiveQualityParameters();
 
-    List<QualityParameterSimpleDTO> getActiveQualityParametersByPhase(
+    List<QualityParameterResponseDTO> getActiveQualityParametersByPhase(
             com.enigcode.frozen_backend.product_phases.model.Phase phase);
 }

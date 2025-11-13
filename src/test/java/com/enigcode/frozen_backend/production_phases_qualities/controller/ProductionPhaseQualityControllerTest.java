@@ -31,128 +31,128 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(GlobalExceptionHandler.class)
 class ProductionPhaseQualityControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @MockBean
-    private ProductionPhaseQualityService service;
+        @MockBean
+        private ProductionPhaseQualityService service;
 
-    @MockBean
-    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
+        @MockBean
+        private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    private String createJson;
-    private ProductionPhaseQualityResponseDTO responseDTO;
+        private String createJson;
+        private ProductionPhaseQualityResponseDTO responseDTO;
 
-    @BeforeEach
-    void setup() throws Exception {
-        ProductionPhaseQualityCreateDTO createDTO = ProductionPhaseQualityCreateDTO.builder()
-                .qualityParameterId(2L)
-                .productionPhaseId(1L)
-                .value("OK")
-                .isApproved(true)
-                .build();
-        createJson = objectMapper.writeValueAsString(createDTO);
+        @BeforeEach
+        void setup() throws Exception {
+                ProductionPhaseQualityCreateDTO createDTO = ProductionPhaseQualityCreateDTO.builder()
+                                .qualityParameterId(2L)
+                                .productionPhaseId(1L)
+                                .value("OK")
+                                .isApproved(true)
+                                .build();
+                createJson = objectMapper.writeValueAsString(createDTO);
 
-        responseDTO = ProductionPhaseQualityResponseDTO.builder()
-                .id(10L)
-                .qualityParameterName("pH")
-                .productionPhaseId(1L)
-                .productionPhase(Phase.MOLIENDA)
-                .value("OK")
-                .isApproved(true)
-                .build();
+                responseDTO = ProductionPhaseQualityResponseDTO.builder()
+                                .id(10L)
+                                .qualityParameterName("pH")
+                                .productionPhaseId(1L)
+                                .productionPhase(Phase.MOLIENDA)
+                                .value("OK")
+                                .isApproved(true)
+                                .build();
 
-        when(service.createProductionPhaseQuality(any())).thenReturn(responseDTO);
-        when(service.updateProductionPhaseQuality(eq(10L), any())).thenReturn(responseDTO);
-        when(service.getProductionPhaseQuality(eq(10L))).thenReturn(responseDTO);
-        when(service.getProductionPhaseQualityByPhase(eq(1L))).thenReturn(List.of(responseDTO));
-        when(service.getProductionPhaseQualityByBatch(eq(100L))).thenReturn(List.of(responseDTO));
-    }
-
-    @Test
-    void create_validRequest_returns201() throws Exception {
-        mockMvc.perform(post("/production-phases-qualities")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(createJson))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(10L))
-                .andExpect(jsonPath("$.productionPhase").value("MOLIENDA"))
-                .andExpect(jsonPath("$.qualityParameterName").value("pH"));
-    }
-
-    @Test
-    void create_missingFields_returns400() throws Exception {
-        String invalidJson = """
-        {
-          "qualityParameterId": 2,
-          "value": "OK",
-          "isApproved": true
+                when(service.createProductionPhaseQuality(any())).thenReturn(responseDTO);
+                when(service.updateProductionPhaseQuality(eq(10L), any())).thenReturn(responseDTO);
+                when(service.getProductionPhaseQuality(eq(10L))).thenReturn(responseDTO);
+                when(service.getProductionPhaseQualityByPhase(eq(1L))).thenReturn(List.of(responseDTO));
+                when(service.getProductionPhaseQualityByBatch(eq(100L))).thenReturn(List.of(responseDTO));
         }
-        """;
-        mockMvc.perform(post("/production-phases-qualities")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJson))
-                .andExpect(status().isBadRequest());
-    }
 
-    @Test
-    void update_validRequest_returns200() throws Exception {
-        ProductionPhaseQualityUpdateDTO updateDTO = ProductionPhaseQualityUpdateDTO.builder()
-                .value("Nuevo")
-                .isApproved(false)
-                .build();
-        String updateJson = objectMapper.writeValueAsString(updateDTO);
+        @Test
+        void create_validRequest_returns201() throws Exception {
+                mockMvc.perform(post("/production-phases-qualities")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(createJson))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.id").value(10L))
+                                .andExpect(jsonPath("$.productionPhase").value("MOLIENDA"))
+                                .andExpect(jsonPath("$.qualityParameterName").value("pH"));
+        }
 
-        mockMvc.perform(patch("/production-phases-qualities/10")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateJson))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(10L));
-    }
+        @Test
+        void create_missingFields_returns400() throws Exception {
+                String invalidJson = """
+                                {
+                                  "qualityParameterId": 2,
+                                  "value": "OK",
+                                  "isApproved": true
+                                }
+                                """;
+                mockMvc.perform(post("/production-phases-qualities")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(invalidJson))
+                                .andExpect(status().isBadRequest());
+        }
 
-    @Test
-    void update_notFound_returns404() throws Exception {
-        when(service.updateProductionPhaseQuality(eq(999L), any()))
-                .thenThrow(new ResourceNotFoundException("No se encontró fase de calidad con id 999"));
+        @Test
+        void update_validRequest_returns200() throws Exception {
+                ProductionPhaseQualityUpdateDTO updateDTO = ProductionPhaseQualityUpdateDTO.builder()
+                                .value("Nuevo")
+                                .isApproved(false)
+                                .build();
+                String updateJson = objectMapper.writeValueAsString(updateDTO);
 
-        String updateJson = """
-        {"value":"Nuevo"}
-        """;
+                mockMvc.perform(patch("/production-phases-qualities/10")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(updateJson))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(10L));
+        }
 
-        mockMvc.perform(patch("/production-phases-qualities/999")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateJson))
-                .andExpect(status().isNotFound());
-    }
+        @Test
+        void update_notFound_returns404() throws Exception {
+                when(service.updateProductionPhaseQuality(eq(999L), any()))
+                                .thenThrow(new ResourceNotFoundException("No se encontró fase de calidad con id 999"));
 
-    @Test
-    void getById_returns200() throws Exception {
-        mockMvc.perform(get("/production-phases-qualities/10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(10L));
-    }
+                String updateJson = """
+                                {"value":"Nuevo"}
+                                """;
 
-    @Test
-    void getById_notFound_returns404() throws Exception {
-        when(service.getProductionPhaseQuality(999L)).thenThrow(new ResourceNotFoundException("no existe"));
-        mockMvc.perform(get("/production-phases-qualities/999"))
-                .andExpect(status().isNotFound());
-    }
+                mockMvc.perform(patch("/production-phases-qualities/999")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(updateJson))
+                                .andExpect(status().isNotFound());
+        }
 
-    @Test
-    void getByPhase_returns200_andArray() throws Exception {
-        mockMvc.perform(get("/production-phases-qualities/by-phase/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
-    }
+        @Test
+        void getById_returns200() throws Exception {
+                mockMvc.perform(get("/production-phases-qualities/10"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(10L));
+        }
 
-    @Test
-    void getByBatch_returns200_andArray() throws Exception {
-        mockMvc.perform(get("/production-phases-qualities/by-batch/100"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
-    }
+        @Test
+        void getById_notFound_returns404() throws Exception {
+                when(service.getProductionPhaseQuality(999L)).thenThrow(new ResourceNotFoundException("no existe"));
+                mockMvc.perform(get("/production-phases-qualities/999"))
+                                .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void getByPhase_returns200_andArray() throws Exception {
+                mockMvc.perform(get("/production-phases-qualities/by-phase/1"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$").isArray());
+        }
+
+        @Test
+        void getByBatch_returns200_andArray() throws Exception {
+                mockMvc.perform(get("/production-phases-qualities/by-batch/100"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$").isArray());
+        }
 }

@@ -348,7 +348,8 @@ public class BatchServiceImpl implements BatchService {
         productionPhaseRepository.save(productionPhase);
     }
 
-    private void completeBatch(Batch batch) {
+    @Override
+    public void completeBatch(Batch batch) {
         batch.setStatus(BatchStatus.COMPLETADO);
         batch.setCompletedDate(OffsetDateTime.now());
 

@@ -23,4 +23,10 @@ public class QualityParameterCreateDTO {
 
     @Size(max = 255)
     private String description;
+
+    @Size(max = 50)
+    private String unit;
+
+    @Size(max = 500)
+    private String information;
 }

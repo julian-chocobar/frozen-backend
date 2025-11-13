@@ -45,7 +45,9 @@ class ProductionPhaseQualityServiceImplTest {
     private ProductionPhaseQualityServiceImpl service;
 
     @BeforeEach
-    void setUp() { MockitoAnnotations.openMocks(this); }
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
 
     @Test
     void createProductionPhaseQuality_success() {
@@ -111,7 +113,8 @@ class ProductionPhaseQualityServiceImplTest {
     void createProductionPhaseQuality_qualityParamNotFound_throws() {
         ProductionPhaseQualityCreateDTO dto = ProductionPhaseQualityCreateDTO.builder()
                 .productionPhaseId(1L).qualityParameterId(99L).value("OK").isApproved(true).build();
-        when(productionPhaseRepository.findById(1L)).thenReturn(Optional.of(ProductionPhase.builder().id(1L).phase(Phase.MOLIENDA).build()));
+        when(productionPhaseRepository.findById(1L))
+                .thenReturn(Optional.of(ProductionPhase.builder().id(1L).phase(Phase.MOLIENDA).build()));
         when(qualityParameterRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> service.createProductionPhaseQuality(dto));
     }
@@ -120,9 +123,12 @@ class ProductionPhaseQualityServiceImplTest {
     void updateProductionPhaseQuality_success() {
         ProductionPhaseQualityUpdateDTO dto = ProductionPhaseQualityUpdateDTO.builder()
                 .value("Nuevo valor").isApproved(false).build();
-        ProductionPhaseQuality existing = ProductionPhaseQuality.builder().id(5L).value("Viejo").isApproved(true).build();
-        ProductionPhaseQuality updated = ProductionPhaseQuality.builder().id(5L).value("Nuevo valor").isApproved(false).build();
-        ProductionPhaseQualityResponseDTO response = ProductionPhaseQualityResponseDTO.builder().id(5L).value("Nuevo valor").isApproved(false).build();
+        ProductionPhaseQuality existing = ProductionPhaseQuality.builder().id(5L).value("Viejo").isApproved(true)
+                .build();
+        ProductionPhaseQuality updated = ProductionPhaseQuality.builder().id(5L).value("Nuevo valor").isApproved(false)
+                .build();
+        ProductionPhaseQualityResponseDTO response = ProductionPhaseQualityResponseDTO.builder().id(5L)
+                .value("Nuevo valor").isApproved(false).build();
 
         when(repository.findById(5L)).thenReturn(Optional.of(existing));
         when(mapper.partialUpdate(dto, existing)).thenReturn(updated);
@@ -137,7 +143,8 @@ class ProductionPhaseQualityServiceImplTest {
     @Test
     void updateProductionPhaseQuality_notFound_throws() {
         when(repository.findById(123L)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> service.updateProductionPhaseQuality(123L, new ProductionPhaseQualityUpdateDTO()));
+        assertThrows(ResourceNotFoundException.class,
+                () -> service.updateProductionPhaseQuality(123L, new ProductionPhaseQualityUpdateDTO()));
         verify(repository, never()).save(any());
     }
 

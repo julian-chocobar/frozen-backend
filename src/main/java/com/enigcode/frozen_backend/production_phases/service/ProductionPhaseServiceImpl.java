@@ -3,6 +3,7 @@ package com.enigcode.frozen_backend.production_phases.service;
 import com.enigcode.frozen_backend.batches.service.BatchService;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseResponseDTO;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseUnderReviewDTO;
 import com.enigcode.frozen_backend.production_phases.mapper.ProductionPhaseMapper;
@@ -119,6 +120,10 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
 
     private void completeProductionPhase(ProductionPhase productionPhase) {
         productionPhase.setStatus(ProductionPhaseStatus.COMPLETADA);
-        batchService.startNextPhase(productionPhase.getBatch());
+        if (productionPhase.getPhase().equals(Phase.ENVASADO)) {
+            batchService.completeBatch(productionPhase.getBatch());
+        } else {
+            batchService.startNextPhase(productionPhase.getBatch());
+        }
     }
 }
