@@ -120,9 +120,10 @@ public class BatchTraceabilityService {
     private List<BatchTraceabilityDTO.ProductionPhaseTraceabilityDTO> buildPhasesTraceability(Long batchId) {
         return productionPhaseRepository.findAllByBatchIdOrderByPhaseOrderAsc(batchId).stream()
                 .map(phase -> {
-                    // Obtener materiales solo si la fase no está PENDIENTE
+                    // Obtener materiales solo si la fase no está PENDIENTE o SUSPENDIDA
                     List<BatchTraceabilityDTO.ProductionMaterialTraceabilityDTO> materials = !phase.getStatus()
-                            .equals(ProductionPhaseStatus.PENDIENTE)
+                            .equals(ProductionPhaseStatus.PENDIENTE) &&
+                            !phase.getStatus().equals(ProductionPhaseStatus.SUSPENDIDA)
                                     ? productionMaterialRepository.findAllByProductionPhaseId(phase.getId()).stream()
                                             .map(pm -> BatchTraceabilityDTO.ProductionMaterialTraceabilityDTO.builder()
                                                     .materialName(pm.getMaterial().getName())
@@ -131,7 +132,7 @@ public class BatchTraceabilityService {
                                                     .unitMeasurement(pm.getMaterial().getUnitMeasurement())
                                                     .build())
                                             .collect(Collectors.toList())
-                                    : List.of(); // Lista vacía para fases PENDIENTE
+                                    : List.of(); // Lista vacía para fases PENDIENTE o SUSPENDIDA
 
                     // Obtener parámetros de calidad de la fase
                     List<BatchTraceabilityDTO.QualityParameterTraceabilityDTO> qualityParams = productionPhaseQualityRepository
