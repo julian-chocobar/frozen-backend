@@ -3,6 +3,7 @@ package com.enigcode.frozen_backend.production_phases.service;
 import com.enigcode.frozen_backend.batches.service.BatchService;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+import com.enigcode.frozen_backend.notifications.service.NotificationService;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseResponseDTO;
 import com.enigcode.frozen_backend.production_phases.DTO.ProductionPhaseUnderReviewDTO;
@@ -27,6 +28,7 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
     private final BatchService batchService;
     private final ProductionPhaseQualityRepository productionPhaseQualityRepository;
     private final com.enigcode.frozen_backend.production_phases_qualities.service.ProductionPhaseQualityService productionPhaseQualityService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -43,6 +45,12 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
         updatedProductionPhase.setStatus(ProductionPhaseStatus.BAJO_REVISION);
 
         ProductionPhase savedProductionPhase = productionPhaseRepository.save(updatedProductionPhase);
+
+        // Notificar a operarios de calidad que hay una fase bajo revisión
+        notificationService.createPhaseUnderReviewNotification(
+                savedProductionPhase.getId(),
+                savedProductionPhase.getBatch().getCode(),
+                savedProductionPhase.getPhase().toString());
 
         return productionPhaseMapper.toResponseDTO(savedProductionPhase);
     }
@@ -103,20 +111,31 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
         return productionPhaseMapper.toResponseDTO(savedProductionPhase);
     }
 
-    // TODO: enviar notificacion a supervisor de produccion del sector que se
-    // requiere ajuste de phase
     private void adjustProductionPhase(ProductionPhase productionPhase) {
         productionPhase.setStatus(ProductionPhaseStatus.SIENDO_AJUSTADA);
 
         // Crear nueva versión de parámetros para permitir nuevas mediciones
         productionPhaseQualityService.createNewVersionForPhase(productionPhase.getId());
+
+        // Notificar al supervisor de producción del sector que se requiere ajuste
+        notificationService.createPhaseAdjustmentRequiredNotification(
+                productionPhase.getId(),
+                productionPhase.getBatch().getCode(),
+                productionPhase.getPhase().toString(),
+                productionPhase.getSector().getId());
     }
 
-    // TODO: enviar notificacion a supervisor de produccion del sector que se
-    // rechazo la fase y cancelo el lote
     private void rejectProductionPhase(ProductionPhase productionPhase) {
         productionPhase.setStatus(ProductionPhaseStatus.RECHAZADA);
         batchService.cancelBatch(productionPhase.getBatch());
+
+        // Notificar al supervisor de producción del sector que la fase fue rechazada y
+        // el lote cancelado
+        notificationService.createPhaseRejectedBatchCancelledNotification(
+                productionPhase.getBatch().getId(),
+                productionPhase.getBatch().getCode(),
+                productionPhase.getPhase().toString(),
+                productionPhase.getSector().getId());
     }
 
     private void completeProductionPhase(ProductionPhase productionPhase) {

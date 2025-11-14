@@ -24,4 +24,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     default List<Long> findUserIdsByRoleName(String roleName) {
         return findUserIdsByRole(Role.valueOf(roleName));
     }
+
+    /**
+     * Busca IDs de supervisores que están asignados a un sector específico
+     */
+    @Query("SELECT s.supervisor.id FROM Sector s WHERE s.id = :sectorId")
+    List<Long> findSupervisorIdsBySectorId(@Param("sectorId") Long sectorId);
 }

@@ -101,13 +101,18 @@ public class MovementServiceImpl implements MovementService {
                 List<Movement> movements = new ArrayList<>();
 
                 materials.forEach(dto -> {
-                        if (type.equals(MovementType.RESERVA) && dto.getMaterial().getStock() < dto.getStock())
-                                throw new BadRequestException("Stock: " + dto.getMaterial().getStock()
-                                                + "insuficiente para reservar " + dto.getStock());
+                        if (type.equals(MovementType.RESERVA)
+                                        && !hasEnoughStock(dto.getMaterial().getStock(), dto.getStock()))
+                                throw new BadRequestException(
+                                                String.format("Stock: %.2f insuficiente para reservar %.2f",
+                                                                dto.getMaterial().getStock(), dto.getStock()));
 
-                        if (type.equals(MovementType.DEVUELTO) && dto.getMaterial().getReservedStock() < dto.getStock())
-                                throw new BadRequestException("Stock reservado: " + dto.getMaterial().getStock()
-                                                + "insuficiente para devolver " + dto.getStock());
+                        if (type.equals(MovementType.DEVUELTO)
+                                        && !hasEnoughReservedStock(dto.getMaterial().getReservedStock(),
+                                                        dto.getStock()))
+                                throw new BadRequestException(
+                                                String.format("Stock reservado: %.2f insuficiente para devolver %.2f",
+                                                                dto.getMaterial().getReservedStock(), dto.getStock()));
 
                         if (type.equals(MovementType.RESERVA))
                                 dto.getMaterial().reserveStock(dto.getStock());
@@ -143,9 +148,10 @@ public class MovementServiceImpl implements MovementService {
                 List<Movement> movements = new ArrayList<>();
 
                 materials.forEach(dto -> {
-                        if (dto.getMaterial().getReservedStock() < dto.getStock())
-                                throw new BadRequestException("Stock reservado: " + dto.getMaterial().getStock()
-                                                + "insuficiente para egresar " + dto.getStock());
+                        if (!hasEnoughReservedStock(dto.getMaterial().getReservedStock(), dto.getStock()))
+                                throw new BadRequestException(
+                                                String.format("Stock reservado: %.2f insuficiente para egresar %.2f",
+                                                                dto.getMaterial().getReservedStock(), dto.getStock()));
 
                         dto.getMaterial().reduceReservedStock(dto.getStock());
 
@@ -323,18 +329,46 @@ public class MovementServiceImpl implements MovementService {
         public void createMovements(List<MovementInternalCreateDTO> materialsMovements) {
                 List<Movement> movements = materialsMovements.stream().map(dto -> {
                         return Movement.builder()
-                                .type(dto.getType())
-                                .stock(dto.getStock())
-                                .reason(dto.getReason())
-                                .location(dto.getLocation())
-                                .createdByUserId(userService.getCurrentUser().getId())
-                                .status(MovementStatus.PENDIENTE)
-                                .material(dto.getMaterial())
-                                .creationDate(OffsetDateTime.now(ZoneOffset.UTC))
-                                .build();
+                                        .type(dto.getType())
+                                        .stock(dto.getStock())
+                                        .reason(dto.getReason())
+                                        .location(dto.getLocation())
+                                        .createdByUserId(userService.getCurrentUser().getId())
+                                        .status(MovementStatus.PENDIENTE)
+                                        .material(dto.getMaterial())
+                                        .creationDate(OffsetDateTime.now(ZoneOffset.UTC))
+                                        .build();
                 }).toList();
 
                 movementRepository.saveAll(movements);
+        }
+
+        /**
+         * Compara si hay suficiente stock disponible considerando tolerancia para
+         * errores de punto flotante
+         */
+        private boolean hasEnoughStock(Double availableStock, Double requiredStock) {
+                if (availableStock == null || requiredStock == null) {
+                        return false;
+                }
+                // Usar tolerancia muy pequeña (0.0001) para comparaciones de punto flotante
+                return availableStock >= (requiredStock - 0.0001);
+        }
+
+        /**
+         * Compara si hay suficiente stock reservado considerando tolerancia para
+         * errores de punto flotante
+         */
+        private boolean hasEnoughReservedStock(Double reservedStock, Double requiredStock) {
+                if (reservedStock == null || requiredStock == null) {
+                        return false;
+                }
+                // Log para debug de precisión decimal
+                log.debug("Comparing reserved stock: {} >= required: {} (with tolerance)", reservedStock,
+                                requiredStock);
+
+                // Usar tolerancia muy pequeña (0.0001) para comparaciones de punto flotante
+                return reservedStock >= (requiredStock - 0.0001);
         }
 
 }

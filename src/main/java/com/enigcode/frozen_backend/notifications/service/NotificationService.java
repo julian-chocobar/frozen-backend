@@ -65,4 +65,42 @@ public interface NotificationService {
      * Limpia las notificaciones automáticamente según la configuración
      */
     void cleanupOldNotifications();
+
+    /**
+     * Crea notificación cuando un lote comienza en producción
+     * Notifica al supervisor de producción del sector
+     */
+    void createBatchStartedNotification(Long batchId, String batchCode, Long sectorId);
+
+    /**
+     * Crea notificación para la próxima fase de producción
+     * Notifica al supervisor de producción del sector de la próxima fase
+     */
+    void createNextPhaseReadyNotification(Long batchId, String batchCode, Long sectorId, String phaseName);
+
+    /**
+     * Crea notificación cuando una fase pasa a revisión
+     * Notifica a operarios de calidad
+     */
+    void createPhaseUnderReviewNotification(Long productionPhaseId, String batchCode, String phaseName);
+
+    /**
+     * Crea notificación cuando una fase requiere ajuste
+     * Notifica al supervisor de producción del sector
+     */
+    void createPhaseAdjustmentRequiredNotification(Long productionPhaseId, String batchCode, String phaseName,
+            Long sectorId);
+
+    /**
+     * Crea notificación cuando una fase es rechazada y el lote cancelado
+     * Notifica al supervisor de producción del sector
+     */
+    void createPhaseRejectedBatchCancelledNotification(Long batchId, String batchCode, String phaseName, Long sectorId);
+
+    /**
+     * Crea notificación cuando se ingresa un parámetro de calidad
+     * Notifica a supervisores de calidad
+     */
+    void createQualityParameterEnteredNotification(Long productionPhaseId, String batchCode, String phaseName,
+            String parameterName);
 }

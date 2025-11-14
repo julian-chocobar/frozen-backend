@@ -77,9 +77,12 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
             throw new BadRequestException("La unidad del producto: " + product.getUnitMeasurement() +
                     " y del packaging: " + batch.getPackaging().getUnitMeasurement() + " deben ser la misma");
 
-        Double quantity = batch.getQuantity() * batch.getPackaging().getQuantity();
+        // Calcular y redondear la cantidad total a 3 decimales para evitar números
+        // excesivos
+        Double quantity = roundToDecimals(batch.getQuantity() * batch.getPackaging().getQuantity(), 3);
 
-        Double materialQuantityMultiplier = quantity / product.getStandardQuantity();
+        // Redondear el multiplicador a 6 decimales para evitar precisión excesiva
+        Double materialQuantityMultiplier = roundToDecimals(quantity / product.getStandardQuantity(), 6);
 
         reserveMaterials(batch, product.getId(), materialQuantityMultiplier);
 
@@ -122,7 +125,8 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
 
         recipeService.getRecipeByProduct(productId).stream()
                 .forEach(recipe -> {
-                    Double quantity = recipe.getQuantity() * materialQuantityMultiplier;
+                    // Redondear cantidad de material a 6 decimales para evitar precisión excesiva
+                    Double quantity = roundToDecimals(recipe.getQuantity() * materialQuantityMultiplier, 6);
 
                     reserveMaterialMovements.add(
                             MovementSimpleCreateDTO.builder()
@@ -265,5 +269,18 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("No se encontro Orden de id " + id));
 
         return productionOrderMapper.toResponseDTO(productionOrder);
+    }
+
+    /**
+     * Redondea un número decimal a la cantidad especificada de decimales
+     */
+    private Double roundToDecimals(Double value, int decimals) {
+        if (value == null) {
+            return null;
+        }
+
+        java.math.BigDecimal bd = new java.math.BigDecimal(value.toString());
+        bd = bd.setScale(decimals, java.math.RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }

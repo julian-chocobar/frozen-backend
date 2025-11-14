@@ -250,4 +250,160 @@ public class NotificationServiceImpl implements NotificationService {
             log.debug("Limpieza automática: No hay notificaciones antiguas para eliminar");
         }
     }
+
+    @Override
+    public void createBatchStartedNotification(Long batchId, String batchCode, Long sectorId) {
+        log.info("🔔 Creando notificación de lote iniciado para lote {} en sector {}", batchCode, sectorId);
+
+        // Obtener el supervisor del sector específico
+        List<Long> supervisorIds = userRepository.findSupervisorIdsBySectorId(sectorId);
+
+        if (supervisorIds.isEmpty()) {
+            log.warn("❌ No se encontró supervisor para el sector {} del lote {}", sectorId, batchCode);
+            return;
+        }
+
+        String message = String.format("El lote %s ha iniciado producción en su sector", batchCode);
+
+        // Crear notificación para cada supervisor del sector
+        for (Long supervisorId : supervisorIds) {
+            createNotification(supervisorId, NotificationType.BATCH_STARTED, message, batchId);
+        }
+
+        log.info("✅ Notificaciones de lote iniciado enviadas a {} supervisores del sector {}",
+                supervisorIds.size(), sectorId);
+    }
+
+    @Override
+    public void createNextPhaseReadyNotification(Long batchId, String batchCode, Long sectorId, String phaseName) {
+        log.info("🔔 Creando notificación de próxima fase para lote {} - fase {} en sector {}",
+                batchCode, phaseName, sectorId);
+
+        // Obtener el supervisor del sector específico de la próxima fase
+        List<Long> supervisorIds = userRepository.findSupervisorIdsBySectorId(sectorId);
+
+        if (supervisorIds.isEmpty()) {
+            log.warn("❌ No se encontró supervisor para el sector {} de la fase {}", sectorId, phaseName);
+            return;
+        }
+
+        String message = String.format("El lote %s está listo para iniciar la fase %s en su sector",
+                batchCode, phaseName);
+
+        // Crear notificación para cada supervisor del sector
+        for (Long supervisorId : supervisorIds) {
+            createNotification(supervisorId, NotificationType.NEXT_PHASE_READY, message, batchId);
+        }
+
+        log.info("✅ Notificaciones de próxima fase enviadas a {} supervisores del sector {}",
+                supervisorIds.size(), sectorId);
+    }
+
+    @Override
+    public void createPhaseUnderReviewNotification(Long productionPhaseId, String batchCode, String phaseName) {
+        log.info("🔔 Creando notificación de fase bajo revisión para lote {} - fase {}", batchCode, phaseName);
+
+        // Obtener todos los operarios de calidad
+        List<Long> qualityOperatorIds = userRepository.findUserIdsByRole(Role.OPERARIO_DE_CALIDAD);
+
+        if (qualityOperatorIds.isEmpty()) {
+            log.warn("❌ No se encontraron operarios de calidad para notificar sobre la fase {} del lote {}",
+                    phaseName, batchCode);
+            return;
+        }
+
+        String message = String.format("La fase %s del lote %s está esperando revisión de calidad",
+                phaseName, batchCode);
+
+        // Crear notificación para cada operario de calidad
+        for (Long operatorId : qualityOperatorIds) {
+            createNotification(operatorId, NotificationType.PHASE_UNDER_REVIEW, message, productionPhaseId);
+        }
+
+        log.info("✅ Notificaciones de fase bajo revisión enviadas a {} operarios de calidad",
+                qualityOperatorIds.size());
+    }
+
+    @Override
+    public void createPhaseAdjustmentRequiredNotification(Long productionPhaseId, String batchCode, String phaseName,
+            Long sectorId) {
+        log.info("🔔 Creando notificación de ajuste requerido para lote {} - fase {} en sector {}",
+                batchCode, phaseName, sectorId);
+
+        // Obtener el supervisor del sector específico
+        List<Long> supervisorIds = userRepository.findSupervisorIdsBySectorId(sectorId);
+
+        if (supervisorIds.isEmpty()) {
+            log.warn("❌ No se encontró supervisor para el sector {} de la fase {} que requiere ajuste",
+                    sectorId, phaseName);
+            return;
+        }
+
+        String message = String.format(
+                "La fase %s del lote %s requiere ajustes. Por favor, realice las correcciones necesarias",
+                phaseName, batchCode);
+
+        // Crear notificación para cada supervisor del sector
+        for (Long supervisorId : supervisorIds) {
+            createNotification(supervisorId, NotificationType.PHASE_ADJUSTMENT_REQUIRED, message, productionPhaseId);
+        }
+
+        log.info("✅ Notificaciones de ajuste requerido enviadas a {} supervisores del sector {}",
+                supervisorIds.size(), sectorId);
+    }
+
+    @Override
+    public void createPhaseRejectedBatchCancelledNotification(Long batchId, String batchCode, String phaseName,
+            Long sectorId) {
+        log.info("🔔 Creando notificación de lote cancelado por fase rechazada - lote {} - fase {} en sector {}",
+                batchCode, phaseName, sectorId);
+
+        // Obtener el supervisor del sector específico
+        List<Long> supervisorIds = userRepository.findSupervisorIdsBySectorId(sectorId);
+
+        if (supervisorIds.isEmpty()) {
+            log.warn("❌ No se encontró supervisor para el sector {} de la fase {} rechazada",
+                    sectorId, phaseName);
+            return;
+        }
+
+        String message = String.format("CRÍTICO: La fase %s del lote %s ha sido rechazada. El lote ha sido cancelado",
+                phaseName, batchCode);
+
+        // Crear notificación para cada supervisor del sector
+        for (Long supervisorId : supervisorIds) {
+            createNotification(supervisorId, NotificationType.PHASE_REJECTED_BATCH_CANCELLED, message, batchId);
+        }
+
+        log.info("✅ Notificaciones de lote cancelado enviadas a {} supervisores del sector {}",
+                supervisorIds.size(), sectorId);
+    }
+
+    @Override
+    public void createQualityParameterEnteredNotification(Long productionPhaseId, String batchCode, String phaseName,
+            String parameterName) {
+        log.info("🔔 Creando notificación de parámetro de calidad ingresado para lote {} - fase {} - parámetro {}",
+                batchCode, phaseName, parameterName);
+
+        // Obtener todos los supervisores de calidad
+        List<Long> qualitySupervisorIds = userRepository.findUserIdsByRole(Role.SUPERVISOR_DE_CALIDAD);
+
+        if (qualitySupervisorIds.isEmpty()) {
+            log.warn(
+                    "❌ No se encontraron supervisores de calidad para notificar sobre el parámetro {} de la fase {} del lote {}",
+                    parameterName, phaseName, batchCode);
+            return;
+        }
+
+        String message = String.format("Nuevo parámetro de calidad '%s' ingresado para la fase %s del lote %s",
+                parameterName, phaseName, batchCode);
+
+        // Crear notificación para cada supervisor de calidad
+        for (Long supervisorId : qualitySupervisorIds) {
+            createNotification(supervisorId, NotificationType.QUALITY_PARAMETER_ENTERED, message, productionPhaseId);
+        }
+
+        log.info("✅ Notificaciones de parámetro de calidad enviadas a {} supervisores de calidad",
+                qualitySupervisorIds.size());
+    }
 }

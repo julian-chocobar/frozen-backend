@@ -12,6 +12,7 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.Resource
 import com.enigcode.frozen_backend.movements.DTO.MovementInternalCreateDTO;
 import com.enigcode.frozen_backend.movements.model.MovementType;
 import com.enigcode.frozen_backend.movements.service.MovementService;
+import com.enigcode.frozen_backend.notifications.service.NotificationService;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
 
@@ -57,6 +58,7 @@ public class BatchServiceImpl implements BatchService {
     private final ProductionPhaseRepository productionPhaseRepository;
     private final ProductionMaterialRepository productionMaterialRepository;
     private final MovementService movementService;
+    private final NotificationService notificationService;
 
     /**
      * Crea un Lote cuando se crea una orden de produccion, la misma tiene que ser
@@ -72,7 +74,8 @@ public class BatchServiceImpl implements BatchService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "No se encontró un paquete con el id " + createDTO.getPackagingId()));
 
-        Integer quantityInteger = (int) Math.floor(createDTO.getQuantity() / packaging.getQuantity());
+        // Calcular cantidad de lotes con mejor precisión
+        Integer quantityInteger = calculateBatchQuantity(createDTO.getQuantity(), packaging.getQuantity());
 
         Map<DayOfWeek, WorkingDay> workingDays = systemConfigurationService.getWorkingDays();
 
@@ -300,7 +303,6 @@ public class BatchServiceImpl implements BatchService {
         sectorService.saveAll(sectors);
     }
 
-    // TODO: ENVIAR NOTIFICACION AL SUPERVISOR DEL SECTOR
     private void startBatch(Batch batch, Sector sector) {
         if (batch.getPhases() == null || batch.getPhases().isEmpty())
             return;
@@ -310,12 +312,14 @@ public class BatchServiceImpl implements BatchService {
         firstPhase.setSector(sector);
         firstPhase.setStatus(ProductionPhaseStatus.EN_PROCESO);
         firstPhase.setStartDate(OffsetDateTime.now());
+
+        // Enviar notificación al supervisor del sector
+        notificationService.createBatchStartedNotification(batch.getId(), batch.getCode(), sector.getId());
     }
 
     /**
      * Funcion que agarra la proxima fase y la pone en produccion o termina el lote
      * en caso de ser la ultima fase
-     * TODO: NOTIFICACION AL SUPERVISOR DEL SECTOR ENCARGADO DE LA PROXIMA FASE
      * 
      * @param batch
      */
@@ -333,19 +337,27 @@ public class BatchServiceImpl implements BatchService {
                             .equals(ProductionPhaseStatus.COMPLETADA));
             if (isComplete)
                 completeBatch(batch);
+            return;
         }
-        ;
 
         ProductionPhase productionPhase = nextProductionPhase.get();
         List<Sector> sectors = sectorService.getAllSectorsAvailableByPhase(productionPhase.getPhase());
         if (sectors.isEmpty())
             throw new BadRequestException("Falta sector para la fase " + productionPhase.getPhase());
 
+        Sector assignedSector = sectors.get(0);
         productionPhase.setStatus(ProductionPhaseStatus.EN_PROCESO);
-        productionPhase.setSector(sectors.get(0));
+        productionPhase.setSector(assignedSector);
         productionPhase.setStartDate(OffsetDateTime.now());
 
         productionPhaseRepository.save(productionPhase);
+
+        // Notificar al supervisor del sector de la próxima fase
+        notificationService.createNextPhaseReadyNotification(
+                batch.getId(),
+                batch.getCode(),
+                assignedSector.getId(),
+                productionPhase.getPhase().toString());
     }
 
     @Override
@@ -354,5 +366,24 @@ public class BatchServiceImpl implements BatchService {
         batch.setCompletedDate(OffsetDateTime.now());
 
         batchRepository.save(batch);
+    }
+
+    /**
+     * Calcula la cantidad de lotes de manera más precisa para evitar problemas de
+     * redondeo
+     */
+    private Integer calculateBatchQuantity(Double requestedQuantity, Double packagingQuantity) {
+        if (requestedQuantity == null || packagingQuantity == null || packagingQuantity <= 0) {
+            throw new BadRequestException("Las cantidades deben ser válidas y mayores a cero");
+        }
+
+        // Usar BigDecimal para mayor precisión en la división
+        java.math.BigDecimal requested = java.math.BigDecimal.valueOf(requestedQuantity);
+        java.math.BigDecimal packaging = java.math.BigDecimal.valueOf(packagingQuantity);
+
+        // Dividir y redondear hacia abajo para obtener la cantidad entera de lotes
+        java.math.BigDecimal result = requested.divide(packaging, 0, java.math.RoundingMode.FLOOR);
+
+        return result.intValue();
     }
 }

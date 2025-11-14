@@ -4,6 +4,7 @@ import com.enigcode.frozen_backend.batches.model.Batch;
 import com.enigcode.frozen_backend.batches.repository.BatchRepository;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
+import com.enigcode.frozen_backend.notifications.service.NotificationService;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
 import com.enigcode.frozen_backend.production_phases_qualities.DTO.ProductionPhaseQualityCreateDTO;
@@ -28,6 +29,7 @@ public class ProductionPhaseQualityServiceImpl implements ProductionPhaseQuality
         private final ProductionPhaseRepository productionPhaseRepository;
         private final QualityParameterRepository qualityParameterRepository;
         private final BatchRepository batchRepository;
+        private final NotificationService notificationService;
 
         @Override
         @Transactional
@@ -58,6 +60,14 @@ public class ProductionPhaseQualityServiceImpl implements ProductionPhaseQuality
 
                 ProductionPhaseQuality savedPhaseQuality = productionPhaseQualityRepository
                                 .save(productionPhaseQuality);
+
+                // Notificar a supervisores de calidad que se ingresó un nuevo parámetro
+                notificationService.createQualityParameterEnteredNotification(
+                                productionPhase.getId(),
+                                productionPhase.getBatch().getCode(),
+                                productionPhase.getPhase().toString(),
+                                qualityParameter.getName());
+
                 return productionPhaseQualityMapper.toResponseDTO(savedPhaseQuality);
         }
 
