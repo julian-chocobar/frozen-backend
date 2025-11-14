@@ -11,12 +11,13 @@ import com.enigcode.frozen_backend.batches.DTO.BatchFilterDTO;
 import com.enigcode.frozen_backend.batches.model.Batch;
 
 public class BatchSpecification {
-    
-    public static Specification<Batch> createFilter (BatchFilterDTO filterDTO){
+
+    public static Specification<Batch> createFilter(BatchFilterDTO filterDTO) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (filterDTO.getProductId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("product").get("id"), filterDTO.getProductId()));
+                predicates.add(criteriaBuilder.equal(root.get("productionOrder").get("product").get("id"),
+                        filterDTO.getProductId()));
             }
             if (filterDTO.getStatus() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("status"), filterDTO.getStatus()));
