@@ -6,6 +6,7 @@ import com.enigcode.frozen_backend.batches.repository.BatchRepository;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository;
 import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
+import com.enigcode.frozen_backend.production_phases.model.ProductionPhaseStatus;
 import com.enigcode.frozen_backend.production_phases_qualities.repository.ProductionPhaseQualityRepository;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -119,16 +120,18 @@ public class BatchTraceabilityService {
     private List<BatchTraceabilityDTO.ProductionPhaseTraceabilityDTO> buildPhasesTraceability(Long batchId) {
         return productionPhaseRepository.findAllByBatchIdOrderByPhaseOrderAsc(batchId).stream()
                 .map(phase -> {
-                    // Obtener materiales de la fase
-                    List<BatchTraceabilityDTO.ProductionMaterialTraceabilityDTO> materials = productionMaterialRepository
-                            .findAllByProductionPhaseId(phase.getId()).stream()
-                            .map(pm -> BatchTraceabilityDTO.ProductionMaterialTraceabilityDTO.builder()
-                                    .materialName(pm.getMaterial().getName())
-                                    .materialType(pm.getMaterial().getType().toString())
-                                    .quantity(pm.getQuantity())
-                                    .unitMeasurement(pm.getMaterial().getUnitMeasurement())
-                                    .build())
-                            .collect(Collectors.toList());
+                    // Obtener materiales solo si la fase no está PENDIENTE
+                    List<BatchTraceabilityDTO.ProductionMaterialTraceabilityDTO> materials = !phase.getStatus()
+                            .equals(ProductionPhaseStatus.PENDIENTE)
+                                    ? productionMaterialRepository.findAllByProductionPhaseId(phase.getId()).stream()
+                                            .map(pm -> BatchTraceabilityDTO.ProductionMaterialTraceabilityDTO.builder()
+                                                    .materialName(pm.getMaterial().getName())
+                                                    .materialType(pm.getMaterial().getType().toString())
+                                                    .quantity(pm.getQuantity())
+                                                    .unitMeasurement(pm.getMaterial().getUnitMeasurement())
+                                                    .build())
+                                            .collect(Collectors.toList())
+                                    : List.of(); // Lista vacía para fases PENDIENTE
 
                     // Obtener parámetros de calidad de la fase
                     List<BatchTraceabilityDTO.QualityParameterTraceabilityDTO> qualityParams = productionPhaseQualityRepository
@@ -136,6 +139,7 @@ public class BatchTraceabilityService {
                             .map(pq -> BatchTraceabilityDTO.QualityParameterTraceabilityDTO.builder()
                                     .parameterName(pq.getQualityParameter().getName())
                                     .value(pq.getValue())
+                                    .unit(pq.getQualityParameter().getUnit())
                                     .isApproved(pq.getIsApproved())
                                     .isCritical(pq.getQualityParameter().getIsCritical())
                                     .realizationDate(pq.getRealizationDate())
@@ -298,7 +302,7 @@ public class BatchTraceabilityService {
 
             for (BatchTraceabilityDTO.QualityParameterTraceabilityDTO param : phase.getQualityParameters()) {
                 qualityTable.addCell(param.getParameterName());
-                qualityTable.addCell(param.getValue() != null ? param.getValue() : "N/A");
+                qualityTable.addCell(param.getValue() != null ? param.getValue() + " " + param.getUnit() : "N/A");
                 qualityTable.addCell(param.getIsApproved() ? "Sí" : "No");
                 qualityTable.addCell(param.getIsCritical() ? "Sí" : "No");
                 qualityTable.addCell(formatDate(param.getRealizationDate()));

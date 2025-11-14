@@ -16,6 +16,7 @@ public interface ProductionPhaseQualityMapper {
     @Mapping(target = "qualityParameterName", source = "qualityParameter.name")
     @Mapping(target = "productionPhaseId", source = "productionPhase.id")
     @Mapping(target = "productionPhase", source = "productionPhase.phase")
+    @Mapping(target = "unit", source = "qualityParameter.unit")
     ProductionPhaseQualityResponseDTO toResponseDTO(ProductionPhaseQuality productionPhaseQuality);
 
     ProductionPhaseQuality toEntity(ProductionPhaseQualityCreateDTO dto);

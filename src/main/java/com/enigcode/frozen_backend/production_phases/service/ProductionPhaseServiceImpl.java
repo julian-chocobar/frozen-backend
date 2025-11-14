@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -120,6 +121,7 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
 
     private void completeProductionPhase(ProductionPhase productionPhase) {
         productionPhase.setStatus(ProductionPhaseStatus.COMPLETADA);
+        productionPhase.setEndDate(OffsetDateTime.now());
         if (productionPhase.getPhase().equals(Phase.ENVASADO)) {
             batchService.completeBatch(productionPhase.getBatch());
         } else {

@@ -99,6 +99,7 @@ public class BatchTraceabilityDTO {
     public static class QualityParameterTraceabilityDTO {
         private String parameterName;
         private String value;
+        private String unit;
         private Boolean isApproved;
         private Boolean isCritical;
         private OffsetDateTime realizationDate;

@@ -16,6 +16,7 @@ public class ProductionPhaseQualityResponseDTO {
     private Long productionPhaseId;
     private Phase productionPhase;
     private String value;
+    private String unit;
     private Boolean isApproved;
     private OffsetDateTime realizationDate;
     private Integer version;
