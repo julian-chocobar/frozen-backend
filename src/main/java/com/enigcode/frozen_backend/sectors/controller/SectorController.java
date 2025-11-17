@@ -7,6 +7,9 @@ import com.enigcode.frozen_backend.sectors.service.SectorService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +28,16 @@ public class SectorController {
     public ResponseEntity<SectorResponseDTO> createSector(@Valid @RequestBody SectorCreateDTO sectorCreateDTO) {
         SectorResponseDTO dto = sectorService.createSector(sectorCreateDTO);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Listar todos los sectores", description = "Obtiene una lista paginada de todos los sectores")
+    @GetMapping
+    public ResponseEntity<Page<SectorResponseDTO>> getAllSectors(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SectorResponseDTO> sectors = sectorService.findAll(pageable);
+        return ResponseEntity.ok(sectors);
     }
 
     @Operation(summary = "Ver un sector especifico")

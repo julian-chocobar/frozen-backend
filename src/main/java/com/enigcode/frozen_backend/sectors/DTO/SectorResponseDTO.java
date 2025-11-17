@@ -10,6 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class SectorResponseDTO {
+    private Long id;
     private String name;
     private Long supervisorId;
     private SectorType type;

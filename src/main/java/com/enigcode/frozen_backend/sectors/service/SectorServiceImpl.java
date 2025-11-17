@@ -15,6 +15,8 @@ import com.enigcode.frozen_backend.users.model.User;
 import com.enigcode.frozen_backend.users.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -112,6 +114,12 @@ public class SectorServiceImpl implements SectorService {
         Sector savedSector = sectorRepository.save(updatedSector);
 
         return sectorMapper.toResponseDTO(savedSector);
+    }
+
+    @Override
+    @Transactional
+    public Page<SectorResponseDTO> findAll(Pageable pageable) {
+        return sectorRepository.findAll(pageable).map(sectorMapper::toResponseDTO);
     }
 
     @Override

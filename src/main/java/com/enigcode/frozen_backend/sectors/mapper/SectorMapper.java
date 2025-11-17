@@ -14,6 +14,7 @@ import org.mapstruct.MappingTarget;
 public interface SectorMapper {
     Sector toEntity(SectorCreateDTO sectorCreateDTO);
 
+    @Mapping(target = "id", source = "id")
     @Mapping(target = "supervisorId", source = "supervisor.id")
     SectorResponseDTO toResponseDTO(Sector sector);
 
