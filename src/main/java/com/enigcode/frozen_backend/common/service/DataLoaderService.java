@@ -641,44 +641,44 @@ public class DataLoaderService {
                                 break;
                         case "MACERACION":
                                 updateData.setEstimatedHours(5.0);
-                                updateData.setInput(1200.0);
-                                updateData.setOutput(1050.0);
+                                updateData.setInput(1300.0);
+                                updateData.setOutput(1150.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "FILTRACION":
                                 updateData.setEstimatedHours(2.0);
-                                updateData.setInput(1050.0);
-                                updateData.setOutput(1000.0);
+                                updateData.setInput(1150.0);
+                                updateData.setOutput(1100.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "COCCION":
                                 updateData.setEstimatedHours(2.5);
-                                updateData.setInput(1000.0);
-                                updateData.setOutput(950.0);
+                                updateData.setInput(1100.0);
+                                updateData.setOutput(1050.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "FERMENTACION":
                                 updateData.setEstimatedHours(168.0); // 7 días
-                                updateData.setInput(950.0);
-                                updateData.setOutput(920.0);
+                                updateData.setInput(1050.0);
+                                updateData.setOutput(1030.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "MADURACION":
                                 updateData.setEstimatedHours(240.0); // 10 días
-                                updateData.setInput(920.0);
-                                updateData.setOutput(900.0);
+                                updateData.setInput(1030.0);
+                                updateData.setOutput(1020.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "GASIFICACION":
                                 updateData.setEstimatedHours(3.0);
-                                updateData.setInput(900.0);
-                                updateData.setOutput(900.0);
+                                updateData.setInput(1020.0);
+                                updateData.setOutput(1010.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "ENVASADO":
                                 updateData.setEstimatedHours(8.0);
-                                updateData.setInput(900.0);
-                                updateData.setOutput(895.0);
+                                updateData.setInput(1010.0);
+                                updateData.setOutput(1000.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                 }
@@ -694,44 +694,44 @@ public class DataLoaderService {
                                 break;
                         case "MACERACION":
                                 updateData.setEstimatedHours(6.0);
-                                updateData.setInput(980.0);
-                                updateData.setOutput(850.0);
+                                updateData.setInput(1050.0);
+                                updateData.setOutput(920.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "FILTRACION":
                                 updateData.setEstimatedHours(2.5);
-                                updateData.setInput(850.0);
-                                updateData.setOutput(800.0);
+                                updateData.setInput(920.0);
+                                updateData.setOutput(880.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "COCCION":
                                 updateData.setEstimatedHours(3.0);
-                                updateData.setInput(800.0);
-                                updateData.setOutput(750.0);
+                                updateData.setInput(880.0);
+                                updateData.setOutput(840.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "FERMENTACION":
                                 updateData.setEstimatedHours(192.0); // 8 días
-                                updateData.setInput(750.0);
-                                updateData.setOutput(720.0);
+                                updateData.setInput(840.0);
+                                updateData.setOutput(825.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "MADURACION":
                                 updateData.setEstimatedHours(336.0); // 14 días
-                                updateData.setInput(720.0);
-                                updateData.setOutput(705.0);
+                                updateData.setInput(825.0);
+                                updateData.setOutput(815.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "GASIFICACION":
                                 updateData.setEstimatedHours(3.0);
-                                updateData.setInput(705.0);
-                                updateData.setOutput(705.0);
+                                updateData.setInput(815.0);
+                                updateData.setOutput(810.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "ENVASADO":
                                 updateData.setEstimatedHours(10.0);
-                                updateData.setInput(705.0);
-                                updateData.setOutput(700.0);
+                                updateData.setInput(810.0);
+                                updateData.setOutput(800.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                 }
@@ -747,50 +747,50 @@ public class DataLoaderService {
                                 break;
                         case "MACERACION":
                                 updateData.setEstimatedHours(5.0);
-                                updateData.setInput(1200.0);
-                                updateData.setOutput(1050.0);
+                                updateData.setInput(1300.0);
+                                updateData.setOutput(1150.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "FILTRACION":
                                 updateData.setEstimatedHours(2.0);
-                                updateData.setInput(1050.0);
-                                updateData.setOutput(1000.0);
+                                updateData.setInput(1150.0);
+                                updateData.setOutput(1100.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "COCCION":
                                 updateData.setEstimatedHours(2.5);
-                                updateData.setInput(1000.0);
-                                updateData.setOutput(950.0);
+                                updateData.setInput(1100.0);
+                                updateData.setOutput(1050.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "FERMENTACION":
                                 updateData.setEstimatedHours(144.0); // 6 días
-                                updateData.setInput(950.0);
-                                updateData.setOutput(920.0);
+                                updateData.setInput(1050.0);
+                                updateData.setOutput(1035.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "DESALCOHOLIZACION":
                                 updateData.setEstimatedHours(48.0); // 2 días
-                                updateData.setInput(920.0);
-                                updateData.setOutput(900.0);
+                                updateData.setInput(1035.0);
+                                updateData.setOutput(1025.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "MADURACION":
                                 updateData.setEstimatedHours(120.0); // 5 días
-                                updateData.setInput(900.0);
-                                updateData.setOutput(890.0);
+                                updateData.setInput(1025.0);
+                                updateData.setOutput(1015.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "GASIFICACION":
                                 updateData.setEstimatedHours(4.0);
-                                updateData.setInput(890.0);
-                                updateData.setOutput(890.0);
+                                updateData.setInput(1015.0);
+                                updateData.setOutput(1010.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                         case "ENVASADO":
                                 updateData.setEstimatedHours(8.0);
-                                updateData.setInput(890.0);
-                                updateData.setOutput(885.0);
+                                updateData.setInput(1010.0);
+                                updateData.setOutput(1000.0);
                                 updateData.setOutputUnit(UnitMeasurement.LT);
                                 break;
                 }
