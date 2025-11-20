@@ -2,8 +2,6 @@ package com.enigcode.frozen_backend.production_materials.DTO;
 
 import lombok.*;
 
-import java.time.OffsetDateTime;
-
 @Getter
 @Setter
 @NoArgsConstructor

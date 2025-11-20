@@ -3,7 +3,6 @@ package com.enigcode.frozen_backend.quality_parameters.service;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterCreateDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
-import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterUpdateDTO;
 import com.enigcode.frozen_backend.quality_parameters.mapper.QualityParameterMapper;
 import com.enigcode.frozen_backend.quality_parameters.model.QualityParameter;

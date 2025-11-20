@@ -29,7 +29,6 @@ import jakarta.transaction.Transactional;
 
 import com.enigcode.frozen_backend.materials.model.Material;
 import com.enigcode.frozen_backend.materials.model.MaterialType;
-import com.enigcode.frozen_backend.materials.model.WarehouseZone;
 import com.enigcode.frozen_backend.warehouse.service.WarehouseLayoutService;
 
 @Service

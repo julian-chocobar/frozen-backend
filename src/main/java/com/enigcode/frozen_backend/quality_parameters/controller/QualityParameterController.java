@@ -3,7 +3,6 @@ package com.enigcode.frozen_backend.quality_parameters.controller;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterCreateDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
-import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterResponseDTO;
 import com.enigcode.frozen_backend.quality_parameters.DTO.QualityParameterUpdateDTO;
 import com.enigcode.frozen_backend.quality_parameters.service.QualityParameterService;
 import io.swagger.v3.oas.annotations.Operation;

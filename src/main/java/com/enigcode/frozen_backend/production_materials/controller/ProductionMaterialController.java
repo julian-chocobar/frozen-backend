@@ -2,7 +2,6 @@ package com.enigcode.frozen_backend.production_materials.controller;
 
 import com.enigcode.frozen_backend.production_materials.DTO.ProductionMaterialResponseDTO;
 import com.enigcode.frozen_backend.production_materials.service.ProductionMaterialService;
-import com.enigcode.frozen_backend.recipes.DTO.RecipeResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

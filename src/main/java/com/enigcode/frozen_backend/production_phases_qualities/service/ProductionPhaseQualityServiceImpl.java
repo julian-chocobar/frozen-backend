@@ -95,7 +95,7 @@ public class ProductionPhaseQualityServiceImpl implements ProductionPhaseQuality
                                                 "No se encontró production phase con id " + id));
 
                 List<ProductionPhaseQuality> productionPhaseQualities = productionPhaseQualityRepository
-                                .findAllByProductionPhaseId(id);
+                                .findAllByProductionPhaseId(productionPhase.getId());
 
                 return productionPhaseQualities.stream().map(productionPhaseQualityMapper::toResponseDTO).toList();
         }
@@ -107,7 +107,7 @@ public class ProductionPhaseQualityServiceImpl implements ProductionPhaseQuality
                                 .orElseThrow(() -> new ResourceNotFoundException("No se encontró batch con id " + id));
 
                 List<ProductionPhaseQuality> productionPhaseQualities = productionPhaseQualityRepository
-                                .findAllByProductionPhase_Batch_Id(id);
+                                .findAllByProductionPhase_Batch_Id(batch.getId());
 
                 return productionPhaseQualities.stream().map(productionPhaseQualityMapper::toResponseDTO).toList();
         }
