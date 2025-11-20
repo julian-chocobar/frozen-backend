@@ -1239,7 +1239,7 @@ public class DataLoaderService {
         }
 
         /**
-         * Carga datos de ejemplo de órdenes de producción y lotes usando un script SQL
+         * Carga datos de ejemplo de órdenes de producción y lotes usando scripts SQL separados
          * Esto evita problemas de transacciones y timeouts al procesar múltiples órdenes
          */
         private void loadSampleProductionOrdersAndBatchesFromSQL() {
@@ -1249,21 +1249,31 @@ public class DataLoaderService {
                 }
 
                 try (Connection connection = dataSource.getConnection()) {
-                        log.info("Ejecutando script SQL para cargar órdenes y lotes de ejemplo...");
+                        log.info("Ejecutando scripts SQL para cargar órdenes y lotes de ejemplo...");
                         
-                        // Leer el script completo como una sola cadena para evitar problemas con delimitadores
-                        ClassPathResource resource = new ClassPathResource("sample-production-orders.sql");
-                        String sqlScript = new String(resource.getInputStream().readAllBytes(), 
-                                java.nio.charset.StandardCharsets.UTF_8);
+                        // Cargar cada orden desde su archivo separado
+                        String[] scriptFiles = {
+                                "sample-production-order-1.sql",
+                                "sample-production-order-2.sql",
+                                "sample-production-order-3.sql",
+                                "sample-production-order-4.sql",
+                                "sample-production-order-5.sql"
+                        };
                         
-                        // Ejecutar como una sola statement
-                        try (java.sql.Statement statement = connection.createStatement()) {
-                                statement.execute(sqlScript);
+                        for (String scriptFile : scriptFiles) {
+                                ClassPathResource resource = new ClassPathResource(scriptFile);
+                                String sqlScript = new String(resource.getInputStream().readAllBytes(), 
+                                        java.nio.charset.StandardCharsets.UTF_8);
+                                
+                                try (java.sql.Statement statement = connection.createStatement()) {
+                                        statement.execute(sqlScript);
+                                        log.info("Script {} ejecutado exitosamente.", scriptFile);
+                                }
                         }
                         
-                        log.info("Script SQL ejecutado exitosamente.");
+                        log.info("Todos los scripts SQL ejecutados exitosamente.");
                 } catch (Exception e) {
-                        log.error("Error ejecutando script SQL para cargar órdenes y lotes: {}", 
+                        log.error("Error ejecutando scripts SQL para cargar órdenes y lotes: {}", 
                                 e.getMessage(), e);
                         throw new RuntimeException("Error cargando órdenes y lotes desde SQL: " + e.getMessage(), e);
                 }
