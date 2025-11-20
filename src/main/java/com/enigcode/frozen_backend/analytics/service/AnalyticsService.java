@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface AnalyticsService {
     List<MonthlyTotalDTO> getMonthlyProduction(LocalDate startDate, LocalDate endDate, Long productId);
+    List<MonthlyTotalDTO> getMonthlyMaterialConsumption(LocalDate startDate, LocalDate endDate, Long materialId);
 }

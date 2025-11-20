@@ -192,6 +192,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
                             .build();
                 }).toList();
 
+
         movementService.confirmReservation(confirmReservationMovements);
     }
 
@@ -241,6 +242,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
                             .build();
                 }).toList();
 
+        batchService.toggleActiveBatch(batchId);
         movementService.createReserveOrReturn(MovementType.DEVUELTO, returnReservedMaterialsMovements);
     }
 

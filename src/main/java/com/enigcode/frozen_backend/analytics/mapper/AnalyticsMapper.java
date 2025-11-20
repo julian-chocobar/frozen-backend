@@ -17,5 +17,5 @@ public interface AnalyticsMapper {
     @Mapping(target = "total", source = "total", qualifiedByName = "round2")
     MonthlyTotalDTO toMonthlyTotalDTO(MonthlyTotalProjectionDTO source);
 
-    List<MonthlyTotalDTO> toMonthlyProductionDTOList(List<MonthlyTotalProjectionDTO> source);
+    List<MonthlyTotalDTO> toMonthlyTotalDTOList(List<MonthlyTotalProjectionDTO> source);
 }

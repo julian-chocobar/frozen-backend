@@ -31,4 +31,6 @@ public interface BatchService {
     void startNextPhase(Batch batch);
 
     void completeBatch(Batch batch);
+
+    void toggleActiveBatch(Long batchId);
 }

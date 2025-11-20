@@ -60,6 +60,9 @@ public class ProductionPhase {
     @Column(name = "output_unit")
     private UnitMeasurement outputUnit;
 
+    @Column(name = "product_waste")
+    private Double productWaste;
+
     @Column(name = "start_date")
     private OffsetDateTime startDate;
 
@@ -68,8 +71,39 @@ public class ProductionPhase {
 
     // LÓGICA DE INICIALIZACIÓN:
     @PrePersist
-    @PreUpdate
     public void setPhaseOrder() {
         if (this.phase != null) this.phaseOrder = this.phase.getOrder();
+    }
+
+    @PreUpdate
+    public void calculateProductWaste() {
+        if (this.phase != null) this.phaseOrder = this.phase.getOrder();
+
+        if (input == null || output == null || standardInput == null || standardOutput == null) {
+            return; // no calcular hasta tener todos los valores
+        }
+
+        // Evitar divisiones por cero
+        if (standardInput == 0) {
+            this.productWaste = 0.0;
+            return;
+        }
+
+        // REGLA ESPECIAL: input < standardInput y output == input → NO hay desperdicio
+        if (input < standardInput && Double.compare(output, input) == 0) {
+            this.productWaste = 0.0;
+            return;
+        }
+
+        // Cálculo general
+        double expectedOutput = standardOutput * (input / standardInput);
+        double wasteCalc = expectedOutput - output;
+
+        // Nunca desperdicio negativo
+        if (wasteCalc < 0) {
+            wasteCalc = 0;
+        }
+
+        this.productWaste = wasteCalc;
     }
 }

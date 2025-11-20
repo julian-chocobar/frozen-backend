@@ -18,7 +18,7 @@ public interface ProductionPhaseRepository extends JpaRepository<ProductionPhase
     @Query("""
         SELECT YEAR(pp.endDate) AS year,
                MONTH(pp.endDate) AS month,
-               SUM(pp.output) AS totalOutput
+               SUM(pp.output) AS total
         FROM ProductionPhase pp
         WHERE pp.phase = 'ENVASADO'
           AND pp.status = 'COMPLETADA'

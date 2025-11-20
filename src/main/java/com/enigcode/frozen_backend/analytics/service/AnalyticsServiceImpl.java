@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -17,6 +18,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AnalyticsServiceImpl implements AnalyticsService{
+
+    private static final ZoneOffset BA_OFFSET = ZoneOffset.of("-03:00");
 
     private final ProductionPhaseRepository productionPhaseRepository;
     private final ProductionMaterialRepository productionMaterialRepository;
@@ -30,15 +33,30 @@ public class AnalyticsServiceImpl implements AnalyticsService{
             endDate = LocalDate.now();
             startDate = endDate.minusYears(1);
         }
-        
-        OffsetDateTime startODT = startDate.atStartOfDay()
-                .atOffset(ZoneOffset.of("-03:00"));
-        OffsetDateTime endODT = endDate.plusDays(1).atStartOfDay()
-                .atOffset(ZoneOffset.of("-03:00"));
+
+        OffsetDateTime startODT = startDate.atStartOfDay().atOffset(BA_OFFSET);
+        OffsetDateTime endODT = endDate.atTime(LocalTime.MAX).atOffset(BA_OFFSET);
 
         List<MonthlyTotalProjectionDTO> results =
                 productionPhaseRepository.getFinalProductionByMonth(startODT, endODT, productId);
 
-        return analyticsMapper.toMonthlyProductionDTOList(results);
+        return analyticsMapper.toMonthlyTotalDTOList(results);
+    }
+
+    @Transactional
+    @Override
+    public List<MonthlyTotalDTO> getMonthlyMaterialConsumption(LocalDate startDate, LocalDate endDate, Long materialId) {
+        if (startDate == null || endDate == null) {
+            endDate = LocalDate.now();
+            startDate = endDate.minusYears(1);
+        }
+
+        OffsetDateTime startODT = startDate.atStartOfDay().atOffset(BA_OFFSET);
+        OffsetDateTime endODT = endDate.atTime(LocalTime.MAX).atOffset(BA_OFFSET);
+
+        List<MonthlyTotalProjectionDTO> results =
+                productionMaterialRepository.getMonthlyMaterialConsumption(startODT, endODT, materialId);
+
+        return analyticsMapper.toMonthlyTotalDTOList(results);
     }
 }

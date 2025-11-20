@@ -78,6 +78,9 @@ public class Batch {
     @JoinColumn(name = "assigned_user_id")
     private User assignedUser;
 
+    @Column(name = "is_active")
+    private Boolean isActive;
+
     public Map<Phase, ProductionPhase> getPhasesAsMap() {
         if (phases == null || phases.isEmpty()) {
             return Map.of();
@@ -87,5 +90,14 @@ public class Batch {
                 .collect(Collectors.toMap(
                         ProductionPhase::getPhase,
                         phase -> phase));
+    }
+
+    public void toggleActive() {
+    }
+
+    // LÓGICA DE INICIALIZACIÓN:
+    @PrePersist
+    public void setIsActive() {
+        if (this.isActive == null) this.isActive = true;
     }
 }

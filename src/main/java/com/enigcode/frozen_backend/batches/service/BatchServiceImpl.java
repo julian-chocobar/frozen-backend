@@ -80,12 +80,20 @@ public class BatchServiceImpl implements BatchService {
 
         OffsetDateTime estimatedEndDate = estimateEndDate(product, createDTO.getPlannedDate(), workingDays);
 
+        // Calcular y redondear la cantidad total a 3 decimales para evitar números
+        // excesivos
+        Double quantity = roundToDecimals(quantityInteger * packaging.getQuantity(), 3);
+
+        // Redondear el multiplicador a 6 decimales para evitar precisión excesiva
+        Double quantityMultiplier = roundToDecimals(quantity / product.getStandardQuantity(), 6);
+
+
         List<ProductionPhase> batchPhases = product.getPhases().stream().map(productPhase -> {
             return ProductionPhase.builder()
                     .status(ProductionPhaseStatus.PENDIENTE)
                     .phase(productPhase.getPhase())
-                    .standardInput(productPhase.getInput())
-                    .standardOutput(productPhase.getOutput())
+                    .standardInput(roundToDecimals(productPhase.getInput() * quantityMultiplier,6))
+                    .standardOutput(roundToDecimals(productPhase.getOutput() * quantityMultiplier,6))
                     .outputUnit(productPhase.getOutputUnit())
                     .build();
         }).toList();
@@ -370,6 +378,17 @@ public class BatchServiceImpl implements BatchService {
         batchRepository.save(batch);
     }
 
+    @Override
+    @Transactional
+    public void toggleActiveBatch(Long batchId) {
+        Batch batch = batchRepository.findById(batchId)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró lote con id " + batchId));
+        batch.setStatus(BatchStatus.CANCELADO);
+        batch.toggleActive();
+        batch.getPhases().stream().forEach(phase -> phase.setStatus(ProductionPhaseStatus.SUSPENDIDA));
+        batchRepository.save(batch);
+    }
+
     /**
      * Calcula la cantidad de lotes de manera más precisa para evitar problemas de
      * redondeo
@@ -387,5 +406,18 @@ public class BatchServiceImpl implements BatchService {
         java.math.BigDecimal result = requested.divide(packaging, 0, java.math.RoundingMode.FLOOR);
 
         return result.intValue();
+    }
+
+    /**
+     * Redondea un número decimal a la cantidad especificada de decimales
+     */
+    private Double roundToDecimals(Double value, int decimals) {
+        if (value == null) {
+            return null;
+        }
+
+        java.math.BigDecimal bd = new java.math.BigDecimal(value.toString());
+        bd = bd.setScale(decimals, java.math.RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }

@@ -32,7 +32,7 @@ public interface ProductionMaterialRepository extends JpaRepository<ProductionMa
         SELECT
             YEAR(pm.productionPhase.endDate) AS year,
             MONTH(pm.productionPhase.endDate) AS month,
-            SUM(pm.quantity) AS totalQuantity
+            SUM(pm.quantity) AS total
         FROM ProductionMaterial pm
         WHERE pm.productionPhase.status IN ('COMPLETADA', 'RECHAZADA')
           AND pm.productionPhase.endDate BETWEEN :start AND :end
