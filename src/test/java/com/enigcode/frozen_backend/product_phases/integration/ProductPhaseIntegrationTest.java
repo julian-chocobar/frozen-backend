@@ -27,7 +27,9 @@ class ProductPhaseIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @SuppressWarnings("unused")
     private static final String USER = "test";
+    @SuppressWarnings("unused")
     private static final String PASS = "test";
 
     @Test

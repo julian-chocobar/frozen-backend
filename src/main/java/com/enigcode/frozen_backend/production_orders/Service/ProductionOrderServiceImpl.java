@@ -38,6 +38,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -87,7 +88,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
         reserveMaterials(batch, product.getId(), materialQuantityMultiplier);
 
         // Obtener usuario actual del contexto de seguridad
-        User currentUser = userService.getCurrentUser();
+        Optional<User> currentUser = Optional.ofNullable(userService.getCurrentUser());
 
         ProductionOrder productionOrder = ProductionOrder.builder()
                 .batch(batch)
@@ -95,11 +96,11 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
                 .status(OrderStatus.PENDIENTE)
                 .quantity(quantity)
                 .creationDate(OffsetDateTime.now())
-                .createdByUser(currentUser)
+                .createdByUser(currentUser.orElse(null))
                 .build();
 
         // Asignar el usuario creador al batch también
-        batch.setAssignedUser(currentUser);
+        batch.setAssignedUser(currentUser.orElse(null));
 
         ProductionOrder savedProductionOrder = productionOrderRepository.saveAndFlush(productionOrder);
 

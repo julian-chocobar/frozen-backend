@@ -1,7 +1,5 @@
 package com.enigcode.frozen_backend.materials.integration;
 
-import com.enigcode.frozen_backend.materials.model.MaterialType;
-import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;

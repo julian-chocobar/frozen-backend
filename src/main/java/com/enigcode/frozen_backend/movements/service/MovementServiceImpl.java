@@ -12,6 +12,7 @@ import com.enigcode.frozen_backend.movements.model.MovementType;
 import com.enigcode.frozen_backend.movements.model.MovementStatus;
 import com.enigcode.frozen_backend.movements.repository.MovementRepository;
 import com.enigcode.frozen_backend.notifications.service.NotificationService;
+import com.enigcode.frozen_backend.users.model.User;
 import com.enigcode.frozen_backend.users.service.UserService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -28,6 +29,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -62,13 +64,15 @@ public class MovementServiceImpl implements MovementService {
                         throw new BadRequestException("El stock actual (" + material.getStock() +
                                         ") es insuficiente para egresar " + movementCreateDTO.getStock());
 
+                Optional<User> currentUser = Optional.ofNullable(userService.getCurrentUser());
+
                 // Crear movimiento en estado PENDIENTE
                 Movement movement = Movement.builder()
                                 .type(movementCreateDTO.getType())
                                 .stock(movementCreateDTO.getStock())
                                 .reason(movementCreateDTO.getReason())
                                 .location(movementCreateDTO.getLocation())
-                                .createdByUserId(userService.getCurrentUser().getId())
+                                .createdByUserId(currentUser.orElse(null).getId())
                                 .status(MovementStatus.PENDIENTE)
                                 .material(material)
                                 .creationDate(OffsetDateTime.now(ZoneOffset.UTC))
@@ -215,7 +219,8 @@ public class MovementServiceImpl implements MovementService {
                 // Validar que si el movimiento está EN_PROCESO, solo el usuario que lo marcó
                 // puede completarlo
                 if (movement.getStatus() == MovementStatus.EN_PROCESO) {
-                        Long currentUserId = userService.getCurrentUser().getId();
+                        Optional<User> currentUser = Optional.ofNullable(userService.getCurrentUser());
+                        Long currentUserId = currentUser.orElse(null).getId();
                         if (movement.getInProgressByUserId() != null
                                         && !movement.getInProgressByUserId().equals(currentUserId)) {
                                 throw new BadRequestException(
@@ -252,7 +257,8 @@ public class MovementServiceImpl implements MovementService {
                 }
 
                 // Marcar movimiento como completado
-                movement.completeMovement(userService.getCurrentUser().getId());
+                Optional<User> currentUser = Optional.ofNullable(userService.getCurrentUser());
+                movement.completeMovement(currentUser.orElse(null).getId());
                 movement.setRealizationDate(OffsetDateTime.now(ZoneOffset.UTC));
 
                 // Guardar cambios
@@ -277,7 +283,8 @@ public class MovementServiceImpl implements MovementService {
                         throw new BadRequestException("Los movimientos completados no pueden cambiar de estado");
 
                 } else if (movement.getStatus() == MovementStatus.EN_PROCESO) {
-                        Long currentUserId = userService.getCurrentUser().getId();
+                        Optional<User> currentUser = Optional.ofNullable(userService.getCurrentUser());
+                        Long currentUserId = currentUser.orElse(null).getId();
 
                         // Validar que solo el usuario que puso en proceso pueda revertir a pendiente
                         if (movement.getInProgressByUserId() != null
@@ -298,7 +305,8 @@ public class MovementServiceImpl implements MovementService {
                         return movementMapper.toResponseDto(savedMovement);
 
                 } else if (movement.getStatus() == MovementStatus.PENDIENTE) {
-                        Long currentUserId = userService.getCurrentUser().getId();
+                        Optional<User> currentUser = Optional.ofNullable(userService.getCurrentUser());
+                        Long currentUserId = currentUser.orElse(null).getId();
 
                         // Validar que si ya hay un usuario en proceso, solo ese usuario pueda cambiar
                         // el estado
@@ -328,12 +336,13 @@ public class MovementServiceImpl implements MovementService {
         @Transactional
         public void createMovements(List<MovementInternalCreateDTO> materialsMovements) {
                 List<Movement> movements = materialsMovements.stream().map(dto -> {
+                        Optional<User> currentUser = Optional.ofNullable(userService.getCurrentUser());
                         return Movement.builder()
                                         .type(dto.getType())
                                         .stock(dto.getStock())
                                         .reason(dto.getReason())
                                         .location(dto.getLocation())
-                                        .createdByUserId(userService.getCurrentUser().getId())
+                                        .createdByUserId(currentUser.orElse(null).getId())
                                         .status(MovementStatus.PENDIENTE)
                                         .material(dto.getMaterial())
                                         .creationDate(OffsetDateTime.now(ZoneOffset.UTC))
