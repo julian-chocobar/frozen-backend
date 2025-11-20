@@ -99,6 +99,7 @@ public class SecurityConfig {
 
                 // Orígenes permitidos - usar patrones para más flexibilidad
                 configuration.setAllowedOriginPatterns(List.of(
+                                "${RED_LOCAL}",
                                 "http://localhost:3000",
                                 "http://localhost:3001",
                                 "http://127.0.0.1:3000",
@@ -128,7 +129,9 @@ public class SecurityConfig {
                                 "Access-Control-Allow-Origin",
                                 "Access-Control-Allow-Credentials",
                                 "Cache-Control",
-                                "Content-Type"));
+                                "Content-Type",
+                                "X-Accel-Buffering",
+                                "Connection"));
 
                 // Permitir credenciales (necesario para SSE y autenticación basada en cookies)
                 configuration.setAllowCredentials(true);
