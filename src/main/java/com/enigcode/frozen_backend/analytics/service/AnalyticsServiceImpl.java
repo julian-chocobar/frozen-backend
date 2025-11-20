@@ -3,6 +3,7 @@ package com.enigcode.frozen_backend.analytics.service;
 import com.enigcode.frozen_backend.analytics.DTO.MonthlyTotalDTO;
 import com.enigcode.frozen_backend.analytics.DTO.MonthlyTotalProjectionDTO;
 import com.enigcode.frozen_backend.analytics.mapper.AnalyticsMapper;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository;
 import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
 import jakarta.transaction.Transactional;
@@ -57,6 +58,28 @@ public class AnalyticsServiceImpl implements AnalyticsService{
         List<MonthlyTotalProjectionDTO> results =
                 productionMaterialRepository.getMonthlyMaterialConsumption(startODT, endODT, materialId);
 
+        return analyticsMapper.toMonthlyTotalDTOList(results);
+    }
+
+    @Transactional
+    @Override
+    public List<MonthlyTotalDTO> getMonthlyWaste(LocalDate startDate, LocalDate endDate, Phase phase, boolean movementOnly) {
+        if (startDate == null || endDate == null) {
+            endDate = LocalDate.now();
+            startDate = endDate.minusYears(1);
+        }
+
+        OffsetDateTime startODT = startDate.atStartOfDay().atOffset(BA_OFFSET);
+        OffsetDateTime endODT = endDate.atTime(LocalTime.MAX).atOffset(BA_OFFSET);
+
+        if(movementOnly){
+            List<MonthlyTotalProjectionDTO> results =
+                    productionPhaseRepository.getMonthlyMovementWaste(startODT,endODT);
+            return analyticsMapper.toMonthlyTotalDTOList(results);
+        }
+
+        List<MonthlyTotalProjectionDTO> results =
+                productionPhaseRepository.getMonthlyWaste(startODT,endODT,phase);
         return analyticsMapper.toMonthlyTotalDTOList(results);
     }
 }

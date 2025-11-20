@@ -92,8 +92,8 @@ public class BatchServiceImpl implements BatchService {
             return ProductionPhase.builder()
                     .status(ProductionPhaseStatus.PENDIENTE)
                     .phase(productPhase.getPhase())
-                    .standardInput(roundToDecimals(productPhase.getInput() * quantityMultiplier,6))
-                    .standardOutput(roundToDecimals(productPhase.getOutput() * quantityMultiplier,6))
+                    .standardInput(roundToDecimals(productPhase.getInput() * quantityMultiplier,2))
+                    .standardOutput(roundToDecimals(productPhase.getOutput() * quantityMultiplier,2))
                     .outputUnit(productPhase.getOutputUnit())
                     .build();
         }).toList();

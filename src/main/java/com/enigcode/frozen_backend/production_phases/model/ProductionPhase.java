@@ -63,6 +63,9 @@ public class ProductionPhase {
     @Column(name = "product_waste")
     private Double productWaste;
 
+    @Column(name = "movement_waste")
+    private Double movementWaste;
+
     @Column(name = "start_date")
     private OffsetDateTime startDate;
 

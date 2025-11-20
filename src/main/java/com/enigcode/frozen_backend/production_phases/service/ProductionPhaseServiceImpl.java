@@ -44,6 +44,20 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
         ProductionPhase updatedProductionPhase = productionPhaseMapper.partialUpdate(dto, productionPhase);
         updatedProductionPhase.setStatus(ProductionPhaseStatus.BAJO_REVISION);
 
+        ProductionPhase previousPhase =
+                productionPhaseRepository.findPreviousPhase(
+                        productionPhase.getBatch(),
+                        productionPhase.getPhaseOrder());
+
+        double movementWaste = 0.0;
+        if(previousPhase != null){
+            double expectedInput = (previousPhase.getOutput() * previousPhase.getStandardInput()) / previousPhase.getStandardOutput();
+            movementWaste = expectedInput - updatedProductionPhase.getInput();
+        }
+
+        if(movementWaste < 0) movementWaste = 0.0;
+        updatedProductionPhase.setMovementWaste(movementWaste);
+
         ProductionPhase savedProductionPhase = productionPhaseRepository.save(updatedProductionPhase);
 
         // Notificar a operarios de calidad que hay una fase bajo revisión

@@ -2,6 +2,7 @@ package com.enigcode.frozen_backend.analytics.controller;
 
 import com.enigcode.frozen_backend.analytics.DTO.MonthlyTotalDTO;
 import com.enigcode.frozen_backend.analytics.service.AnalyticsService;
+import com.enigcode.frozen_backend.product_phases.model.Phase;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -45,6 +46,20 @@ public class AnalyticsController {
             @RequestParam(required = false) Long materialId
     ) {
         List<MonthlyTotalDTO> dtoList = analyticsService.getMonthlyMaterialConsumption(startDate, endDate, materialId);
+        return new ResponseEntity<>(dtoList, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Ver desperdicios por mes",
+            description = "Devuelve una lista de la suma de los desperdicios generados por mes del ultimo año (default)" +
+                    " y se puede filtrar por fechas y fase")
+    @GetMapping("/monthly-waste")
+    public ResponseEntity<List<MonthlyTotalDTO>> getMonthlyWaste(
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) Phase phase,
+            @RequestParam(defaultValue = "false") boolean transferOnly
+    ) {
+        List<MonthlyTotalDTO> dtoList = analyticsService.getMonthlyWaste(startDate, endDate, phase, transferOnly);
         return new ResponseEntity<>(dtoList, HttpStatus.OK);
     }
 }
