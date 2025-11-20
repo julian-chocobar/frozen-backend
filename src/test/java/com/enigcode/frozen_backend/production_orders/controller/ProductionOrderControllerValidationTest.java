@@ -12,7 +12,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -36,11 +36,11 @@ class ProductionOrderControllerValidationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private ProductionOrderService productionOrderService;
 
     // SecurityProperties is required by the test slices in this project
-    @MockBean
+    @MockitoBean
     private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 
     private String buildCreateJson(OffsetDateTime plannedDate) throws Exception {

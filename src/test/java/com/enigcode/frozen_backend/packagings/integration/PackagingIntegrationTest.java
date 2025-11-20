@@ -35,7 +35,11 @@ class PackagingIntegrationTest {
     @Autowired
     private MaterialRepository materialRepository;
 
+    
+    @SuppressWarnings("unused")
     private static final String USER = "test";
+
+    @SuppressWarnings("unused")
     private static final String PASS = "test";
 
     private Long envaseMaterialId;

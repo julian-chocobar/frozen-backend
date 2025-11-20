@@ -22,7 +22,6 @@ import com.enigcode.frozen_backend.production_orders.Service.ProductionOrderServ
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
 import com.enigcode.frozen_backend.production_materials.model.ProductionMaterial;
-import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.recipes.model.Recipe;
@@ -30,6 +29,7 @@ import com.enigcode.frozen_backend.recipes.service.RecipeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -307,7 +307,7 @@ class ProductionOrderServiceImplTest {
 
                 // Assert - Verify the material reservation
                 @SuppressWarnings("unchecked")
-                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = ArgumentCaptor.forClass((Class) List.class);
+                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = (ArgumentCaptor<List<MovementSimpleCreateDTO>>) ArgumentCaptor.forClass((Class<?>) List.class);
                 verify(movementService).createReserveOrReturn(eq(MovementType.RESERVA), movementsCaptor.capture());
 
                 List<MovementSimpleCreateDTO> reservedMaterials = movementsCaptor.getValue();
@@ -483,7 +483,7 @@ class ProductionOrderServiceImplTest {
 
                 // Assert - Verify the material confirmation
                 @SuppressWarnings("unchecked")
-                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = ArgumentCaptor.forClass((Class) List.class);
+                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = (ArgumentCaptor<List<MovementSimpleCreateDTO>>) ArgumentCaptor.forClass((Class<?>) List.class);
                 verify(movementService).confirmReservation(movementsCaptor.capture());
 
                 List<MovementSimpleCreateDTO> confirmedMaterials = movementsCaptor.getValue();
@@ -721,7 +721,7 @@ class ProductionOrderServiceImplTest {
 
                 // Assert - Verify the material return
                 @SuppressWarnings("unchecked")
-                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = ArgumentCaptor.forClass((Class) List.class);
+                ArgumentCaptor<List<MovementSimpleCreateDTO>> movementsCaptor = (ArgumentCaptor<List<MovementSimpleCreateDTO>>) ArgumentCaptor.forClass((Class<?>) List.class);
                 verify(movementService).createReserveOrReturn(eq(MovementType.DEVUELTO), movementsCaptor.capture());
 
                 List<MovementSimpleCreateDTO> returnedMaterials = movementsCaptor.getValue();
@@ -793,7 +793,7 @@ class ProductionOrderServiceImplTest {
                 ProductionOrderResponseDTO responseDTO1 = new ProductionOrderResponseDTO();
                 ProductionOrderResponseDTO responseDTO2 = new ProductionOrderResponseDTO();
 
-                when(productionOrderRepository.findAll(any(Specification.class), any(Pageable.class)))
+                when(productionOrderRepository.findAll(ArgumentMatchers.<Specification<ProductionOrder>>any(), any(Pageable.class)))
                                 .thenReturn(ordersPage);
                 when(productionOrderMapper.toResponseDTO(order1)).thenReturn(responseDTO1);
                 when(productionOrderMapper.toResponseDTO(order2)).thenReturn(responseDTO2);
@@ -806,7 +806,7 @@ class ProductionOrderServiceImplTest {
                 assertEquals(2, result.getTotalElements());
                 assertSame(responseDTO1, result.getContent().get(0));
                 assertSame(responseDTO2, result.getContent().get(1));
-                verify(productionOrderRepository).findAll(any(Specification.class), any(Pageable.class));
+                verify(productionOrderRepository).findAll(ArgumentMatchers.<Specification<ProductionOrder>>any(), any(Pageable.class));
         }
 
         @Test
@@ -817,7 +817,7 @@ class ProductionOrderServiceImplTest {
 
                 Page<ProductionOrder> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-                when(productionOrderRepository.findAll(any(Specification.class), any(Pageable.class)))
+                when(productionOrderRepository.findAll(ArgumentMatchers.<Specification<ProductionOrder>>any(), any(Pageable.class)))
                                 .thenReturn(emptyPage);
 
                 // Act
@@ -826,6 +826,6 @@ class ProductionOrderServiceImplTest {
                 // Assert
                 assertEquals(0, result.getContent().size());
                 assertEquals(0, result.getTotalElements());
-                verify(productionOrderRepository).findAll(any(Specification.class), any(Pageable.class));
+                verify(productionOrderRepository).findAll(ArgumentMatchers.<Specification<ProductionOrder>>any(), any(Pageable.class));
         }
 }
