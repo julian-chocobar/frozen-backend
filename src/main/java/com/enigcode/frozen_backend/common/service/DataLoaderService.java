@@ -37,7 +37,11 @@ import com.enigcode.frozen_backend.system_configurations.DTO.WorkingDayUpdateDTO
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
 
 import java.util.List;
 import java.util.Set;
@@ -66,6 +70,7 @@ public class DataLoaderService {
         private final SectorService sectorService;
         private final SystemConfigurationService systemConfigurationService;
         private final QualityParameterService qualityParameterService;
+        private final DataSource dataSource;
 
         // IDs de materiales creados para usar en recipes
         private Long maltaPaleId;
@@ -173,6 +178,12 @@ public class DataLoaderService {
                                 log.info("Iniciando carga de parámetros de calidad...");
                                 loadQualityParameters();
                                 log.info("Parámetros de calidad cargados exitosamente.");
+
+                                // Paso 11: Crear órdenes de producción y lotes de ejemplo usando script SQL
+                                log.info("Iniciando carga de órdenes de producción y lotes de ejemplo...");
+                                loadSampleProductionOrdersAndBatchesFromSQL();
+                                log.info("Órdenes de producción y lotes cargados exitosamente.");
+
                                 log.info("Datos de ejemplo cargados exitosamente siguiendo reglas de negocio!");
 
                         } catch (Exception e) {
@@ -1225,6 +1236,37 @@ public class DataLoaderService {
                         return value;
                 }
                 return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
+        }
+
+        /**
+         * Carga datos de ejemplo de órdenes de producción y lotes usando un script SQL
+         * Esto evita problemas de transacciones y timeouts al procesar múltiples órdenes
+         */
+        private void loadSampleProductionOrdersAndBatchesFromSQL() {
+                if (productionOrderRepository.count() > 0) {
+                        log.info("Ya existen órdenes de producción, omitiendo carga de datos de ejemplo.");
+                        return;
+                }
+
+                try (Connection connection = dataSource.getConnection()) {
+                        log.info("Ejecutando script SQL para cargar órdenes y lotes de ejemplo...");
+                        
+                        // Leer el script completo como una sola cadena para evitar problemas con delimitadores
+                        ClassPathResource resource = new ClassPathResource("sample-production-orders.sql");
+                        String sqlScript = new String(resource.getInputStream().readAllBytes(), 
+                                java.nio.charset.StandardCharsets.UTF_8);
+                        
+                        // Ejecutar como una sola statement
+                        try (java.sql.Statement statement = connection.createStatement()) {
+                                statement.execute(sqlScript);
+                        }
+                        
+                        log.info("Script SQL ejecutado exitosamente.");
+                } catch (Exception e) {
+                        log.error("Error ejecutando script SQL para cargar órdenes y lotes: {}", 
+                                e.getMessage(), e);
+                        throw new RuntimeException("Error cargando órdenes y lotes desde SQL: " + e.getMessage(), e);
+                }
         }
 
 }
