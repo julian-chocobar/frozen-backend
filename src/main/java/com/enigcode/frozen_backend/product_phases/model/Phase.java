@@ -3,8 +3,6 @@ package com.enigcode.frozen_backend.product_phases.model;
 import lombok.Getter;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 @Getter

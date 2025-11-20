@@ -23,7 +23,6 @@ import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDT
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhaseStatus;
 import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
-import com.enigcode.frozen_backend.production_phases.service.ProductionPhaseService;
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.sectors.model.Sector;
 import com.enigcode.frozen_backend.sectors.service.SectorService;
@@ -176,7 +175,7 @@ public class BatchServiceImpl implements BatchService {
 
         this.suspendProductionPhases(remainingProductionPhases);
 
-        Batch savedBatch = batchRepository.save(batch);
+        batchRepository.save(batch);
     }
 
     @Override

@@ -101,6 +101,7 @@ public class DataLoaderService {
         @SuppressWarnings("unused")
         private Long gerentePlantaId;
 
+        @SuppressWarnings("unused")
         private Long supervisorProduccionId;
         private Long supervisorCalidadId;
         private Long supervisorAlmacenId;
