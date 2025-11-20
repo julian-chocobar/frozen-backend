@@ -362,6 +362,9 @@ public class BatchServiceImpl implements BatchService {
 
     @Override
     public void completeBatch(Batch batch) {
+        ProductionPhase lastPhase = batch.getPhases().get(batch.getPhases().size() - 1);
+        Integer finalQuantity = calculateBatchQuantity(lastPhase.getOutput(), batch.getPackaging().getQuantity());
+        batch.setFinalQuantity(finalQuantity);
         batch.setStatus(BatchStatus.COMPLETADO);
         batch.setCompletedDate(OffsetDateTime.now());
 

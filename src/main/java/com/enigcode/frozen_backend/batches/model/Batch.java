@@ -54,6 +54,9 @@ public class Batch {
     @Min(value = 0)
     private Integer quantity;
 
+    @Min(value = 0)
+    private Integer finalQuantity;
+
     @Column(name = "creation_date")
     @NotNull
     private OffsetDateTime creationDate;
