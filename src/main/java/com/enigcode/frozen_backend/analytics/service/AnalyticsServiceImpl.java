@@ -1,8 +1,11 @@
 package com.enigcode.frozen_backend.analytics.service;
 
+import com.enigcode.frozen_backend.analytics.DTO.DashboardStatsDTO;
+import com.enigcode.frozen_backend.analytics.DTO.GeneralDashboardProjectionDTO;
 import com.enigcode.frozen_backend.analytics.DTO.MonthlyTotalDTO;
 import com.enigcode.frozen_backend.analytics.DTO.MonthlyTotalProjectionDTO;
 import com.enigcode.frozen_backend.analytics.mapper.AnalyticsMapper;
+import com.enigcode.frozen_backend.analytics.repository.AnalyticsRepository;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository;
 import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
@@ -24,6 +27,7 @@ public class AnalyticsServiceImpl implements AnalyticsService{
 
     private final ProductionPhaseRepository productionPhaseRepository;
     private final ProductionMaterialRepository productionMaterialRepository;
+    private final AnalyticsRepository analyticsRepository;
     private final AnalyticsMapper analyticsMapper;
 
 
@@ -81,5 +85,16 @@ public class AnalyticsServiceImpl implements AnalyticsService{
         List<MonthlyTotalProjectionDTO> results =
                 productionPhaseRepository.getMonthlyWaste(startODT,endODT,phase);
         return analyticsMapper.toMonthlyTotalDTOList(results);
+    }
+
+    @Transactional
+    @Override
+    public DashboardStatsDTO getDashboardStats() {
+        OffsetDateTime end = OffsetDateTime.now();
+        OffsetDateTime start = end.minusMonths(1);
+
+        GeneralDashboardProjectionDTO dto = analyticsRepository.getDashboardData(start, end);
+
+        return  analyticsMapper.toDashboardStatsDTO(dto);
     }
 }

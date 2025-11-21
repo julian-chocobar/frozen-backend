@@ -1,5 +1,6 @@
 package com.enigcode.frozen_backend.analytics.controller;
 
+import com.enigcode.frozen_backend.analytics.DTO.DashboardStatsDTO;
 import com.enigcode.frozen_backend.analytics.DTO.MonthlyTotalDTO;
 import com.enigcode.frozen_backend.analytics.service.AnalyticsService;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
@@ -62,4 +63,13 @@ public class AnalyticsController {
         List<MonthlyTotalDTO> dtoList = analyticsService.getMonthlyWaste(startDate, endDate, phase, transferOnly);
         return new ResponseEntity<>(dtoList, HttpStatus.OK);
     }
+
+    @Operation(summary = "Ver resumen del ultimo mes",
+            description = "Devuelve diferentes datos relacionados al ultimo mes")
+    @GetMapping("/dashboard/monthly")
+    public ResponseEntity<DashboardStatsDTO> getMonthlyDashboard() {
+        DashboardStatsDTO dto =  analyticsService.getDashboardStats();
+        return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
+
 }

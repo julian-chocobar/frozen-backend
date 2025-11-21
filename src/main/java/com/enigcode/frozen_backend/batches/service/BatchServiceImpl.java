@@ -155,6 +155,7 @@ public class BatchServiceImpl implements BatchService {
                 .orElseThrow(() -> new ResourceNotFoundException("No se encontró lote con id " + id));
 
         batch.setStatus(BatchStatus.CANCELADO);
+        batch.setCompletedDate(OffsetDateTime.now());
 
         List<ProductionPhase> remainingProductionPhases = batch.getPhases().stream()
                 .filter(productionPhase -> productionPhase.getStatus().equals(ProductionPhaseStatus.PENDIENTE))
