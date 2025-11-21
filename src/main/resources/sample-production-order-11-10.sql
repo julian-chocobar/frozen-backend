@@ -1,20 +1,20 @@
--- Script SQL para cargar datos de ejemplo de orden de producción 2 (Agosto 10, 2025)
+-- Script SQL para cargar datos de ejemplo de orden de producción 5 (Noviembre 18-20, 2025)
 -- Este script asume que ya existen: productos, packagings, usuarios, sectores, quality_parameters y recipes
--- Orden 2: Agosto 10, 2025 (CON DESPERDICIO - 95% eficiencia)
+-- Orden 5: Noviembre 18-20, 2025 (SIN DESPERDICIO - eficiencia 100%, producción rápida en 2 días)
 
 DO $$
 DECLARE
     -- Variables para IDs
-    batch2_id BIGINT;
-    order2_id BIGINT;
-    phase2_1_id BIGINT; -- MOLIENDA
-    phase2_2_id BIGINT; -- MACERACION
-    phase2_3_id BIGINT; -- FILTRACION
-    phase2_4_id BIGINT; -- COCCION
-    phase2_5_id BIGINT; -- FERMENTACION
-    phase2_6_id BIGINT; -- MADURACION
-    phase2_7_id BIGINT; -- GASIFICACION
-    phase2_8_id BIGINT; -- ENVASADO
+    batch5_id BIGINT;
+    order5_id BIGINT;
+    phase5_1_id BIGINT; -- MOLIENDA
+    phase5_2_id BIGINT; -- MACERACION
+    phase5_3_id BIGINT; -- FILTRACION
+    phase5_4_id BIGINT; -- COCCION
+    phase5_5_id BIGINT; -- FERMENTACION
+    phase5_6_id BIGINT; -- MADURACION
+    phase5_7_id BIGINT; -- GASIFICACION
+    phase5_8_id BIGINT; -- ENVASADO
     
     -- IDs de referencias
     product2_id BIGINT;
@@ -63,35 +63,35 @@ BEGIN
          END
          FROM products p, packagings pkg
          WHERE p.id = product2_id AND pkg.id = packaging2_id),
-        '2025-08-10 09:00:00'::timestamptz,
-        '2025-08-10 09:00:00'::timestamptz,
-        '2025-08-10 09:00:00'::timestamptz,
-        '2025-09-09 09:00:00'::timestamptz,
-        '2025-09-09 09:00:00'::timestamptz
-    ) RETURNING id INTO batch2_id;
+        '2025-11-18 09:00:00'::timestamptz,
+        '2025-11-18 09:00:00'::timestamptz,
+        '2025-11-18 09:00:00'::timestamptz,
+        '2025-11-20 20:00:00'::timestamptz,
+        '2025-11-20 20:00:00'::timestamptz
+    ) RETURNING id INTO batch5_id;
     
-    UPDATE batches SET code = 'LOT-' || batch2_id WHERE id = batch2_id;
+    UPDATE batches SET code = 'LOT-' || batch5_id WHERE id = batch5_id;
     
     -- Production Order 1
     INSERT INTO production_orders (id, id_batch, id_product, status, quantity, creation_date, validation_date, created_by_user_id, approved_by_user_id)
     VALUES (
         nextval('production_orders_seq'),
-        batch2_id,
+        batch5_id,
         product2_id,
         'APROBADA',
         (SELECT standard_quantity FROM products WHERE id = product2_id),
-        '2025-08-10 09:00:00'::timestamptz,
-        '2025-08-10 09:00:00'::timestamptz,
+        '2025-11-18 09:00:00'::timestamptz,
+        '2025-11-18 09:00:00'::timestamptz,
         supervisor_prod_id,
         supervisor_prod_id
-    ) RETURNING id INTO order2_id;
+    ) RETURNING id INTO order5_id;
     
     -- Calcular multiplicador
     SELECT po.quantity / p.standard_quantity INTO multiplier
     FROM production_orders po, products p
-    WHERE po.id = order2_id AND p.id = product2_id;
+    WHERE po.id = order5_id AND p.id = product2_id;
     
-    efficiency_factor := 0.95; -- Sin desperdicio
+    efficiency_factor := 1.0; -- Sin desperdicio
     
     -- Production Phase 1.1: MOLIENDA
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
@@ -102,18 +102,19 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'MOLIENDA' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
-        batch2_id, sector_id, 'MOLIENDA', phase_order_val, 'COMPLETADA',
+        batch5_id, sector_id, 'MOLIENDA', phase_order_val, 'COMPLETADA',
         ROUND(current_input * 1000.0) / 1000.0,
         ROUND(current_output * 1000.0) / 1000.0,
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
-        '2025-08-10 09:00:00'::timestamptz,
-        '2025-08-10 11:00:00'::timestamptz
-    ) RETURNING id INTO phase2_1_id;
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        '2025-11-18 09:00:00'::timestamptz,
+        '2025-11-18 11:00:00'::timestamptz
+    ) RETURNING id INTO phase5_1_id;
     
     -- Production Materials para MOLIENDA
     FOR recipe_material_id, recipe_quantity IN 
@@ -126,42 +127,44 @@ BEGIN
         VALUES (
             nextval('production_materials_seq'),
             recipe_material_id,
-            phase2_1_id,
+            phase5_1_id,
             ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
-            '2025-08-10 09:00:00'::timestamptz
+            '2025-11-18 09:00:00'::timestamptz
         );
     END LOOP;
     
     -- Quality parameters para MOLIENDA
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'MOLIENDA' AND name = 'Granulometria';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_1_id, quality_param_id, '350 μm', true, true, 1, '2025-08-10 09:00:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_1_id, quality_param_id, '350 μm', true, true, 1, '2025-11-18 09:00:00'::timestamptz);
     
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'MOLIENDA' AND name = 'Humedad Malta';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_1_id, quality_param_id, '4.5 %', true, true, 1, '2025-08-10 09:00:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_1_id, quality_param_id, '4.5 %', true, true, 1, '2025-11-18 09:00:00'::timestamptz);
     
     -- Production Phase 1.2: MACERACION
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
     FROM product_phases WHERE id_product = product2_id AND phase = 'MACERACION';
     
-    current_input := current_output;
-    current_output := current_input * (standard_output / standard_input) * efficiency_factor;
+    -- MACERACION inicia cadena de litros (no usar output de MOLIENDA que está en KG)
+    current_input := standard_input * multiplier;
+    current_output := standard_output * multiplier * efficiency_factor;
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'MACERACION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
-        batch2_id, sector_id, 'MACERACION', phase_order_val, 'COMPLETADA',
+        batch5_id, sector_id, 'MACERACION', phase_order_val, 'COMPLETADA',
         ROUND(current_input * 1000.0) / 1000.0,
         ROUND(current_output * 1000.0) / 1000.0,
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
-        '2025-08-10 11:00:00'::timestamptz,
-        '2025-08-10 16:00:00'::timestamptz
-    ) RETURNING id INTO phase2_2_id;
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        '2025-11-18 11:00:00'::timestamptz,
+        '2025-11-18 16:00:00'::timestamptz
+    ) RETURNING id INTO phase5_2_id;
     
     -- Production Materials para MACERACION
     FOR recipe_material_id, recipe_quantity IN 
@@ -174,20 +177,20 @@ BEGIN
         VALUES (
             nextval('production_materials_seq'),
             recipe_material_id,
-            phase2_2_id,
+            phase5_2_id,
             ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
-            '2025-08-10 11:00:00'::timestamptz
+            '2025-11-18 11:00:00'::timestamptz
         );
     END LOOP;
     
     -- Quality parameters para MACERACION
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'MACERACION' AND name = 'Temp Macerac';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_2_id, quality_param_id, '66 °C', true, true, 1, '2025-08-10 11:00:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_2_id, quality_param_id, '66 °C', true, true, 1, '2025-11-18 11:00:00'::timestamptz);
     
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'MACERACION' AND name = 'pH Macerac';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_2_id, quality_param_id, '5.4 pH', true, true, 1, '2025-08-10 11:00:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_2_id, quality_param_id, '5.4 pH', true, true, 1, '2025-11-18 11:00:00'::timestamptz);
     
     -- Production Phase 1.3: FILTRACION
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
@@ -198,18 +201,19 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'FILTRACION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
-        batch2_id, sector_id, 'FILTRACION', phase_order_val, 'COMPLETADA',
+        batch5_id, sector_id, 'FILTRACION', phase_order_val, 'COMPLETADA',
         ROUND(current_input * 1000.0) / 1000.0,
         ROUND(current_output * 1000.0) / 1000.0,
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
-        '2025-08-10 16:00:00'::timestamptz,
-        '2025-08-10 18:00:00'::timestamptz
-    ) RETURNING id INTO phase2_3_id;
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        '2025-11-18 16:00:00'::timestamptz,
+        '2025-11-18 18:00:00'::timestamptz
+    ) RETURNING id INTO phase5_3_id;
     
     -- Production Materials para FILTRACION
     FOR recipe_material_id, recipe_quantity IN 
@@ -222,20 +226,20 @@ BEGIN
         VALUES (
             nextval('production_materials_seq'),
             recipe_material_id,
-            phase2_3_id,
+            phase5_3_id,
             ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
-            '2025-08-10 16:00:00'::timestamptz
+            '2025-11-18 16:00:00'::timestamptz
         );
     END LOOP;
     
     -- Quality parameters para FILTRACION
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'FILTRACION' AND name = 'Claridad';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_3_id, quality_param_id, '15 NTU', true, true, 1, '2025-08-10 16:00:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_3_id, quality_param_id, '15 NTU', true, true, 1, '2025-11-18 16:00:00'::timestamptz);
     
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'FILTRACION' AND name = 'Temp Filtrado';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_3_id, quality_param_id, '78 °C', true, true, 1, '2025-08-10 16:00:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_3_id, quality_param_id, '78 °C', true, true, 1, '2025-11-18 16:00:00'::timestamptz);
     
     -- Production Phase 1.4: COCCION
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
@@ -246,18 +250,19 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'COCCION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
-        batch2_id, sector_id, 'COCCION', phase_order_val, 'COMPLETADA',
+        batch5_id, sector_id, 'COCCION', phase_order_val, 'COMPLETADA',
         ROUND(current_input * 1000.0) / 1000.0,
         ROUND(current_output * 1000.0) / 1000.0,
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
-        '2025-08-10 18:00:00'::timestamptz,
-        '2025-08-10 20:30:00'::timestamptz
-    ) RETURNING id INTO phase2_4_id;
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        '2025-11-18 18:00:00'::timestamptz,
+        '2025-11-18 20:30:00'::timestamptz
+    ) RETURNING id INTO phase5_4_id;
     
     -- Production Materials para COCCION
     FOR recipe_material_id, recipe_quantity IN 
@@ -270,20 +275,20 @@ BEGIN
         VALUES (
             nextval('production_materials_seq'),
             recipe_material_id,
-            phase2_4_id,
+            phase5_4_id,
             ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
-            '2025-08-10 18:00:00'::timestamptz
+            '2025-11-18 18:00:00'::timestamptz
         );
     END LOOP;
     
     -- Quality parameters para COCCION
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'COCCION' AND name = 'Plato Final';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_4_id, quality_param_id, '12.5 °P', true, true, 1, '2025-08-10 18:00:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_4_id, quality_param_id, '12.5 °P', true, true, 1, '2025-11-18 18:00:00'::timestamptz);
     
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'COCCION' AND name = 'Tiempo Lupulo';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_4_id, quality_param_id, '10 min', true, true, 1, '2025-08-10 18:00:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_4_id, quality_param_id, '10 min', true, true, 1, '2025-11-18 18:00:00'::timestamptz);
     
     -- Production Phase 1.5: FERMENTACION
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
@@ -294,18 +299,19 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'FERMENTACION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
-        batch2_id, sector_id, 'FERMENTACION', phase_order_val, 'COMPLETADA',
+        batch5_id, sector_id, 'FERMENTACION', phase_order_val, 'COMPLETADA',
         ROUND(current_input * 1000.0) / 1000.0,
         ROUND(current_output * 1000.0) / 1000.0,
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
-        '2025-08-10 20:30:00'::timestamptz,
-        '2025-08-17 20:30:00'::timestamptz
-    ) RETURNING id INTO phase2_5_id;
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        '2025-11-18 20:30:00'::timestamptz,
+        '2025-11-19 08:00:00'::timestamptz
+    ) RETURNING id INTO phase5_5_id;
     
     -- Production Materials para FERMENTACION
     FOR recipe_material_id, recipe_quantity IN 
@@ -318,20 +324,20 @@ BEGIN
         VALUES (
             nextval('production_materials_seq'),
             recipe_material_id,
-            phase2_5_id,
+            phase5_5_id,
             ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
-            '2025-08-10 20:30:00'::timestamptz
+            '2025-11-18 20:30:00'::timestamptz
         );
     END LOOP;
     
     -- Quality parameters para FERMENTACION
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'FERMENTACION' AND name = 'Temp Ferm';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_5_id, quality_param_id, '19 °C', true, true, 1, '2025-08-10 20:30:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_5_id, quality_param_id, '19 °C', true, true, 1, '2025-11-18 20:30:00'::timestamptz);
     
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'FERMENTACION' AND name = 'Densidad Ferm';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_5_id, quality_param_id, '1.010 SG', true, true, 1, '2025-08-10 20:30:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_5_id, quality_param_id, '1.010 SG', true, true, 1, '2025-11-18 20:30:00'::timestamptz);
     
     -- Production Phase 1.6: MADURACION
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
@@ -342,18 +348,19 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'MADURACION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
-        batch2_id, sector_id, 'MADURACION', phase_order_val, 'COMPLETADA',
+        batch5_id, sector_id, 'MADURACION', phase_order_val, 'COMPLETADA',
         ROUND(current_input * 1000.0) / 1000.0,
         ROUND(current_output * 1000.0) / 1000.0,
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
-        '2025-08-17 20:30:00'::timestamptz,
-        '2025-08-27 20:30:00'::timestamptz
-    ) RETURNING id INTO phase2_6_id;
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        '2025-11-19 08:00:00'::timestamptz,
+        '2025-11-19 14:00:00'::timestamptz
+    ) RETURNING id INTO phase5_6_id;
     
     -- Production Materials para MADURACION
     FOR recipe_material_id, recipe_quantity IN 
@@ -366,20 +373,20 @@ BEGIN
         VALUES (
             nextval('production_materials_seq'),
             recipe_material_id,
-            phase2_6_id,
+            phase5_6_id,
             ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
-            '2025-08-17 20:30:00'::timestamptz
+            '2025-11-19 08:00:00'::timestamptz
         );
     END LOOP;
     
     -- Quality parameters para MADURACION
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'MADURACION' AND name = 'Diacetilo';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_6_id, quality_param_id, '0.08 ppm', true, true, 1, '2025-08-17 20:30:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_6_id, quality_param_id, '0.08 ppm', true, true, 1, '2025-11-19 08:00:00'::timestamptz);
     
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'MADURACION' AND name = 'Turbidez';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_6_id, quality_param_id, '5 EBC', true, true, 1, '2025-08-17 20:30:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_6_id, quality_param_id, '5 EBC', true, true, 1, '2025-11-19 08:00:00'::timestamptz);
     
     -- Production Phase 1.7: GASIFICACION
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
@@ -390,18 +397,19 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'GASIFICACION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
-        batch2_id, sector_id, 'GASIFICACION', phase_order_val, 'COMPLETADA',
+        batch5_id, sector_id, 'GASIFICACION', phase_order_val, 'COMPLETADA',
         ROUND(current_input * 1000.0) / 1000.0,
         ROUND(current_output * 1000.0) / 1000.0,
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
-        '2025-08-27 20:30:00'::timestamptz,
-        '2025-08-28 00:30:00'::timestamptz
-    ) RETURNING id INTO phase2_7_id;
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        '2025-11-19 14:00:00'::timestamptz,
+        '2025-11-19 17:00:00'::timestamptz
+    ) RETURNING id INTO phase5_7_id;
     
     -- Production Materials para GASIFICACION
     FOR recipe_material_id, recipe_quantity IN 
@@ -414,20 +422,20 @@ BEGIN
         VALUES (
             nextval('production_materials_seq'),
             recipe_material_id,
-            phase2_7_id,
+            phase5_7_id,
             ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
-            '2025-08-27 20:30:00'::timestamptz
+            '2025-11-19 14:00:00'::timestamptz
         );
     END LOOP;
     
     -- Quality parameters para GASIFICACION
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'GASIFICACION' AND name = 'CO2 Volumen';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_7_id, quality_param_id, '2.4 vol CO2', true, true, 1, '2025-08-27 20:30:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_7_id, quality_param_id, '2.4 vol CO2', true, true, 1, '2025-11-19 14:00:00'::timestamptz);
     
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'GASIFICACION' AND name = 'Presion Tank';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_7_id, quality_param_id, '18 psi', true, true, 1, '2025-08-27 20:30:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_7_id, quality_param_id, '18 psi', true, true, 1, '2025-11-19 14:00:00'::timestamptz);
     
     -- Production Phase 1.8: ENVASADO
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
@@ -438,18 +446,19 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'ENVASADO' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
-        batch2_id, sector_id, 'ENVASADO', phase_order_val, 'COMPLETADA',
+        batch5_id, sector_id, 'ENVASADO', phase_order_val, 'COMPLETADA',
         ROUND(current_input * 1000.0) / 1000.0,
         ROUND(current_output * 1000.0) / 1000.0,
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
-        '2025-08-28 00:30:00'::timestamptz,
-        '2025-08-28 08:30:00'::timestamptz
-    ) RETURNING id INTO phase2_8_id;
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        '2025-11-19 17:00:00'::timestamptz,
+        '2025-11-20 20:00:00'::timestamptz
+    ) RETURNING id INTO phase5_8_id;
     
     -- Production Materials para ENVASADO
     FOR recipe_material_id, recipe_quantity IN 
@@ -462,22 +471,22 @@ BEGIN
         VALUES (
             nextval('production_materials_seq'),
             recipe_material_id,
-            phase2_8_id,
+            phase5_8_id,
             ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
-            '2025-08-28 00:30:00'::timestamptz
+            '2025-11-19 17:00:00'::timestamptz
         );
     END LOOP;
     
     -- Quality parameters para ENVASADO
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'ENVASADO' AND name = 'Sellado';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_8_id, quality_param_id, 'OK', true, true, 1, '2025-08-28 00:30:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_8_id, quality_param_id, 'OK', true, true, 1, '2025-11-19 17:00:00'::timestamptz);
     
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'ENVASADO' AND name = 'Etiquetado';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase2_8_id, quality_param_id, 'OK', true, true, 1, '2025-08-28 00:30:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase5_8_id, quality_param_id, 'OK', true, true, 1, '2025-11-19 17:00:00'::timestamptz);
     
-    RAISE NOTICE 'Orden de producción 2 (Agosto) cargada exitosamente';
+    RAISE NOTICE 'Orden de producción 5 (Noviembre) cargada exitosamente';
     
     -- Actualizar secuencias
     PERFORM setval('batches_seq', COALESCE((SELECT MAX(id) FROM batches), 1), true);

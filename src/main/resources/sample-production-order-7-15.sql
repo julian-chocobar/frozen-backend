@@ -1,6 +1,7 @@
 -- Script SQL para cargar datos de ejemplo de orden de producción 1 (Julio 15, 2025)
 -- Este script asume que ya existen: productos, packagings, usuarios, sectores, quality_parameters y recipes
 -- Orden 1: Julio 15, 2025 (SIN DESPERDICIO - eficiencia 100%)
+-- Producto: Pale Ale Clásica - Output final: 1000 LT
 
 DO $$
 DECLARE
@@ -102,7 +103,7 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'MOLIENDA' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'MOLIENDA', phase_order_val, 'COMPLETADA',
@@ -111,6 +112,7 @@ BEGIN
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
         '2025-07-15 09:00:00'::timestamptz,
         '2025-07-15 11:00:00'::timestamptz
     ) RETURNING id INTO phase1_1_id;
@@ -145,12 +147,13 @@ BEGIN
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
     FROM product_phases WHERE id_product = product1_id AND phase = 'MACERACION';
     
-    current_input := current_output;
-    current_output := current_input * (standard_output / standard_input) * efficiency_factor;
+    -- MACERACION inicia cadena de litros (no usar output de MOLIENDA que está en KG)
+    current_input := standard_input * multiplier;
+    current_output := standard_output * multiplier * efficiency_factor;
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'MACERACION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'MACERACION', phase_order_val, 'COMPLETADA',
@@ -159,6 +162,7 @@ BEGIN
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
         '2025-07-15 11:00:00'::timestamptz,
         '2025-07-15 16:00:00'::timestamptz
     ) RETURNING id INTO phase1_2_id;
@@ -198,7 +202,7 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'FILTRACION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'FILTRACION', phase_order_val, 'COMPLETADA',
@@ -207,6 +211,7 @@ BEGIN
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
         '2025-07-15 16:00:00'::timestamptz,
         '2025-07-15 18:00:00'::timestamptz
     ) RETURNING id INTO phase1_3_id;
@@ -246,7 +251,7 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'COCCION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'COCCION', phase_order_val, 'COMPLETADA',
@@ -255,6 +260,7 @@ BEGIN
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
         '2025-07-15 18:00:00'::timestamptz,
         '2025-07-15 20:30:00'::timestamptz
     ) RETURNING id INTO phase1_4_id;
@@ -294,7 +300,7 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'FERMENTACION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'FERMENTACION', phase_order_val, 'COMPLETADA',
@@ -303,6 +309,7 @@ BEGIN
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
         '2025-07-15 20:30:00'::timestamptz,
         '2025-07-22 20:30:00'::timestamptz
     ) RETURNING id INTO phase1_5_id;
@@ -342,7 +349,7 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'MADURACION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'MADURACION', phase_order_val, 'COMPLETADA',
@@ -351,6 +358,7 @@ BEGIN
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
         '2025-07-22 20:30:00'::timestamptz,
         '2025-08-01 20:30:00'::timestamptz
     ) RETURNING id INTO phase1_6_id;
@@ -390,7 +398,7 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'GASIFICACION' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'GASIFICACION', phase_order_val, 'COMPLETADA',
@@ -399,8 +407,9 @@ BEGIN
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
         '2025-08-01 20:30:00'::timestamptz,
-        '2025-08-02 00:30:00'::timestamptz
+        '2025-08-01 23:30:00'::timestamptz
     ) RETURNING id INTO phase1_7_id;
     
     -- Production Materials para GASIFICACION
@@ -438,7 +447,7 @@ BEGIN
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'ENVASADO' ORDER BY id LIMIT 1;
     
-    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, start_date, end_date)
+    INSERT INTO production_phases (id, id_batch, id_sector, phase, phase_order, status, input, output, standard_input, standard_output, output_unit, product_waste, start_date, end_date)
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'ENVASADO', phase_order_val, 'COMPLETADA',
@@ -447,8 +456,9 @@ BEGIN
         standard_input * multiplier,
         standard_output * multiplier,
         output_unit_val,
-        '2025-08-02 00:30:00'::timestamptz,
-        '2025-08-02 08:30:00'::timestamptz
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        '2025-08-01 23:30:00'::timestamptz,
+        '2025-08-13 02:00:00'::timestamptz
     ) RETURNING id INTO phase1_8_id;
     
     -- Production Materials para ENVASADO

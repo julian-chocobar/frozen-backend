@@ -913,18 +913,6 @@ public class DataLoaderService {
                                                 .build();
                                 recipeService.createRecipe(co2Recipe);
                                 break;
-
-                        /*
-                         * case "ENVASADO":
-                         * // Necesita envases
-                         * RecipeCreateDTO envaseRecipe = RecipeCreateDTO.builder()
-                         * .productPhaseId(phaseId)
-                         * .materialId(botella330Id) // Botella 330ml
-                         * .quantity(3000.0)
-                         * .build();
-                         * recipeService.createRecipe(envaseRecipe);
-                         * break;
-                         */
                 }
         }
 
@@ -1240,8 +1228,10 @@ public class DataLoaderService {
         }
 
         /**
-         * Carga datos de ejemplo de órdenes de producción y lotes usando scripts SQL separados
-         * Esto evita problemas de transacciones y timeouts al procesar múltiples órdenes
+         * Carga datos de ejemplo de órdenes de producción y lotes usando scripts SQL
+         * separados
+         * Esto evita problemas de transacciones y timeouts al procesar múltiples
+         * órdenes
          */
         private void loadSampleProductionOrdersAndBatchesFromSQL() {
                 if (productionOrderRepository.count() > 0) {
@@ -1251,31 +1241,39 @@ public class DataLoaderService {
 
                 try (Connection connection = dataSource.getConnection()) {
                         log.info("Ejecutando scripts SQL para cargar órdenes y lotes de ejemplo...");
-                        
+
                         // Cargar cada orden desde su archivo separado
                         String[] scriptFiles = {
-                                "sample-production-order-1.sql",
-                                "sample-production-order-2.sql",
-                                "sample-production-order-3.sql",
-                                "sample-production-order-4.sql",
-                                "sample-production-order-5.sql"
+                                        "sample-production-order-1-5.sql",
+                                        "sample-production-order-1-15.sql",
+                                        "sample-production-order-2-8.sql",
+                                        "sample-production-order-3-15.sql",
+                                        "sample-production-order-4-20.sql",
+                                        "sample-production-order-5-18.sql",
+                                        "sample-production-order-5-25.sql",
+                                        "sample-production-order-7-15.sql",
+                                        "sample-production-order-8-10.sql",
+                                        "sample-production-order-9-20.sql",
+                                        "sample-production-order-10-5.sql",
+                                        "sample-production-order-11-2.sql",
+                                        "sample-production-order-11-10.sql"
                         };
-                        
+
                         for (String scriptFile : scriptFiles) {
                                 ClassPathResource resource = new ClassPathResource(scriptFile);
-                                String sqlScript = new String(resource.getInputStream().readAllBytes(), 
-                                        java.nio.charset.StandardCharsets.UTF_8);
-                                
+                                String sqlScript = new String(resource.getInputStream().readAllBytes(),
+                                                java.nio.charset.StandardCharsets.UTF_8);
+
                                 try (java.sql.Statement statement = connection.createStatement()) {
                                         statement.execute(sqlScript);
                                         log.info("Script {} ejecutado exitosamente.", scriptFile);
                                 }
                         }
-                        
+
                         log.info("Todos los scripts SQL ejecutados exitosamente.");
                 } catch (Exception e) {
-                        log.error("Error ejecutando scripts SQL para cargar órdenes y lotes: {}", 
-                                e.getMessage(), e);
+                        log.error("Error ejecutando scripts SQL para cargar órdenes y lotes: {}",
+                                        e.getMessage(), e);
                         throw new RuntimeException("Error cargando órdenes y lotes desde SQL: " + e.getMessage(), e);
                 }
         }
