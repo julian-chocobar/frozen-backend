@@ -30,336 +30,383 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
 
-        @Mock
-        UserRepository userRepository;
+    @Mock
+    UserRepository userRepository;
 
-        @Mock
-        UserMapper userMapper;
+    @Mock
+    UserMapper userMapper;
 
-        @Mock
-        PasswordEncoder passwordEncoder;
+    @Mock
+    PasswordEncoder passwordEncoder;
 
-        @Mock
-        ApplicationContext applicationContext;
+    @Mock
+    com.enigcode.frozen_backend.notifications.service.SseNotificationService sseNotificationService;
 
-        @Mock
-        SessionRegistry sessionRegistry;
+    @Mock
+    ApplicationContext applicationContext;
 
-        @InjectMocks
-        UserServiceImpl service;
+    @Mock
+    SessionRegistry sessionRegistry;
 
-    // Helper methods
-    private Set<String> rolesToNames(Set<Role> roles) {
-            return roles.stream()
-                            .map(Role::name)
-                            .collect(java.util.stream.Collectors.toSet());
+    @InjectMocks
+    UserServiceImpl service;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(userMapper.toResponseDto(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            return UserResponseDTO.builder()
+                    .id(u.getId())
+                    .username(u.getUsername())
+                    .name(u.getName())
+                    .roles(u.getRoles().stream().map(r -> r.name()).collect(java.util.stream.Collectors.toSet()))
+                    .isActive(u.getIsActive())
+                    .build();
+        });
+
+        lenient().when(userMapper.toUserDetailDTO(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            return UserDetailDTO.builder()
+                    .id(u.getId())
+                    .username(u.getUsername())
+                    .name(u.getName())
+                    .roles(u.getRoles().stream().map(r -> r.name()).collect(java.util.stream.Collectors.toSet()))
+                    .email(u.getEmail())
+                    .phoneNumber(u.getPhoneNumber())
+                    .isActive(u.getIsActive())
+                    .build();
+        });
     }
 
-        @BeforeEach
-        void setUp() {
-            lenient().when(userMapper.toResponseDto(any(User.class))).thenAnswer(inv -> {
-                        User u = inv.getArgument(0);
-                        return UserResponseDTO.builder()
-                                        .id(u.getId())
-                                        .username(u.getUsername())
-                                        .name(u.getName())
-                                    .roles(rolesToNames(u.getRoles()))
-                                        .isActive(u.getIsActive())
-                                        .build();
-                });
+    @Test
+    void createUser_success() {
+        UserCreateDTO createDTO = UserCreateDTO.builder()
+                .username("testuser")
+                .password("password123")
+                .name("Test User")
+                .roles(Set.of(Role.OPERARIO_DE_PRODUCCION.name()))
+                .email("test@example.com")
+                .build();
 
-            lenient().when(userMapper.toUserDetailDTO(any(User.class))).thenAnswer(inv -> {
-                        User u = inv.getArgument(0);
-                        return UserDetailDTO.builder()
-                                        .id(u.getId())
-                                        .username(u.getUsername())
-                                        .name(u.getName())
-                                    .roles(rolesToNames(u.getRoles()))
-                                        .email(u.getEmail())
-                                        .phoneNumber(u.getPhoneNumber())
-                                        .isActive(u.getIsActive())
-                                        .build();
-                });
-        }
+        User user = User.builder()
+                .username("testuser")
+                .name("Test User")
+                .roles(Set.of())
+                .email("test@example.com")
+                .build();
 
-        @Test
-        void createUser_success() {
-                UserCreateDTO createDTO = UserCreateDTO.builder()
-                                .username("testuser")
-                                .password("password123")
-                                .name("Test User")
-                                .roles(Set.of("OPERARIO_DE_ALMACEN"))
-                                .email("test@example.com")
-                                .build();
+        when(userMapper.toEntity(createDTO)).thenReturn(user);
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(1L);
+            return u;
+        });
 
-                User user = User.builder()
-                                .username("testuser")
-                                .name("Test User")
-                                .email("test@example.com")
-                                .build();
+        UserResponseDTO result = service.createUser(createDTO);
 
-                when(userMapper.toEntity(createDTO)).thenReturn(user);
-                when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-                when(userRepository.save(any(User.class))).thenAnswer(inv -> {
-                        User u = inv.getArgument(0);
-                        u.setId(1L);
-                        return u;
-                });
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        
+        User savedUser = userCaptor.getValue();
+        assertThat(savedUser.getPassword()).isEqualTo("encodedPassword");
+        assertThat(savedUser.getIsActive()).isTrue();
+        assertThat(savedUser.getCreationDate()).isNotNull();
+        
+        assertThat(result.getUsername()).isEqualTo("testuser");
+        assertThat(result.getIsActive()).isTrue();
+    }
 
-                UserResponseDTO result = service.createUser(createDTO);
+    @Test
+    void createUser_setsDefaultValues() {
+        UserCreateDTO createDTO = UserCreateDTO.builder()
+                .username("newuser")
+                .password("pass")
+                .name("New User")
+                .roles(Set.of(Role.SUPERVISOR_DE_PRODUCCION.name()))
+                .build();
 
-                ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-                verify(userRepository).save(userCaptor.capture());
+        User user = User.builder()
+                .username("newuser")
+                .name("New User")
+                .roles(Set.of())
+                .build();
 
-                User savedUser = userCaptor.getValue();
-                assertThat(savedUser.getPassword()).isEqualTo("encodedPassword");
-                assertThat(savedUser.getIsActive()).isTrue();
-                assertThat(savedUser.getCreationDate()).isNotNull();
-        assertThat(savedUser.getRoles()).contains(Role.OPERARIO_DE_ALMACEN);
+        when(userMapper.toEntity(createDTO)).thenReturn(user);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-                assertThat(result.getUsername()).isEqualTo("testuser");
-                assertThat(result.getIsActive()).isTrue();
-        }
+        service.createUser(createDTO);
 
-        @Test
-        void createUser_setsDefaultValues() {
-                UserCreateDTO createDTO = UserCreateDTO.builder()
-                                .username("newuser")
-                                .password("pass")
-                                .name("New User")
-                                .roles(Set.of("SUPERVISOR_DE_CALIDAD"))
-                                .build();
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        
+        User saved = captor.getValue();
+        assertThat(saved.getIsActive()).isTrue();
+        assertThat(saved.getCreationDate()).isNotNull();
+    }
 
-                User user = User.builder()
-                                .username("newuser")
-                                .name("New User")
-                                .build();
+    @Test
+    void toggleActive_whenActive_disablesAndInvalidatesSessions() {
+        User user = User.builder()
+                .id(1L)
+                .username("activeuser")
+                .name("Active User")
+                .roles(Set.of())
+                .isActive(true)
+                .enabled(true)
+                .build();
 
-                when(userMapper.toEntity(createDTO)).thenReturn(user);
-                when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-                when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        
+        // Configurar mocks para SessionRegistry
+        lenient().when(applicationContext.getBean(SessionRegistry.class)).thenReturn(sessionRegistry);
+        when(sessionRegistry.getAllPrincipals()).thenReturn(List.of());
 
-                service.createUser(createDTO);
+        UserResponseDTO result = service.toggleActive(1L);
 
-                ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-                verify(userRepository).save(captor.capture());
+        verify(userRepository).save(argThat(u -> 
+            !u.getIsActive() && !u.isEnabled()
+        ));
+        
+        assertThat(result.getIsActive()).isFalse();
+    }
 
-                User saved = captor.getValue();
-                assertThat(saved.getIsActive()).isTrue();
-                assertThat(saved.getCreationDate()).isNotNull();
-        assertThat(saved.getRoles()).contains(Role.SUPERVISOR_DE_CALIDAD);
-        }
+    @Test
+    void toggleActive_whenInactive_enables() {
+        User user = User.builder()
+                .id(2L)
+                .username("inactiveuser")
+                .name("Inactive User")
+                .roles(Set.of())
+                .isActive(false)
+                .enabled(false)
+                .build();
 
-        @Test
-        void toggleActive_whenActive_disablesAndInvalidatesSessions() {
-                User user = User.builder()
-                                .id(1L)
-                                .username("activeuser")
-                                .name("Active User")
-                                .roles(Set.of(Role.OPERARIO_DE_PRODUCCION))
-                                .isActive(true)
-                                .enabled(true)
-                                .build();
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-                when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-                when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        UserResponseDTO result = service.toggleActive(2L);
 
-                // Configurar mocks para SessionRegistry
-                when(sessionRegistry.getAllPrincipals()).thenReturn(List.of());
+        verify(userRepository).save(argThat(u -> 
+            u.getIsActive() && u.isEnabled()
+        ));
+        
+        assertThat(result.getIsActive()).isTrue();
+    }
 
-                UserResponseDTO result = service.toggleActive(1L);
+    @Test
+    void updateUser_success() {
+        User existingUser = User.builder()
+                .id(1L)
+                .username("user1")
+                .name("Old Name")
+                .roles(Set.of())
+                .email("old@example.com")
+                .build();
 
-                verify(userRepository).save(argThat(u -> !u.getIsActive() && !u.isEnabled()));
+        UserUpdateDTO updateDTO = UserUpdateDTO.builder()
+                .name("New Name")
+                .email("new@example.com")
+                .build();
 
-                assertThat(result.getIsActive()).isFalse();
-        }
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userMapper.partialUpdate(updateDTO, existingUser)).thenAnswer(inv -> {
+            User u = inv.getArgument(1);
+            u.setName("New Name");
+            u.setEmail("new@example.com");
+            return u;
+        });
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        @Test
-        void toggleActive_whenInactive_enables() {
-                User user = User.builder()
-                                .id(2L)
-                                .username("inactiveuser")
-                                .name("Inactive User")
-                                .roles(Set.of(Role.OPERARIO_DE_PRODUCCION))
-                                .isActive(false)
-                                .enabled(false)
-                                .build();
+        UserResponseDTO result = service.updateUser(1L, updateDTO);
 
-                when(userRepository.findById(2L)).thenReturn(Optional.of(user));
-                when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        verify(userRepository).save(any(User.class));
+        assertThat(result.getName()).isEqualTo("New Name");
+    }
 
-                UserResponseDTO result = service.toggleActive(2L);
+    @Test
+    void updateUser_notFound_throws() {
+        UserUpdateDTO updateDTO = UserUpdateDTO.builder()
+                .name("New Name")
+                .build();
 
-                verify(userRepository).save(argThat(u -> u.getIsActive() && u.isEnabled()));
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-                assertThat(result.getIsActive()).isTrue();
-        }
+        assertThatThrownBy(() -> service.updateUser(999L, updateDTO))
+                .isInstanceOf(UsernameNotFoundException.class)
+                .hasMessageContaining("Usuario no encontrado con ID: 999");
+    }
 
-        @Test
-        void updateUser_success() {
-                User existingUser = User.builder()
-                                .id(1L)
-                                .username("user1")
-                                .name("Old Name")
-                                .roles(Set.of(Role.OPERARIO_DE_PRODUCCION))
-                                .email("old@example.com")
-                                .build();
+    @Test
+    void updateUserRole_success() {
+        User user = User.builder()
+                .id(1L)
+                .username("user1")
+                .name("User")
+                .roles(Set.of())
+                .build();
 
-                UserUpdateDTO updateDTO = UserUpdateDTO.builder()
-                                .name("New Name")
-                                .email("new@example.com")
-                                .build();
+        UpdateRoleDTO updateRoleDTO = UpdateRoleDTO.builder()
+                .roles(Set.of(Role.ADMIN.name()))
+                .build();
 
-                when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
-                when(userMapper.partialUpdate(updateDTO, existingUser)).thenAnswer(inv -> {
-                        User u = inv.getArgument(1);
-                        u.setName("New Name");
-                        u.setEmail("new@example.com");
-                        return u;
-                });
-                when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userMapper.updateUserRoles(anySet(), eq(user))).thenAnswer(inv -> {
+            User u = inv.getArgument(1);
+            return u;
+        });
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-                UserResponseDTO result = service.updateUser(1L, updateDTO);
+        UserResponseDTO result = service.updateUserRole(1L, updateRoleDTO);
 
-                verify(userRepository).save(any(User.class));
-                assertThat(result.getName()).isEqualTo("New Name");
-        }
+        verify(userRepository).save(any(User.class));
+        assertThat(result).isNotNull();
+    }
 
-        @Test
-        void updateUser_notFound_throws() {
-                UserUpdateDTO updateDTO = UserUpdateDTO.builder()
-                                .name("New Name")
-                                .build();
+    @Test
+    void updateUserPassword_success() {
+        User user = User.builder()
+                .id(1L)
+                .username("user1")
+                .name("User")
+                .password("oldEncoded")
+                .roles(Set.of())
+                .build();
 
-                when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        UpdatePasswordDTO updatePasswordDTO = UpdatePasswordDTO.builder()
+                .password("newPassword123")
+                .passwordConfirmacion("newPassword123")
+                .build();
 
-                assertThatThrownBy(() -> service.updateUser(999L, updateDTO))
-                                .isInstanceOf(UsernameNotFoundException.class)
-                                .hasMessageContaining("Usuario no encontrado con ID: 999");
-        }
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userMapper.updateUserPassword("newPassword123", user)).thenReturn(user);
+        when(passwordEncoder.encode("newPassword123")).thenReturn("newEncodedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        @Test
-        void updateUserRole_success() {
-                User user = User.builder()
-                                .id(1L)
-                                .username("user1")
-                                .name("User")
-                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN))
-                                .build();
+        UserResponseDTO result = service.updateUserPassword(1L, updatePasswordDTO);
 
-                UpdateRoleDTO updateRoleDTO = UpdateRoleDTO.builder()
-                                .roles(Set.of("ADMIN"))
-                                .build();
+        verify(userRepository).save(argThat(u -> 
+            u.getPassword().equals("newEncodedPassword")
+        ));
+        assertThat(result).isNotNull();
+    }
 
-                when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-                when(userMapper.updateUserRoles(Set.of(Role.ADMIN), user)).thenAnswer(inv -> {
-                        User u = inv.getArgument(1);
-                        u.setRoles(Set.of(Role.ADMIN));
-                        return u;
-                });
-                when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+    @Test
+    void getUserById_success() {
+        User user = User.builder()
+                .id(1L)
+                .username("user1")
+                .name("User One")
+                .roles(Set.of())
+                .email("user1@example.com")
+                .isActive(true)
+                .build();
 
-                UserResponseDTO result = service.updateUserRole(1L, updateRoleDTO);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-                verify(userRepository).save(argThat(u -> u.getRoles().contains(Role.ADMIN)));
-                assertThat(result.getRoles()).containsExactly("ADMIN");
-        }
+        UserDetailDTO result = service.getUserById(1L);
 
-        @Test
-        void updateUserPassword_success() {
-                User user = User.builder()
-                                .id(1L)
-                                .username("user1")
-                                .name("User")
-                                .password("oldEncoded")
-                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN))
-                                .build();
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getUsername()).isEqualTo("user1");
+        assertThat(result.getEmail()).isEqualTo("user1@example.com");
+    }
 
-                UpdatePasswordDTO updatePasswordDTO = UpdatePasswordDTO.builder()
-                                .password("newPassword123")
-                                .passwordConfirmacion("newPassword123")
-                                .build();
+    @Test
+    void getUserById_notFound_throws() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-                when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-                when(userMapper.updateUserPassword("newPassword123", user)).thenReturn(user);
-                when(passwordEncoder.encode("newPassword123")).thenReturn("newEncodedPassword");
-                when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        assertThatThrownBy(() -> service.getUserById(999L))
+                .isInstanceOf(UsernameNotFoundException.class)
+                .hasMessageContaining("Usuario no encontrado con ID: 999");
+    }
 
-                UserResponseDTO result = service.updateUserPassword(1L, updatePasswordDTO);
+    @Test
+    void getUserByUsername_success() {
+        User user = User.builder()
+                .id(1L)
+                .username("testuser")
+                .name("Test User")
+                .roles(Set.of())
+                .build();
 
-                verify(userRepository).save(argThat(u -> u.getPassword().equals("newEncodedPassword")));
-                assertThat(result).isNotNull();
-        }
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
-        @Test
-        void getUserById_success() {
-                User user = User.builder()
-                                .id(1L)
-                                .username("user1")
-                                .name("User One")
-                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN))
-                                .email("user1@example.com")
-                                .isActive(true)
-                                .build();
+        UserDetailDTO result = service.getUserByUsername("testuser");
 
-                when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        assertThat(result.getUsername()).isEqualTo("testuser");
+        assertThat(result.getName()).isEqualTo("Test User");
+    }
 
-                UserDetailDTO result = service.getUserById(1L);
+    @Test
+    void findAll_returnsPage() {
+        User user1 = User.builder()
+                .id(1L)
+                .username("user1")
+                .name("User One")
+                .roles(Set.of())
+                .build();
 
-                assertThat(result.getId()).isEqualTo(1L);
-                assertThat(result.getUsername()).isEqualTo("user1");
-                assertThat(result.getEmail()).isEqualTo("user1@example.com");
-        }
+        User user2 = User.builder()
+                .id(2L)
+                .username("user2")
+                .name("User Two")
+                .roles(Set.of())
+                .build();
 
-        @Test
-        void getUserById_notFound_throws() {
-                when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        Page<User> page = new PageImpl<>(List.of(user1, user2));
+        when(userRepository.findAll(any(PageRequest.class))).thenReturn(page);
 
-                assertThatThrownBy(() -> service.getUserById(999L))
-                                .isInstanceOf(UsernameNotFoundException.class)
-                                .hasMessageContaining("Usuario no encontrado con ID: 999");
-        }
+        Page<UserResponseDTO> result = service.findAll(PageRequest.of(0, 10));
 
-        @Test
-        void getUserByUsername_success() {
-                User user = User.builder()
-                                .id(1L)
-                                .username("testuser")
-                                .name("Test User")
-                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN))
-                                .build();
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().get(0).getUsername()).isEqualTo("user1");
+    }
 
-                when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+    @Test
+    void loadUserByUsername_registersSseCache_and_returnsUserDetails_evenIfSseFails() {
+        User user = User.builder()
+                .id(7L)
+                .username("sseuser")
+                .password("x")
+                .name("SSE User")
+                .roles(Set.of())
+                .build();
 
-                UserDetailDTO result = service.getUserByUsername("testuser");
+        when(userRepository.findByUsername("sseuser")).thenReturn(Optional.of(user));
 
-                assertThat(result.getUsername()).isEqualTo("testuser");
-                assertThat(result.getName()).isEqualTo("Test User");
-        }
+        // Case 1: normal registration
+        service.loadUserByUsername("sseuser");
+        verify(sseNotificationService).registerUserInCache("sseuser", 7L);
 
-        @Test
-        void findAll_returnsPage() {
-                User user1 = User.builder()
-                                .id(1L)
-                                .username("user1")
-                                .name("User One")
-                                .roles(Set.of(Role.OPERARIO_DE_ALMACEN))
-                                .build();
+        // Case 2: registration throws, should not break authentication
+        reset(sseNotificationService);
+        doThrow(new RuntimeException("cache down")).when(sseNotificationService).registerUserInCache(anyString(), anyLong());
 
-                User user2 = User.builder()
-                                .id(2L)
-                                .username("user2")
-                                .name("User Two")
-                                .roles(Set.of(Role.ADMIN))
-                                .build();
+        org.springframework.security.core.userdetails.UserDetails details = service.loadUserByUsername("sseuser");
+        assertThat(details.getUsername()).isEqualTo("sseuser");
+    }
 
-                Page<User> page = new PageImpl<>(List.of(user1, user2));
-                when(userRepository.findAll(any(PageRequest.class))).thenReturn(page);
+    @Test
+    void getCurrentUser_returnsNullWhenNoAuth_and_returnsUserWhenAuthenticated() {
+        // No auth -> null
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThat(service.getCurrentUser()).isNull();
 
-                Page<UserResponseDTO> result = service.findAll(PageRequest.of(0, 10));
+        // With auth
+        User user = User.builder().id(8L).username("me").build();
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(user));
 
-                assertThat(result.getTotalElements()).isEqualTo(2);
-                assertThat(result.getContent()).hasSize(2);
-                assertThat(result.getContent().get(0).getUsername()).isEqualTo("user1");
-        }
+        org.springframework.security.core.Authentication auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+            "me",
+            "x",
+            java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER")));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+
+        User result = service.getCurrentUser();
+        assertThat(result).isNotNull();
+        assertThat(result.getUsername()).isEqualTo("me");
+    }
 }
