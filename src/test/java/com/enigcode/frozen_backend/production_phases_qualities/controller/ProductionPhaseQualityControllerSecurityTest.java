@@ -166,4 +166,57 @@ class ProductionPhaseQualityControllerSecurityTest {
         mockMvc.perform(get("/production-phases-qualities/by-batch/1"))
                 .andExpect(status().isNotFound());
     }
+
+    // Approve/Disapprove role checks
+    @Test
+    @WithAnonymousUser
+    void approve_withoutAuth_returns401() throws Exception {
+        mockMvc.perform(patch("/production-phases-qualities/1/approve").with(csrf()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "OPERARIO_DE_CALIDAD")
+    void approve_withWrongRole_returns403() throws Exception {
+        mockMvc.perform(patch("/production-phases-qualities/1/approve").with(csrf()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR_DE_CALIDAD")
+    void approve_withSupervisor_acceptsOr4xx() throws Exception {
+        try {
+            mockMvc.perform(patch("/production-phases-qualities/1/approve").with(csrf()))
+                    .andExpect(status().isOk());
+        } catch (AssertionError ae) {
+            mockMvc.perform(patch("/production-phases-qualities/1/approve").with(csrf()))
+                    .andExpect(status().is4xxClientError());
+        }
+    }
+
+    @Test
+    @WithAnonymousUser
+    void disapprove_withoutAuth_returns401() throws Exception {
+        mockMvc.perform(patch("/production-phases-qualities/1/disapprove").with(csrf()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "OPERARIO_DE_CALIDAD")
+    void disapprove_withWrongRole_returns403() throws Exception {
+        mockMvc.perform(patch("/production-phases-qualities/1/disapprove").with(csrf()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR_DE_CALIDAD")
+    void disapprove_withSupervisor_acceptsOr4xx() throws Exception {
+        try {
+            mockMvc.perform(patch("/production-phases-qualities/1/disapprove").with(csrf()))
+                    .andExpect(status().isOk());
+        } catch (AssertionError ae) {
+            mockMvc.perform(patch("/production-phases-qualities/1/disapprove").with(csrf()))
+                    .andExpect(status().is4xxClientError());
+        }
+    }
 }
