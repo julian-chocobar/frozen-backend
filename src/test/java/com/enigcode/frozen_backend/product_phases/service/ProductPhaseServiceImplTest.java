@@ -185,4 +185,75 @@ class ProductPhaseServiceImplTest {
 
         assertThrows(BadRequestException.class, () -> productPhaseService.toggleReady(1L));
     }
+
+    @Test
+    void testReviewIsReady_noRequiredMaterials_unsetsReady() {
+        Product mockProduct = new Product();
+        mockProduct.setId(5L);
+        mockProduct.setIsReady(true);
+
+        productPhase.setId(1L);
+        productPhase.setIsReady(true);
+        productPhase.setPhase(Phase.FILTRACION); // no required materials
+        productPhase.setProduct(mockProduct);
+
+        when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(productPhase));
+        when(productRepository.save(mockProduct)).thenReturn(mockProduct);
+        when(productPhaseRepository.save(productPhase)).thenReturn(productPhase);
+
+        productPhaseService.reviewIsReady(1L);
+
+        assertFalse(productPhase.getIsReady());
+        assertFalse(mockProduct.getIsReady());
+        verify(productRepository).save(mockProduct);
+        verify(productPhaseRepository).save(productPhase);
+    }
+
+    @Test
+    void testReviewIsReady_missingMaterial_unsetsReady() {
+        Product mockProduct = new Product();
+        mockProduct.setId(7L);
+        mockProduct.setIsReady(true);
+
+        productPhase.setId(1L);
+        productPhase.setIsReady(true);
+        productPhase.setPhase(Phase.MACERACION); // requires AGUA
+        productPhase.setProduct(mockProduct);
+
+        when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(productPhase));
+        when(recipeRepository.existsByProductPhaseIdAndMaterial_Type(1L, MaterialType.AGUA)).thenReturn(false);
+        when(productRepository.save(mockProduct)).thenReturn(mockProduct);
+        when(productPhaseRepository.save(productPhase)).thenReturn(productPhase);
+
+        productPhaseService.reviewIsReady(1L);
+
+        assertFalse(productPhase.getIsReady());
+        assertFalse(mockProduct.getIsReady());
+        verify(productRepository).save(mockProduct);
+        verify(productPhaseRepository).save(productPhase);
+    }
+
+    @Test
+    void testToggleReady_turnsOff_whenAlreadyReady() {
+        Product mockProduct = new Product();
+        mockProduct.setId(9L);
+        mockProduct.setIsReady(true);
+
+        productPhase.setId(1L);
+        productPhase.setIsReady(true);
+        productPhase.setProduct(mockProduct);
+
+        when(productPhaseRepository.findById(1L)).thenReturn(Optional.of(productPhase));
+        when(productPhaseRepository.save(productPhase)).thenReturn(productPhase);
+        when(productRepository.save(mockProduct)).thenReturn(mockProduct);
+        when(productPhaseMapper.toResponseDto(productPhase)).thenReturn(responseDTO);
+
+        ProductPhaseResponseDTO result = productPhaseService.toggleReady(1L);
+
+        assertNotNull(result);
+        assertFalse(productPhase.getIsReady());
+        assertFalse(mockProduct.getIsReady());
+        verify(productRepository).save(mockProduct);
+        verify(productPhaseRepository).save(productPhase);
+    }
 }

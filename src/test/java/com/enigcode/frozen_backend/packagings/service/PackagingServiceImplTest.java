@@ -2,6 +2,8 @@ package com.enigcode.frozen_backend.packagings.service;
 
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.packagings.DTO.*;
+import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
+import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.packagings.mapper.PackagingMapper;
 import com.enigcode.frozen_backend.packagings.model.Packaging;
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
@@ -28,6 +30,8 @@ class PackagingServiceImplTest {
     private PackagingRepository packagingRepository;
     @Mock
     private MaterialRepository materialRepository;
+    @Mock
+    private com.enigcode.frozen_backend.products.repository.ProductRepository productRepository;
     @Mock
     private PackagingMapper packagingMapper;
 
@@ -183,5 +187,146 @@ class PackagingServiceImplTest {
         when(packagingRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> packagingService.updatePackaging(99L, updateDTO));
+    }
+
+    // --- Additional tests: validations and branches ---
+
+    @Test
+    void testCreatePackaging_PackagingMaterialWrongType_ThrowsBadRequest() {
+        PackagingCreateDTO createDTO = new PackagingCreateDTO();
+        createDTO.setName("Caja");
+        createDTO.setPackagingMaterialId(1L);
+        createDTO.setLabelingMaterialId(2L);
+        createDTO.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.KG);
+        createDTO.setQuantity(1.0);
+
+        com.enigcode.frozen_backend.materials.model.Material wrong = new com.enigcode.frozen_backend.materials.model.Material();
+        wrong.setId(1L);
+        wrong.setType(com.enigcode.frozen_backend.materials.model.MaterialType.OTROS);
+
+        when(materialRepository.findById(1L)).thenReturn(Optional.of(wrong));
+        when(materialRepository.findById(2L)).thenReturn(Optional.of(new com.enigcode.frozen_backend.materials.model.Material() {{ setId(2L); setType(com.enigcode.frozen_backend.materials.model.MaterialType.ETIQUETADO); }}));
+
+        assertThrows(BadRequestException.class, () -> packagingService.createPackaging(createDTO));
+    }
+
+    @Test
+    void testCreatePackaging_LabelingMaterialWrongType_ThrowsBadRequest() {
+        PackagingCreateDTO createDTO = new PackagingCreateDTO();
+        createDTO.setName("Caja");
+        createDTO.setPackagingMaterialId(1L);
+        createDTO.setLabelingMaterialId(2L);
+        createDTO.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.KG);
+        createDTO.setQuantity(1.0);
+
+        when(materialRepository.findById(1L)).thenReturn(Optional.of(new com.enigcode.frozen_backend.materials.model.Material() {{ setId(1L); setType(com.enigcode.frozen_backend.materials.model.MaterialType.ENVASE); }}));
+        com.enigcode.frozen_backend.materials.model.Material wrong = new com.enigcode.frozen_backend.materials.model.Material();
+        wrong.setId(2L);
+        wrong.setType(com.enigcode.frozen_backend.materials.model.MaterialType.OTROS);
+        when(materialRepository.findById(2L)).thenReturn(Optional.of(wrong));
+
+        assertThrows(BadRequestException.class, () -> packagingService.createPackaging(createDTO));
+    }
+
+    @Test
+    void testCreatePackaging_UnitMeasurementUnidad_ThrowsBadRequest() {
+        PackagingCreateDTO createDTO = new PackagingCreateDTO();
+        createDTO.setName("Caja");
+        createDTO.setPackagingMaterialId(1L);
+        createDTO.setLabelingMaterialId(2L);
+        createDTO.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.UNIDAD);
+        createDTO.setQuantity(1.0);
+
+        when(materialRepository.findById(1L)).thenReturn(Optional.of(new com.enigcode.frozen_backend.materials.model.Material() {{ setId(1L); setType(com.enigcode.frozen_backend.materials.model.MaterialType.ENVASE); }}));
+        when(materialRepository.findById(2L)).thenReturn(Optional.of(new com.enigcode.frozen_backend.materials.model.Material() {{ setId(2L); setType(com.enigcode.frozen_backend.materials.model.MaterialType.ETIQUETADO); }}));
+
+        assertThrows(BadRequestException.class, () -> packagingService.createPackaging(createDTO));
+    }
+
+    @Test
+    void testGetPackagingList_NameNull_ReturnsEmpty() {
+        List<com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO> result = packagingService.getPackagingList(null, true, null);
+        assertNotNull(result);
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    void testGetPackagingList_WithProductId_UsesProductUnitMeasurement() {
+        String searchName = "pack";
+        Long productId = 5L;
+
+        Product product = new Product();
+        product.setId(productId);
+        product.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.KG);
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+
+        Packaging p = new Packaging();
+        p.setId(10L);
+        p.setName("Pack prueba");
+        p.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.KG);
+
+        when(packagingRepository.findTop10ByUnitMeasurementAndNameContainingIgnoreCase(com.enigcode.frozen_backend.materials.model.UnitMeasurement.KG, searchName))
+                .thenReturn(List.of(p));
+
+        com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO dto = new com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO();
+        dto.setId(10L);
+        dto.setName("Pack prueba");
+        when(packagingMapper.toSimpleResponseDTO(p)).thenReturn(dto);
+
+        List<com.enigcode.frozen_backend.packagings.DTO.PackagingSimpleResponseDTO> result = packagingService.getPackagingList(searchName, null, productId);
+
+        assertEquals(1, result.size());
+        assertEquals(10L, result.get(0).getId());
+        verify(packagingRepository).findTop10ByUnitMeasurementAndNameContainingIgnoreCase(com.enigcode.frozen_backend.materials.model.UnitMeasurement.KG, searchName);
+    }
+
+    @Test
+    void testUpdatePackaging_PackagingMaterialChangeToNonEnvase_ThrowsBadRequest() {
+        PackagingUpdateDTO updateDTO = new PackagingUpdateDTO();
+        updateDTO.setPackagingMaterialId(2L);
+
+        Packaging original = new Packaging();
+        original.setId(1L);
+        original.setPackagingMaterial(new com.enigcode.frozen_backend.materials.model.Material() {{ setId(1L); setType(com.enigcode.frozen_backend.materials.model.MaterialType.ENVASE); }});
+
+        when(packagingRepository.findById(1L)).thenReturn(Optional.of(original));
+        com.enigcode.frozen_backend.materials.model.Material wrong = new com.enigcode.frozen_backend.materials.model.Material();
+        wrong.setId(2L);
+        wrong.setType(com.enigcode.frozen_backend.materials.model.MaterialType.OTROS);
+        when(materialRepository.findById(2L)).thenReturn(Optional.of(wrong));
+
+        assertThrows(BadRequestException.class, () -> packagingService.updatePackaging(1L, updateDTO));
+    }
+
+    @Test
+    void testUpdatePackaging_LabelingMaterialChangeToNonEtiquetado_ThrowsBadRequest() {
+        PackagingUpdateDTO updateDTO = new PackagingUpdateDTO();
+        updateDTO.setLabelingMaterialId(3L);
+
+        Packaging original = new Packaging();
+        original.setId(1L);
+        original.setLabelingMaterial(new com.enigcode.frozen_backend.materials.model.Material() {{ setId(2L); setType(com.enigcode.frozen_backend.materials.model.MaterialType.ETIQUETADO); }});
+
+        when(packagingRepository.findById(1L)).thenReturn(Optional.of(original));
+        com.enigcode.frozen_backend.materials.model.Material wrong = new com.enigcode.frozen_backend.materials.model.Material();
+        wrong.setId(3L);
+        wrong.setType(com.enigcode.frozen_backend.materials.model.MaterialType.OTROS);
+        when(materialRepository.findById(3L)).thenReturn(Optional.of(wrong));
+
+        assertThrows(BadRequestException.class, () -> packagingService.updatePackaging(1L, updateDTO));
+    }
+
+    @Test
+    void testUpdatePackaging_UnitMeasurementUnidad_ThrowsBadRequest() {
+        PackagingUpdateDTO updateDTO = new PackagingUpdateDTO();
+        updateDTO.setUnitMeasurement(com.enigcode.frozen_backend.materials.model.UnitMeasurement.UNIDAD);
+
+        Packaging original = new Packaging();
+        original.setId(1L);
+
+        when(packagingRepository.findById(1L)).thenReturn(Optional.of(original));
+
+        assertThrows(BadRequestException.class, () -> packagingService.updatePackaging(1L, updateDTO));
     }
 }
