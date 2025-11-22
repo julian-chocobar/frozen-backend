@@ -65,6 +65,8 @@ class ProductionOrderServiceImplTest {
         private com.enigcode.frozen_backend.notifications.service.NotificationService notificationService;
         @Mock
         private com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository productionMaterialRepository;
+        @Mock
+        private com.enigcode.frozen_backend.users.service.UserService userService;
 
         @InjectMocks
         private ProductionOrderServiceImpl service;
@@ -148,8 +150,163 @@ class ProductionOrderServiceImplTest {
                 verify(batchService).createBatch(createDTO, product);
                 verify(recipeService).getRecipeByProduct(1L);
                 verify(movementService).createReserveOrReturn(eq(MovementType.RESERVA), anyList());
+                verify(productionMaterialRepository).saveAllAndFlush(anyList());
                 verify(productionOrderRepository).saveAndFlush(any(ProductionOrder.class));
                 verify(productionOrderMapper).toResponseDTO(productionOrder);
+                // Notification should be created for new production orders
+                verify(notificationService).createProductionOrderNotification(eq(productionOrder.getId()), eq(product.getName()));
+        }
+
+        @Test
+        void createProductionOrder_persistsProductionMaterials() {
+                // Arrange
+                ProductionOrderCreateDTO createDTO = ProductionOrderCreateDTO.builder()
+                                .productId(1L)
+                                .quantity(100.0)
+                                .packagingId(1L)
+                                .plannedDate(OffsetDateTime.now())
+                                .build();
+
+                Product product = Product.builder()
+                                .id(1L)
+                                .name("Test Product")
+                                .isReady(true)
+                                .standardQuantity(10.0)
+                                .unitMeasurement(UnitMeasurement.UNIDAD)
+                                .build();
+
+                Packaging packaging = Packaging.builder()
+                                .id(1L)
+                                .quantity(10.0)
+                                .unitMeasurement(UnitMeasurement.UNIDAD)
+                                .build();
+
+                Batch batch = Batch.builder()
+                                .id(1L)
+                                .quantity(10)
+                                .packaging(packaging)
+                                .build();
+
+                Material material1 = Material.builder()
+                                .id(1L)
+                                .name("Material 1")
+                                .type(MaterialType.MALTA)
+                                .build();
+
+                ProductPhase productPhase1 = ProductPhase.builder()
+                                .id(1L)
+                                .phase(Phase.MOLIENDA)
+                                .build();
+
+                Recipe recipe1 = Recipe.builder()
+                                .id(1L)
+                                .material(material1)
+                                .quantity(2.0)
+                                .productPhase(productPhase1)
+                                .build();
+
+                ProductionOrder productionOrder = ProductionOrder.builder()
+                                .id(1L)
+                                .batch(batch)
+                                .product(product)
+                                .status(OrderStatus.PENDIENTE)
+                                .quantity(100.0)
+                                .creationDate(OffsetDateTime.now())
+                                .build();
+
+                when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+                when(batchService.createBatch(createDTO, product)).thenReturn(batch);
+                when(recipeService.getRecipeByProduct(1L)).thenReturn(List.of(recipe1));
+                when(productionOrderRepository.saveAndFlush(any(ProductionOrder.class))).thenReturn(productionOrder);
+                when(productionOrderMapper.toResponseDTO(productionOrder)).thenReturn(new ProductionOrderResponseDTO());
+
+                // Act
+                service.createProductionOrder(createDTO);
+
+                // Assert - verify production materials persisted
+                @SuppressWarnings("unchecked")
+                ArgumentCaptor<List<com.enigcode.frozen_backend.production_materials.model.ProductionMaterial>> pmCaptor =
+                                (ArgumentCaptor<List<com.enigcode.frozen_backend.production_materials.model.ProductionMaterial>>) ArgumentCaptor.forClass((Class<?>) List.class);
+                verify(productionMaterialRepository).saveAllAndFlush(pmCaptor.capture());
+
+                List<com.enigcode.frozen_backend.production_materials.model.ProductionMaterial> savedPm = pmCaptor.getValue();
+                assertEquals(1, savedPm.size());
+                assertEquals(material1, savedPm.get(0).getMaterial());
+                // multiplier = 100 / 10 = 10 -> recipe.quantity 2.0 * 10 = 20.0
+                assertEquals(20.0, savedPm.get(0).getQuantity());
+        }
+
+        @Test
+        void createProductionOrder_roundsQuantitiesCorrectly() {
+                // Arrange: values that produce many decimals
+                ProductionOrderCreateDTO createDTO = ProductionOrderCreateDTO.builder()
+                                .productId(1L)
+                                .quantity(100.0)
+                                .packagingId(1L)
+                                .plannedDate(OffsetDateTime.now())
+                                .build();
+
+                Product product = Product.builder()
+                                .id(1L)
+                                .name("Test Product")
+                                .isReady(true)
+                                .standardQuantity(3.0)
+                                .unitMeasurement(UnitMeasurement.UNIDAD)
+                                .build();
+
+                Packaging packaging = Packaging.builder()
+                                .id(1L)
+                                .quantity(3.333333)
+                                .unitMeasurement(UnitMeasurement.UNIDAD)
+                                .build();
+
+                Batch batch = Batch.builder()
+                                .id(1L)
+                                .quantity(3) // 3 * 3.333333 = 9.999999
+                                .packaging(packaging)
+                                .build();
+
+                Material material1 = Material.builder()
+                                .id(1L)
+                                .name("Material 1")
+                                .type(MaterialType.MALTA)
+                                .build();
+
+                ProductPhase productPhase1 = ProductPhase.builder()
+                                .id(1L)
+                                .phase(Phase.MOLIENDA)
+                                .build();
+
+                Recipe recipe1 = Recipe.builder()
+                                .id(1L)
+                                .material(material1)
+                                .quantity(1.0)
+                                .productPhase(productPhase1)
+                                .build();
+
+                ProductionOrder productionOrder = ProductionOrder.builder()
+                                .id(1L)
+                                .batch(batch)
+                                .product(product)
+                                .status(OrderStatus.PENDIENTE)
+                                .quantity(9.999999)
+                                .creationDate(OffsetDateTime.now())
+                                .build();
+
+                when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+                when(batchService.createBatch(createDTO, product)).thenReturn(batch);
+                when(recipeService.getRecipeByProduct(1L)).thenReturn(List.of(recipe1));
+                when(productionOrderRepository.saveAndFlush(any(ProductionOrder.class))).thenReturn(productionOrder);
+                when(productionOrderMapper.toResponseDTO(productionOrder)).thenReturn(new ProductionOrderResponseDTO());
+
+                // Act
+                service.createProductionOrder(createDTO);
+
+                // Assert - capture saved production order and check rounding to 3 decimals
+                ArgumentCaptor<ProductionOrder> poCaptor = ArgumentCaptor.forClass(ProductionOrder.class);
+                verify(productionOrderRepository).saveAndFlush(poCaptor.capture());
+                ProductionOrder saved = poCaptor.getValue();
+                assertEquals(10.0, saved.getQuantity());
         }
 
         @Test
@@ -548,6 +705,8 @@ class ProductionOrderServiceImplTest {
                 verify(productionOrderRepository).findById(orderId);
                 verify(movementService).createReserveOrReturn(eq(MovementType.DEVUELTO), anyList());
                 verify(productionOrderRepository).save(productionOrder);
+                // Batch should be toggled active when returning reserved materials
+                verify(batchService).toggleActiveBatch(10L);
         }
 
         @Test

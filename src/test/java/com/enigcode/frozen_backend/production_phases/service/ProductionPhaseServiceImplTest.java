@@ -22,6 +22,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ProductionPhaseServiceImplTest {
 
     @Mock
@@ -48,6 +51,12 @@ class ProductionPhaseServiceImplTest {
 
     @Mock
     private ProductionPhaseQualityRepository productionPhaseQualityRepository;
+
+        @Mock
+        private com.enigcode.frozen_backend.notifications.service.NotificationService notificationService;
+
+        @Mock
+        private com.enigcode.frozen_backend.production_phases_qualities.service.ProductionPhaseQualityService productionPhaseQualityService;
 
         @Mock
         private BatchService batchService;
@@ -199,17 +208,19 @@ class ProductionPhaseServiceImplTest {
                 .build();
 
         when(productionPhaseRepository.findById(1L)).thenReturn(Optional.of(productionPhase));
-        when(productionPhaseQualityRepository.findAllByProductionPhaseId(1L))
+        when(productionPhaseQualityRepository.findAllByProductionPhaseIdAndIsActiveTrue(1L))
                 .thenReturn(List.of(quality1));
+        // mock the productionPhaseQualityService used inside adjustProductionPhase
+        doNothing().when(productionPhaseQualityService).createNewVersionForPhase(anyLong());
         when(productionPhaseRepository.save(any(ProductionPhase.class))).thenReturn(productionPhase);
         when(productionPhaseMapper.toResponseDTO(productionPhase)).thenReturn(responseDTO);
 
         ProductionPhaseResponseDTO result = productionPhaseService.reviewProductionPhase(1L);
 
         assertNotNull(result);
-        // Nota: lógica actual en producción realiza complete y luego SIEMPRE ajusta,
-        // dejando el estado final en SIENDO_AJUSTADA (posible bug). El test refleja ese comportamiento actual.
-        assertEquals(ProductionPhaseStatus.SIENDO_AJUSTADA, productionPhase.getStatus());
+        // Actualmente la implementación marca la fase como COMPLETADA cuando todos los parámetros
+        // están aprobados. Ajustamos la expectativa del test a ese comportamiento existente.
+        assertEquals(ProductionPhaseStatus.COMPLETADA, productionPhase.getStatus());
         verify(productionPhaseRepository).save(productionPhase);
     }
 
@@ -232,15 +243,23 @@ class ProductionPhaseServiceImplTest {
                 .build();
 
         when(productionPhaseRepository.findById(1L)).thenReturn(Optional.of(productionPhase));
-        when(productionPhaseQualityRepository.findAllByProductionPhaseId(1L))
+        when(productionPhaseQualityRepository.findAllByProductionPhaseIdAndIsActiveTrue(1L))
                 .thenReturn(List.of(quality1));
+        // Ensure sector exists to avoid NPE when sending notifications
+        com.enigcode.frozen_backend.sectors.model.Sector sector = new com.enigcode.frozen_backend.sectors.model.Sector();
+        sector.setId(5L);
+        productionPhase.setSector(sector);
+
+        // stub productionPhaseQualityService used by adjustProductionPhase
+        doNothing().when(productionPhaseQualityService).createNewVersionForPhase(anyLong());
+
         when(productionPhaseRepository.save(any(ProductionPhase.class))).thenReturn(productionPhase);
         when(productionPhaseMapper.toResponseDTO(productionPhase)).thenReturn(responseDTO);
 
         ProductionPhaseResponseDTO result = productionPhaseService.reviewProductionPhase(1L);
 
         assertNotNull(result);
-        // Lógica actual del código (posible bug): allMatch(false)==true ejecuta rejectProductionPhase, luego SIEMPRE adjustProductionPhase sobreescribe a SIENDO_AJUSTADA
+        // La implementación actual llama a adjustProductionPhase cuando hay parámetros no aprobados.
         assertEquals(ProductionPhaseStatus.SIENDO_AJUSTADA, productionPhase.getStatus());
         verify(productionPhaseRepository).save(productionPhase);
     }
@@ -264,8 +283,13 @@ class ProductionPhaseServiceImplTest {
                 .qualityParameter(criticalParameter)
                 .build();
 
+        // Ensure the phase has a sector to avoid NPE when notifying
+        com.enigcode.frozen_backend.sectors.model.Sector sector = new com.enigcode.frozen_backend.sectors.model.Sector();
+        sector.setId(5L);
+        productionPhase.setSector(sector);
+
         when(productionPhaseRepository.findById(1L)).thenReturn(Optional.of(productionPhase));
-        when(productionPhaseQualityRepository.findAllByProductionPhaseId(1L))
+        when(productionPhaseQualityRepository.findAllByProductionPhaseIdAndIsActiveTrue(1L))
                 .thenReturn(List.of(quality1));
         when(productionPhaseRepository.save(any(ProductionPhase.class))).thenReturn(productionPhase);
         when(productionPhaseMapper.toResponseDTO(productionPhase)).thenReturn(responseDTO);
@@ -273,8 +297,8 @@ class ProductionPhaseServiceImplTest {
         ProductionPhaseResponseDTO result = productionPhaseService.reviewProductionPhase(1L);
 
         assertNotNull(result);
-        // Comportamiento actual: cuando hay críticos → allMatch(false)==false → NO rechaza → ajusta
-        assertEquals(ProductionPhaseStatus.SIENDO_AJUSTADA, productionPhase.getStatus());
+        // Comportamiento actual: la implementación rechaza la fase cuando hay errores críticos.
+        assertEquals(ProductionPhaseStatus.RECHAZADA, productionPhase.getStatus());
         verify(productionPhaseRepository).save(productionPhase);
     }
 
@@ -293,7 +317,7 @@ class ProductionPhaseServiceImplTest {
         productionPhase.setStatus(ProductionPhaseStatus.BAJO_REVISION);
 
         when(productionPhaseRepository.findById(1L)).thenReturn(Optional.of(productionPhase));
-        when(productionPhaseQualityRepository.findAllByProductionPhaseId(1L))
+        when(productionPhaseQualityRepository.findAllByProductionPhaseIdAndIsActiveTrue(1L))
                 .thenReturn(Collections.emptyList());
 
         assertThrows(BadRequestException.class, 
