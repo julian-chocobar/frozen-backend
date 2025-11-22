@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.mockito.ArgumentMatchers.*;
+import com.enigcode.frozen_backend.products.DTO.ProductSimpleDTO;
 
 @WebMvcTest(controllers = ProductController.class, excludeAutoConfiguration = {
                 org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
@@ -192,5 +193,45 @@ class ProductControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(updateJson))
                                 .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void getProduct_existing_returns200() throws Exception {
+                Mockito.when(productService.getProduct(eq(1L)))
+                                .thenReturn(ProductResponseDTO.builder().id(1L).name("IPA").isActive(true).build());
+
+                mockMvc.perform(get("/products/1").contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.name").value("IPA"));
+        }
+
+        @Test
+        void getProduct_notFound_returns404() throws Exception {
+                Mockito.when(productService.getProduct(eq(999L))).thenThrow(new ResourceNotFoundException("no encontrado"));
+
+                mockMvc.perform(get("/products/999").contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void getProductSimpleList_withName_returnsList() throws Exception {
+                Mockito.when(productService.getProductSimpleList(eq("IPA"), eq(null), eq(null)))
+                                .thenReturn(java.util.List.of(new ProductSimpleDTO(2L, "IPA Blonde")));
+
+                mockMvc.perform(get("/products/id-name-list").param("name", "IPA"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].id").value(2))
+                                .andExpect(jsonPath("$[0].name").value("IPA Blonde"));
+        }
+
+        @Test
+        void getProductSimpleList_emptyName_returnsEmpty() throws Exception {
+                Mockito.when(productService.getProductSimpleList(eq(""), eq(null), eq(null))).thenReturn(java.util.List.of());
+
+                mockMvc.perform(get("/products/id-name-list").param("name", ""))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$").isArray())
+                                .andExpect(jsonPath("$.length()").value(0));
         }
 }

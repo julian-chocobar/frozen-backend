@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.enigcode.frozen_backend.products.DTO.ProductSimpleDTO;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
@@ -280,5 +281,24 @@ class ProductServiceTest {
                                 new com.enigcode.frozen_backend.products.DTO.ProductFilterDTO(), PageRequest.of(0, 10));
                 assertThat(page.getTotalElements()).isEqualTo(1);
                 assertThat(page.getContent().get(0).getId()).isEqualTo(20L);
+        }
+
+        @Test
+        void getProductSimpleList_emptyName_returnsEmpty() {
+                List<ProductSimpleDTO> res = service.getProductSimpleList("", null, null);
+                assertThat(res).isEmpty();
+        }
+
+        @Test
+        void getProductSimpleList_callsActiveReadyBranch() {
+                Product product = Product.builder().id(100L).name("IPA").isActive(true).isReady(true)
+                                .creationDate(OffsetDateTime.now()).build();
+
+                when(productRepository.findTop10ByNameContainingIgnoreCaseAndIsActiveTrueAndIsReadyTrue(eq("IPA")))
+                                .thenReturn(List.of(product));
+
+                List<ProductSimpleDTO> res = service.getProductSimpleList("IPA", true, true);
+                assertThat(res).hasSize(1);
+                assertThat(res.get(0).getName()).isEqualTo("IPA");
         }
 }
