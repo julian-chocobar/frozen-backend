@@ -6,6 +6,8 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.Resource
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 
 import com.enigcode.frozen_backend.materials.service.MaterialService;
+import com.enigcode.frozen_backend.materials.DTO.MaterialLocationUpdateDTO;
+import com.enigcode.frozen_backend.materials.model.WarehouseZone;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.enigcode.frozen_backend.materials.DTO.MaterialCreateDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -155,5 +157,24 @@ class MaterialControllerTest {
     @Test
     void testGetMaterial() throws Exception {
         mockMvc.perform(get("/materials/1")).andExpect(status().isOk());
+    }
+
+    @Test
+    void updateLocation_serviceThrowsBadRequest_returns400() throws Exception {
+        MaterialLocationUpdateDTO dto = new MaterialLocationUpdateDTO();
+        dto.setWarehouseZone(WarehouseZone.MALTA);
+        dto.setWarehouseSection("A1");
+        dto.setWarehouseLevel(1);
+
+        org.mockito.Mockito.doThrow(new BadRequestException("Invalid location"))
+            .when(materialService)
+            .updateMaterialLocation(org.mockito.ArgumentMatchers.eq(2L), org.mockito.ArgumentMatchers.any(MaterialLocationUpdateDTO.class));
+
+        String json = objectMapper.writeValueAsString(dto);
+
+        mockMvc.perform(patch("/materials/2/location")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isBadRequest());
     }
 }
