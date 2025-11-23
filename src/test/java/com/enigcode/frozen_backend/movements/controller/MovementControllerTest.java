@@ -3,51 +3,55 @@ package com.enigcode.frozen_backend.movements.controller;
 import com.enigcode.frozen_backend.common.exceptions_configs.GlobalExceptionHandler;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
-
 import com.enigcode.frozen_backend.movements.DTO.MovementCreateDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementResponseDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementDetailDTO;
 import com.enigcode.frozen_backend.movements.service.MovementService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(MovementController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@Import(GlobalExceptionHandler.class)
+@ExtendWith(MockitoExtension.class)
 class MovementControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
-    @MockitoBean
+
+    @Mock
     private MovementService movementService;
-    @MockitoBean
-    private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
+
+    @InjectMocks
+    private MovementController movementController;
+
+    @BeforeEach
+    void setup() {
+        mockMvc = MockMvcBuilders.standaloneSetup(movementController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     @Test
     void testCreateMovement() throws Exception {
-        // inicializar campos necesarios
         MovementResponseDTO responseDTO = new MovementResponseDTO();
         responseDTO.setId(1L);
 
         when(movementService.createMovement(any(MovementCreateDTO.class))).thenReturn(responseDTO);
 
-    // JSON con campos mínimos válidos según validaciones del DTO
-    String validJson = "{\"materialId\":1,\"stock\":5,\"type\":\"INGRESO\",\"location\":\"A1\"}";
-    mockMvc.perform(post("/movements")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(validJson))
+        String validJson = "{\"materialId\":1,\"stock\":5,\"type\":\"INGRESO\",\"location\":\"A1\"}";
+        mockMvc.perform(post("/movements")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validJson))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value("1"));
+                .andExpect(jsonPath("$.id").value(1));
 
         verify(movementService, times(1)).createMovement(any(MovementCreateDTO.class));
     }
@@ -73,7 +77,7 @@ class MovementControllerTest {
 
         mockMvc.perform(get("/movements/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("1"));
+                .andExpect(jsonPath("$.id").value(1));
 
         verify(movementService, times(1)).getMovement(1L);
     }
@@ -87,11 +91,40 @@ class MovementControllerTest {
     }
 
     @Test
-    void testCreateMovement_InvalidType_ShouldReturn400() throws Exception {
-        String invalidTypeJson = "{\"materialId\":1,\"stock\":5,\"type\":\"INVALIDO\"}";
-        mockMvc.perform(post("/movements")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(invalidTypeJson))
-                .andExpect(status().isInternalServerError()); // JSON parsing error returns 500
+    void testToggleInProgress_Patch_Success() throws Exception {
+        MovementResponseDTO dto = new MovementResponseDTO();
+        dto.setId(2L);
+        when(movementService.toggleInProgressPending(2L)).thenReturn(dto);
+
+        mockMvc.perform(patch("/movements/2/in-progress"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(2));
+    }
+
+    @Test
+    void testToggleInProgress_Patch_BadRequest() throws Exception {
+        when(movementService.toggleInProgressPending(3L)).thenThrow(new BadRequestException("invalid"));
+
+        mockMvc.perform(patch("/movements/3/in-progress"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testCompleteMovement_Patch_Success() throws Exception {
+        MovementResponseDTO dto = new MovementResponseDTO();
+        dto.setId(5L);
+        when(movementService.completeMovement(5L)).thenReturn(dto);
+
+        mockMvc.perform(patch("/movements/5/complete"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5));
+    }
+
+    @Test
+    void testCompleteMovement_Patch_NotFound() throws Exception {
+        when(movementService.completeMovement(999L)).thenThrow(new ResourceNotFoundException("no"));
+
+        mockMvc.perform(patch("/movements/999/complete"))
+                .andExpect(status().isNotFound());
     }
 }

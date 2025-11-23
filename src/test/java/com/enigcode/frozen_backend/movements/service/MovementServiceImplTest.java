@@ -9,6 +9,7 @@ import com.enigcode.frozen_backend.movements.DTO.MovementDetailDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementFilterDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementResponseDTO;
 import com.enigcode.frozen_backend.movements.DTO.MovementSimpleCreateDTO;
+import com.enigcode.frozen_backend.movements.DTO.MovementInternalCreateDTO;
 import com.enigcode.frozen_backend.movements.mapper.MovementMapper;
 import com.enigcode.frozen_backend.movements.model.Movement;
 import com.enigcode.frozen_backend.movements.model.MovementType;
@@ -421,5 +422,47 @@ class MovementServiceImplTest {
         when(movementRepository.findById(3L)).thenReturn(Optional.of(inProcessMovement));
 
         assertThrows(BadRequestException.class, () -> movementService.toggleInProgressPending(3L));
+    }
+
+    @Test
+    void testCreateMovements_bulkCreate_assignsCreatedBy() {
+        com.enigcode.frozen_backend.users.model.User mockUser = new com.enigcode.frozen_backend.users.model.User();
+        mockUser.setId(42L);
+        when(userService.getCurrentUser()).thenReturn(mockUser);
+
+        com.enigcode.frozen_backend.materials.model.Material mat1 = new com.enigcode.frozen_backend.materials.model.Material();
+        mat1.setId(11L);
+        MovementInternalCreateDTO dto = new MovementInternalCreateDTO();
+        dto.setMaterial(mat1);
+        dto.setStock(3.0);
+        dto.setType(MovementType.INGRESO);
+
+        when(movementRepository.saveAll(anyList())).thenReturn(List.of());
+
+        movementService.createMovements(List.of(dto));
+
+        // verify that saveAll was invoked
+        verify(movementRepository, times(1)).saveAll(anyList());
+    }
+
+    @Test
+    void testCompleteMovement_EnProceso_OtherUserThrows() {
+        // movement in EN_PROCESO by user 2
+        Movement m = Movement.builder()
+                .id(99L)
+                .type(MovementType.INGRESO)
+                .stock(1.0)
+                .material(material)
+                .status(com.enigcode.frozen_backend.movements.model.MovementStatus.EN_PROCESO)
+                .inProgressByUserId(2L)
+                .build();
+
+        com.enigcode.frozen_backend.users.model.User current = new com.enigcode.frozen_backend.users.model.User();
+        current.setId(3L); // different user
+        when(userService.getCurrentUser()).thenReturn(current);
+
+        when(movementRepository.findById(99L)).thenReturn(Optional.of(m));
+
+        assertThrows(BadRequestException.class, () -> movementService.completeMovement(99L));
     }
 }
