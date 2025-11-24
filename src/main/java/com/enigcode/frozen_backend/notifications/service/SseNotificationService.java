@@ -113,10 +113,14 @@ public class SseNotificationService {
         });
 
         emitter.onError((ex) -> {
+            // Suprimir logs de desconexiones normales del cliente
             if (ex instanceof IOException) {
                 handleSseConnectionError(userId, (IOException) ex, "callback de error");
+            } else if (ex instanceof org.springframework.web.context.request.async.AsyncRequestNotUsableException) {
+                // Desconexión normal del cliente - no logear
+                log.debug("Cliente desconectado normalmente para usuario {}", userId);
             } else {
-                log.warn("Error no-IOException en conexión SSE para usuario {}: {}", userId, ex.getMessage());
+                log.debug("Error en conexión SSE para usuario {}: {}", userId, ex.getClass().getSimpleName());
             }
             removeConnection(userId, emitter);
         });

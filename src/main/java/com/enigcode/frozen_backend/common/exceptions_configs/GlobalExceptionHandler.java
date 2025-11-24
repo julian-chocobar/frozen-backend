@@ -166,6 +166,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
     }
 
+    /**
+     * Maneja errores de SSE cuando el cliente se desconecta
+     * No intenta responder porque el stream ya está cerrado
+     */
+    @ExceptionHandler(org.springframework.web.context.request.async.AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsable(
+            org.springframework.web.context.request.async.AsyncRequestNotUsableException ex) {
+        // Cliente desconectado - esto es normal en SSE
+        // No logueamos ni intentamos responder porque el stream está cerrado
+    }
+
     // Nota: El manejo específico de InvalidCredentialsException se movió a un
     // advice condicional
     // para evitar errores de carga de clase durante los tests cuando dicha clase no
