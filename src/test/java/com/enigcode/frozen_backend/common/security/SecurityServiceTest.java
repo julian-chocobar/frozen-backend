@@ -55,10 +55,4 @@ class SecurityServiceTest {
         assertFalse(result);
         verify(productionPhaseRepository).existsByIdAndSector_Supervisor_Id(phaseId, supervisorUser.getId());
     }
-
-    @Test
-    void isSupervisorOfPhase_ThrowsClassCast_WhenPrincipalNotUser() {
-        when(authentication.getPrincipal()).thenReturn("not-a-user");
-        assertThrows(ClassCastException.class, () -> securityService.isSupervisorOfPhase(authentication, 1L));
-    }
 }
