@@ -2,6 +2,7 @@ package com.enigcode.frozen_backend.batches.controller;
 
 import com.enigcode.frozen_backend.batches.DTO.BatchResponseDTO;
 import com.enigcode.frozen_backend.batches.service.BatchService;
+import com.enigcode.frozen_backend.batches.service.BatchTraceabilityService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -26,6 +27,8 @@ class BatchControllerSecurityTest {
 
     @MockitoBean
     private BatchService batchService;
+    @MockitoBean
+    private BatchTraceabilityService batchTraceabilityService;
     @MockitoBean
     private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 

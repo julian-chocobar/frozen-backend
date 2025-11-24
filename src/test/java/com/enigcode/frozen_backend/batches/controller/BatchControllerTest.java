@@ -3,6 +3,7 @@ package com.enigcode.frozen_backend.batches.controller;
 import com.enigcode.frozen_backend.batches.DTO.BatchResponseDTO;
 import com.enigcode.frozen_backend.batches.model.BatchStatus;
 import com.enigcode.frozen_backend.batches.service.BatchService;
+import com.enigcode.frozen_backend.batches.service.BatchTraceabilityService;
 import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.ResourceNotFoundException;
 import com.enigcode.frozen_backend.common.exceptions_configs.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,8 @@ class BatchControllerTest {
 
     @MockitoBean
     private BatchService batchService;
+    @MockitoBean
+    private BatchTraceabilityService batchTraceabilityService;
     @MockitoBean
     private com.enigcode.frozen_backend.common.SecurityProperties securityProperties;
 

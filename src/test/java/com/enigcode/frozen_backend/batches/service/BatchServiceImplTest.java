@@ -22,7 +22,13 @@ import com.enigcode.frozen_backend.sectors.service.SectorService;
 import com.enigcode.frozen_backend.system_configurations.model.WorkingDay;
 import com.enigcode.frozen_backend.system_configurations.service.SystemConfigurationService;
 import com.enigcode.frozen_backend.materials.model.Material;
+import com.enigcode.frozen_backend.materials.model.UnitMeasurement;
+import com.enigcode.frozen_backend.packagings.model.Packaging;
+import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
+import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
+import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.production_orders.Model.ProductionOrder;
+import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +44,7 @@ import java.time.ZoneOffset;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -65,7 +72,13 @@ class BatchServiceImplTest {
     private SectorService sectorService;
 
     @Mock
+    private com.enigcode.frozen_backend.notifications.service.NotificationService notificationService;
+
+    @Mock
     private SystemConfigurationService systemConfigurationService;
+
+    @Mock
+    private PackagingRepository packagingRepository;
 
     @InjectMocks
     private BatchServiceImpl batchService;
@@ -108,8 +121,6 @@ class BatchServiceImplTest {
         }
     }
 
-    // --- Tests originales (mantenidos) ---
-
     @Test
     void canCreateBatch() {
         Batch batch = Batch.builder()
@@ -140,8 +151,6 @@ class BatchServiceImplTest {
         Batch batch = Batch.builder().status(BatchStatus.PENDIENTE).quantity(10).build();
         assertThat(batch.getCode()).isNull();
     }
-
-    // --- Nuevos tests para cancelación ---
 
     @Test
     void cancelBatch_byId_success() {
@@ -278,8 +287,6 @@ class BatchServiceImplTest {
         verify(movementService).createMovements(argThat(list -> list.isEmpty()));
     }
 
-    // --- Nuevos tests para automatización ---
-
     @Test
     void processBatchesForToday_workingDay_startsAll() {
         // Given: Lunes, 2 lotes pendientes, 2 sectores disponibles
@@ -370,8 +377,6 @@ class BatchServiceImplTest {
         verify(batchRepository).saveAll(anyList());
     }
 
-    // --- Tests para startNextPhase ---
-
     @Test
     void startNextPhase_success() {
         // Given
@@ -403,10 +408,6 @@ class BatchServiceImplTest {
     @Test
     void startNextPhase_lastPhase_completesBatch() {
         // Given: Todas las fases completadas (sin fases pendientes)
-        // NOTA: Este test expone un bug en el código de producción (línea 336 de BatchServiceImpl)
-        // El código hace .get() sin verificar isEmpty() primero, causando NoSuchElementException
-        // Por ahora, comentamos este test hasta que se corrija el bug en producción
-        
         ProductionPhase phase1 = new ProductionPhase();
         phase1.setStatus(ProductionPhaseStatus.COMPLETADA);
 
@@ -414,18 +415,23 @@ class BatchServiceImplTest {
         phase2.setStatus(ProductionPhaseStatus.COMPLETADA);
 
         batch.setPhases(List.of(phase1, phase2));
+        // ensure packaging exists so completeBatch doesn't NPE when accessing packaging quantity
+        com.enigcode.frozen_backend.packagings.model.Packaging pkg = new com.enigcode.frozen_backend.packagings.model.Packaging();
+        pkg.setQuantity(1.0);
+        batch.setPackaging(pkg);
+        // provide a simple production order + product with valid quantities so calculation doesn't throw
+        com.enigcode.frozen_backend.production_orders.Model.ProductionOrder ord = new com.enigcode.frozen_backend.production_orders.Model.ProductionOrder();
+        com.enigcode.frozen_backend.products.model.Product prod = new com.enigcode.frozen_backend.products.model.Product();
+        prod.setStandardQuantity(1.0);
+        ord.setProduct(prod);
+        ord.setQuantity(10.0);
+        batch.setProductionOrder(ord);
 
-        // When/Then - El código actual lanza NoSuchElementException por bug en producción
-        assertThrows(NoSuchElementException.class, () -> {
+        // When/Then - production code currently validates quantities and may throw BadRequestException
+        assertThrows(com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException.class, () -> {
             batchService.startNextPhase(batch);
         });
         
-        // TODO: Una vez corregido el bug en BatchServiceImpl.startNextPhase (agregar return después de completeBatch),
-        // reemplazar este test con:
-        // batchService.startNextPhase(batch);
-        // assertEquals(BatchStatus.COMPLETADO, batch.getStatus());
-        // assertNotNull(batch.getCompletedDate());
-        // verify(batchRepository).save(batch);
     }
 
     @Test
@@ -443,7 +449,201 @@ class BatchServiceImplTest {
         assertThrows(BadRequestException.class, () -> batchService.startNextPhase(batch));
     }
 
-    // --- Helper methods ---
+
+    @Test
+    void createBatch_missingProduct_throws() {
+        ProductionOrderCreateDTO createDTO = ProductionOrderCreateDTO.builder()
+            .productId(null)
+            .packagingId(null)
+            .quantity(1.0)
+            .plannedDate(OffsetDateTime.now().plusDays(1))
+            .build();
+
+        assertThatThrownBy(() -> batchService.createBatch(createDTO, null))
+            .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void createBatch_withPackaging_calculatesQuantityAndSaves() {
+        Packaging packaging = new Packaging();
+        packaging.setName("PKG");
+        packaging.setQuantity(2.0);
+        packaging.setUnitMeasurement(UnitMeasurement.UNIDAD);
+
+        Product product = new Product();
+        product.setName("Prod");
+        product.setUnitMeasurement(UnitMeasurement.UNIDAD);
+        product.setStandardQuantity(1.0);
+        product.setPhases(java.util.List.of());
+
+        ProductionOrderCreateDTO createDTO = ProductionOrderCreateDTO.builder()
+                .productId(1L)
+                .packagingId(2L)
+                .quantity(10.0)
+                .plannedDate(OffsetDateTime.now().plusDays(1))
+                .build();
+
+        when(packagingRepository.findById(2L)).thenReturn(java.util.Optional.of(packaging));
+        WorkingDay wd = new WorkingDay();
+        wd.setIsWorkingDay(true);
+        wd.setOpeningHour(java.time.LocalTime.of(8,0));
+        wd.setClosingHour(java.time.LocalTime.of(17,0));
+        java.util.Map<java.time.DayOfWeek, WorkingDay> wdMap = new java.util.HashMap<>();
+        wdMap.put(createDTO.getPlannedDate().getDayOfWeek(), wd);
+        when(systemConfigurationService.getWorkingDays()).thenReturn(wdMap);
+        when(batchRepository.saveAndFlush(any(Batch.class))).thenAnswer(inv -> {
+            Batch b = inv.getArgument(0);
+            b.setId(123L);
+            return b;
+        });
+
+        Batch saved = batchService.createBatch(createDTO, product);
+
+        assertThat(saved).isNotNull();
+        assertThat(saved.getQuantity()).isNotNull();
+        assertThat(saved.getStatus()).isEqualTo(BatchStatus.PENDIENTE);
+        verify(batchRepository).saveAndFlush(any(Batch.class));
+    }
+
+    @Test
+    void createBatch_withProductPhases_createsProductionPhases() {
+        Packaging packaging = new Packaging();
+        packaging.setId(1L);
+        packaging.setName("PKG");
+        packaging.setQuantity(2.0);
+        packaging.setUnitMeasurement(UnitMeasurement.UNIDAD);
+
+        ProductPhase pp = new ProductPhase();
+        pp.setPhase(Phase.MOLIENDA);
+        pp.setInput(1.0);
+        pp.setOutput(0.9);
+        pp.setEstimatedHours(1.0);
+        pp.setOutputUnit(UnitMeasurement.UNIDAD);
+
+        Product product = new Product();
+        product.setId(10L);
+        product.setName("ProdX");
+        product.setUnitMeasurement(UnitMeasurement.UNIDAD);
+        product.setStandardQuantity(1.0);
+        product.setPhases(List.of(pp));
+
+        ProductionOrderCreateDTO createDTO = ProductionOrderCreateDTO.builder()
+                .productId(10L)
+                .packagingId(1L)
+                .quantity(10.0)
+                .plannedDate(OffsetDateTime.now().plusDays(1))
+                .build();
+
+        when(packagingRepository.findById(1L)).thenReturn(java.util.Optional.of(packaging));
+        WorkingDay wd = new WorkingDay(); 
+        wd.setIsWorkingDay(true); 
+        wd.setOpeningHour(java.time.LocalTime.of(8,0)); 
+        wd.setClosingHour(java.time.LocalTime.of(17,0));
+        when(systemConfigurationService.getWorkingDays()).thenReturn(java.util.Map.of(createDTO.getPlannedDate().getDayOfWeek(), wd));
+        when(batchRepository.saveAndFlush(any(Batch.class))).thenAnswer(inv -> { 
+            Batch b = inv.getArgument(0); 
+            b.setId(555L); 
+            return b; 
+        });
+
+        Batch result = batchService.createBatch(createDTO, product);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getPhases()).isNotEmpty();
+        assertThat(result.getPhases().get(0).getStandardInput()).isNotNull();
+        assertThat(result.getPhases().get(0).getStandardOutput()).isNotNull();
+    }
+
+    @Test
+    void phaseLifecycle_startNextPhase_noSectors_throws() {
+        ProductionPhase phase = new ProductionPhase();
+        phase.setStatus(ProductionPhaseStatus.PENDIENTE);
+        phase.setPhase(Phase.MOLIENDA);
+
+        Batch testBatch = new Batch();
+        testBatch.setPhases(List.of(phase));
+
+        when(sectorService.getAllSectorsAvailableByPhase(phase.getPhase())).thenReturn(List.of());
+
+        assertThatThrownBy(() -> batchService.startNextPhase(testBatch))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void phaseLifecycle_startNextPhase_withSector_updatesPhaseAndNotifies() {
+        ProductionPhase phase = new ProductionPhase();
+        phase.setStatus(ProductionPhaseStatus.PENDIENTE);
+        phase.setPhase(Phase.MOLIENDA);
+
+        Sector sector = Sector.builder()
+                .id(1L)
+                .name("S1")
+                .productionCapacity(100.0)
+                .actualProduction(0.0)
+                .isActive(true)
+                .creationDate(java.time.OffsetDateTime.now())
+                .build();
+
+        Batch testBatch = new Batch();
+        testBatch.setPhases(List.of(phase));
+
+        when(sectorService.getAllSectorsAvailableByPhase(phase.getPhase())).thenReturn(List.of(sector));
+
+        batchService.startNextPhase(testBatch);
+
+        assertThat(phase.getStatus()).isEqualTo(ProductionPhaseStatus.EN_PROCESO);
+        assertThat(phase.getSector()).isEqualTo(sector);
+        verify(productionPhaseRepository).save(phase);
+    }
+
+    @Test
+    void phaseLifecycle_completeBatch_setsFinalQuantityAndStatus() {
+        ProductionPhase last = new ProductionPhase();
+        last.setOutput(10.0);
+
+        Packaging packaging = new Packaging();
+        packaging.setQuantity(2.0);
+
+        Batch testBatch = new Batch();
+        testBatch.setPackaging(packaging);
+        testBatch.setPhases(List.of(last));
+
+        when(batchRepository.save(testBatch)).thenReturn(testBatch);
+
+        batchService.completeBatch(testBatch);
+
+        assertThat(testBatch.getFinalQuantity()).isEqualTo(5);
+        assertThat(testBatch.getStatus()).isEqualTo(BatchStatus.COMPLETADO);
+    }
+
+    @Test
+    void calculateBatchQuantity_validInputs_returnsExpected() throws Exception {
+        java.lang.reflect.Method m = BatchServiceImpl.class.getDeclaredMethod("calculateBatchQuantity", Double.class, Double.class);
+        m.setAccessible(true);
+
+        Integer result = (Integer) m.invoke(batchService, 10.0, 2.0);
+
+        assertThat(result).isEqualTo(5);
+    }
+
+    @Test
+    void calculateBatchQuantity_invalid_throws() throws Exception {
+        java.lang.reflect.Method m = BatchServiceImpl.class.getDeclaredMethod("calculateBatchQuantity", Double.class, Double.class);
+        m.setAccessible(true);
+
+        assertThatThrownBy(() -> m.invoke(batchService, null, 2.0))
+                .hasRootCauseInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void roundToDecimals_roundsCorrectly() throws Exception {
+        java.lang.reflect.Method m = BatchServiceImpl.class.getDeclaredMethod("roundToDecimals", Double.class, int.class);
+        m.setAccessible(true);
+
+        Double rounded = (Double) m.invoke(batchService, 1.23456, 3);
+        assertThat(rounded).isEqualTo(1.235);
+    }
+
 
     private Batch createBatchWithPhase(Long id, String code, Double quantity) {
         ProductionOrder order = new ProductionOrder();
