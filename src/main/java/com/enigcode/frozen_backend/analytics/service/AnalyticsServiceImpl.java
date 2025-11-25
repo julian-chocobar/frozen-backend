@@ -100,7 +100,7 @@ public class AnalyticsServiceImpl implements AnalyticsService{
 
     @Transactional
     @Override
-    public List<MonthlyTotalDTO> getMonthlyEfficiency(LocalDate startDate, LocalDate endDate) {
+    public List<MonthlyTotalDTO> getMonthlyEfficiency(LocalDate startDate, LocalDate endDate, Long productId, Phase phase) {
         // Establecer fechas por defecto si no se proporcionan (último año)
         if (startDate == null || endDate == null) {
             endDate = LocalDate.now();
@@ -111,10 +111,10 @@ public class AnalyticsServiceImpl implements AnalyticsService{
         OffsetDateTime startODT = startDate.atStartOfDay().atOffset(BA_OFFSET);
         OffsetDateTime endODT = endDate.atTime(LocalTime.MAX).atOffset(BA_OFFSET);
 
-        // Obtener datos mensuales
-        List<MonthlyTotalProjectionDTO> production = analyticsRepository.getMonthlyProduction(startODT, endODT);
-        List<MonthlyTotalProjectionDTO> waste = analyticsRepository.getMonthlyWasteTotal(startODT, endODT);
-        List<MonthlyTotalProjectionDTO> materials = analyticsRepository.getMonthlyMaterialsTotal(startODT, endODT);
+        // Obtener datos mensuales con filtros
+        List<MonthlyTotalProjectionDTO> production = analyticsRepository.getMonthlyProduction(startODT, endODT, productId);
+        List<MonthlyTotalProjectionDTO> waste = analyticsRepository.getMonthlyWasteTotal(startODT, endODT, productId, phase);
+        List<MonthlyTotalProjectionDTO> materials = analyticsRepository.getMonthlyMaterialsTotal(startODT, endODT, productId, phase);
 
         // Crear mapas por mes para facilitar el cálculo
         var wasteByMonth = waste.stream()

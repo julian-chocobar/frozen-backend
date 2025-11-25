@@ -83,12 +83,14 @@ public interface AnalyticsRepository extends Repository<ProductionPhase, Long> {
     WHERE pp.phase = 'ENVASADO'
       AND pp.status = 'COMPLETADA'
       AND pp.endDate BETWEEN :start AND :end
+      AND (:productId IS NULL OR pp.batch.productionOrder.product.id = :productId)
     GROUP BY YEAR(pp.endDate), MONTH(pp.endDate)
     ORDER BY YEAR(pp.endDate), MONTH(pp.endDate)
     """)
     List<MonthlyTotalProjectionDTO> getMonthlyProduction(
             @Param("start") OffsetDateTime start,
-            @Param("end") OffsetDateTime end
+            @Param("end") OffsetDateTime end,
+            @Param("productId") Long productId
     );
 
     @Query("""
@@ -106,12 +108,16 @@ public interface AnalyticsRepository extends Repository<ProductionPhase, Long> {
         ) AS total
     FROM ProductionPhase pp
     WHERE pp.endDate BETWEEN :start AND :end
+      AND (:productId IS NULL OR pp.batch.productionOrder.product.id = :productId)
+      AND (:phase IS NULL OR pp.phase = :phase)
     GROUP BY YEAR(pp.endDate), MONTH(pp.endDate)
     ORDER BY YEAR(pp.endDate), MONTH(pp.endDate)
     """)
     List<MonthlyTotalProjectionDTO> getMonthlyWasteTotal(
             @Param("start") OffsetDateTime start,
-            @Param("end") OffsetDateTime end
+            @Param("end") OffsetDateTime end,
+            @Param("productId") Long productId,
+            @Param("phase") com.enigcode.frozen_backend.product_phases.model.Phase phase
     );
 
     @Query("""
@@ -123,12 +129,16 @@ public interface AnalyticsRepository extends Repository<ProductionPhase, Long> {
     JOIN pm.productionPhase pp
     WHERE pp.endDate BETWEEN :start AND :end
       AND pp.status IN ('COMPLETADA', 'RECHAZADA')
+      AND (:productId IS NULL OR pp.batch.productionOrder.product.id = :productId)
+      AND (:phase IS NULL OR pp.phase = :phase)
     GROUP BY YEAR(pp.endDate), MONTH(pp.endDate)
     ORDER BY YEAR(pp.endDate), MONTH(pp.endDate)
     """)
     List<MonthlyTotalProjectionDTO> getMonthlyMaterialsTotal(
             @Param("start") OffsetDateTime start,
-            @Param("end") OffsetDateTime end
+            @Param("end") OffsetDateTime end,
+            @Param("productId") Long productId,
+            @Param("phase") com.enigcode.frozen_backend.product_phases.model.Phase phase
     );
     
 }

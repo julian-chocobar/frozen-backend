@@ -12,5 +12,5 @@ public interface AnalyticsService {
     List<MonthlyTotalDTO> getMonthlyMaterialConsumption(LocalDate startDate, LocalDate endDate, Long materialId);
     List<MonthlyTotalDTO> getMonthlyWaste(LocalDate startDate, LocalDate endDate, Phase phase, boolean transferOnly);
     DashboardStatsDTO getDashboardStats();
-    List<MonthlyTotalDTO> getMonthlyEfficiency(LocalDate startDate, LocalDate endDate);
+    List<MonthlyTotalDTO> getMonthlyEfficiency(LocalDate startDate, LocalDate endDate, Long productId, Phase phase);
 }

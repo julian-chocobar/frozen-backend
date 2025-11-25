@@ -70,12 +70,14 @@ public class AnalyticsController {
         }
 
         @Operation(summary = "Ver eficiencia por mes", description = "Devuelve una lista de la eficiencia general por mes del último año (por default) "
-                        + "y se puede filtrar por fechas. Combina eficiencia de materiales y tasa de desperdicio en una métrica unificada")
+                        + "y se puede filtrar por fechas, producto y fase. Combina eficiencia de materiales y tasa de desperdicio en una métrica unificada")
         @GetMapping("/monthly-efficiency")
         public ResponseEntity<List<MonthlyTotalDTO>> getMonthlyEfficiency(
                         @RequestParam(required = false) LocalDate startDate,
-                        @RequestParam(required = false) LocalDate endDate) {
-                List<MonthlyTotalDTO> dtoList = analyticsService.getMonthlyEfficiency(startDate, endDate);
+                        @RequestParam(required = false) LocalDate endDate,
+                        @RequestParam(required = false) Long productId,
+                        @RequestParam(required = false) Phase phase) {
+                List<MonthlyTotalDTO> dtoList = analyticsService.getMonthlyEfficiency(startDate, endDate, productId, phase);
                 return new ResponseEntity<>(dtoList, HttpStatus.OK);
         }
 
