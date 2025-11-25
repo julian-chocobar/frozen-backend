@@ -129,29 +129,25 @@ public class AnalyticsServiceImpl implements AnalyticsService{
                         MonthlyTotalProjectionDTO::getTotal
                 ));
 
-        // Calcular eficiencia general por mes
-        // Eficiencia = ((1 - tasa_desperdicio/100) + eficiencia_materiales/100) / 2 * 100
-        // O simplemente: eficiencia_materiales - tasa_desperdicio (más simple)
+        // Calcular eficiencia neta por mes
+        // Eficiencia Neta = ((producción - desperdicio) / materiales) × 100
+        // Representa el % de material que se convierte en producto útil
         return production.stream()
                 .map(prod -> {
                     String key = prod.getYear() + "-" + prod.getMonth();
                     Double wasteAmount = wasteByMonth.getOrDefault(key, 0.0);
                     Double materialsUsed = materialsByMonth.getOrDefault(key, 0.0);
                     
-                    // Calcular tasa de desperdicio
-                    Double wasteRate = prod.getTotal() > 0 ? (wasteAmount / prod.getTotal()) * 100.0 : 0.0;
-                    
-                    // Calcular eficiencia de materiales
-                    Double materialEfficiency = materialsUsed > 0 ? (prod.getTotal() / materialsUsed) * 100.0 : 0.0;
-                    
-                    // Eficiencia general: promedio ponderado
-                    // (Eficiencia de materiales es positiva, desperdicio es negativa)
-                    // Fórmula: eficiencia_materiales - tasa_desperdicio
-                    Double efficiency = materialEfficiency - wasteRate;
+                    // Calcular eficiencia neta
+                    Double netEfficiency = 0.0;
+                    if (materialsUsed > 0) {
+                        Double usefulProduction = prod.getTotal() - wasteAmount;
+                        netEfficiency = (usefulProduction / materialsUsed) * 100.0;
+                    }
                     
                     return MonthlyTotalDTO.builder()
                             .month(prod.getYear() + "-" + String.format("%02d", prod.getMonth()))
-                            .total(efficiency)
+                            .total(netEfficiency)
                             .build();
                 })
                 .collect(java.util.stream.Collectors.toList());

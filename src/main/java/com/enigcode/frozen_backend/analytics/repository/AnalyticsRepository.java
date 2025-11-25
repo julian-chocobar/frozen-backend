@@ -122,17 +122,21 @@ public interface AnalyticsRepository extends Repository<ProductionPhase, Long> {
 
     @Query("""
     SELECT
-        YEAR(pp.endDate) AS year,
-        MONTH(pp.endDate) AS month,
+        YEAR(envasado.endDate) AS year,
+        MONTH(envasado.endDate) AS month,
         SUM(pm.quantity) AS total
     FROM ProductionMaterial pm
     JOIN pm.productionPhase pp
-    WHERE pp.endDate BETWEEN :start AND :end
+    JOIN pp.batch b
+    JOIN b.phases envasado
+    WHERE envasado.endDate BETWEEN :start AND :end
+      AND envasado.phase = 'ENVASADO'
+      AND envasado.status = 'COMPLETADA'
       AND pp.status IN ('COMPLETADA', 'RECHAZADA')
-      AND (:productId IS NULL OR pp.batch.productionOrder.product.id = :productId)
+      AND (:productId IS NULL OR b.productionOrder.product.id = :productId)
       AND (:phase IS NULL OR pp.phase = :phase)
-    GROUP BY YEAR(pp.endDate), MONTH(pp.endDate)
-    ORDER BY YEAR(pp.endDate), MONTH(pp.endDate)
+    GROUP BY YEAR(envasado.endDate), MONTH(envasado.endDate)
+    ORDER BY YEAR(envasado.endDate), MONTH(envasado.endDate)
     """)
     List<MonthlyTotalProjectionDTO> getMonthlyMaterialsTotal(
             @Param("start") OffsetDateTime start,
