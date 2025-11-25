@@ -97,4 +97,63 @@ public class AnalyticsServiceImpl implements AnalyticsService{
 
         return  analyticsMapper.toDashboardStatsDTO(dto);
     }
+
+    @Transactional
+    @Override
+    public List<MonthlyTotalDTO> getMonthlyEfficiency(LocalDate startDate, LocalDate endDate) {
+        // Establecer fechas por defecto si no se proporcionan (último año)
+        if (startDate == null || endDate == null) {
+            endDate = LocalDate.now();
+            startDate = endDate.minusYears(1);
+        }
+
+        // Convertir a OffsetDateTime para la consulta
+        OffsetDateTime startODT = startDate.atStartOfDay().atOffset(BA_OFFSET);
+        OffsetDateTime endODT = endDate.atTime(LocalTime.MAX).atOffset(BA_OFFSET);
+
+        // Obtener datos mensuales
+        List<MonthlyTotalProjectionDTO> production = analyticsRepository.getMonthlyProduction(startODT, endODT);
+        List<MonthlyTotalProjectionDTO> waste = analyticsRepository.getMonthlyWasteTotal(startODT, endODT);
+        List<MonthlyTotalProjectionDTO> materials = analyticsRepository.getMonthlyMaterialsTotal(startODT, endODT);
+
+        // Crear mapas por mes para facilitar el cálculo
+        var wasteByMonth = waste.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        w -> w.getYear() + "-" + w.getMonth(),
+                        MonthlyTotalProjectionDTO::getTotal
+                ));
+        
+        var materialsByMonth = materials.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        m -> m.getYear() + "-" + m.getMonth(),
+                        MonthlyTotalProjectionDTO::getTotal
+                ));
+
+        // Calcular eficiencia general por mes
+        // Eficiencia = ((1 - tasa_desperdicio/100) + eficiencia_materiales/100) / 2 * 100
+        // O simplemente: eficiencia_materiales - tasa_desperdicio (más simple)
+        return production.stream()
+                .map(prod -> {
+                    String key = prod.getYear() + "-" + prod.getMonth();
+                    Double wasteAmount = wasteByMonth.getOrDefault(key, 0.0);
+                    Double materialsUsed = materialsByMonth.getOrDefault(key, 0.0);
+                    
+                    // Calcular tasa de desperdicio
+                    Double wasteRate = prod.getTotal() > 0 ? (wasteAmount / prod.getTotal()) * 100.0 : 0.0;
+                    
+                    // Calcular eficiencia de materiales
+                    Double materialEfficiency = materialsUsed > 0 ? (prod.getTotal() / materialsUsed) * 100.0 : 0.0;
+                    
+                    // Eficiencia general: promedio ponderado
+                    // (Eficiencia de materiales es positiva, desperdicio es negativa)
+                    // Fórmula: eficiencia_materiales - tasa_desperdicio
+                    Double efficiency = materialEfficiency - wasteRate;
+                    
+                    return MonthlyTotalDTO.builder()
+                            .month(prod.getYear() + "-" + String.format("%02d", prod.getMonth()))
+                            .total(efficiency)
+                            .build();
+                })
+                .collect(java.util.stream.Collectors.toList());
+    }
 }
