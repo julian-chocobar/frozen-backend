@@ -11,6 +11,7 @@ import com.enigcode.frozen_backend.production_materials.repository.ProductionMat
 import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -32,6 +33,7 @@ public class AnalyticsServiceImpl implements AnalyticsService{
 
 
     @Transactional
+    @Cacheable(value = "analytics", key = "'production:' + T(com.enigcode.frozen_backend.analytics.service.AnalyticsServiceImpl).normalizeCacheKey(#startDate, #endDate, #productId)")
     @Override
     public List<MonthlyTotalDTO> getMonthlyProduction(LocalDate startDate, LocalDate endDate, Long productId) {
         if (startDate == null || endDate == null) {
@@ -49,6 +51,7 @@ public class AnalyticsServiceImpl implements AnalyticsService{
     }
 
     @Transactional
+    @Cacheable(value = "analytics", key = "'materials:' + T(com.enigcode.frozen_backend.analytics.service.AnalyticsServiceImpl).normalizeCacheKey(#startDate, #endDate, #materialId)")
     @Override
     public List<MonthlyTotalDTO> getMonthlyMaterialConsumption(LocalDate startDate, LocalDate endDate, Long materialId) {
         if (startDate == null || endDate == null) {
@@ -66,6 +69,7 @@ public class AnalyticsServiceImpl implements AnalyticsService{
     }
 
     @Transactional
+    @Cacheable(value = "analytics", key = "'waste:' + T(com.enigcode.frozen_backend.analytics.service.AnalyticsServiceImpl).normalizeCacheKey(#startDate, #endDate, null) + ':' + (#phase != null ? #phase.toString() : 'null') + ':' + #movementOnly")
     @Override
     public List<MonthlyTotalDTO> getMonthlyWaste(LocalDate startDate, LocalDate endDate, Phase phase, boolean movementOnly) {
         if (startDate == null || endDate == null) {
@@ -88,6 +92,7 @@ public class AnalyticsServiceImpl implements AnalyticsService{
     }
 
     @Transactional
+    @Cacheable(value = "analytics", key = "'dashboard:stats'")
     @Override
     public DashboardStatsDTO getDashboardStats() {
         OffsetDateTime end = OffsetDateTime.now();
@@ -99,6 +104,7 @@ public class AnalyticsServiceImpl implements AnalyticsService{
     }
 
     @Transactional
+    @Cacheable(value = "analytics", key = "'efficiency:' + T(com.enigcode.frozen_backend.analytics.service.AnalyticsServiceImpl).normalizeCacheKey(#startDate, #endDate, #productId) + ':' + (#phase != null ? #phase.toString() : 'null')")
     @Override
     public List<MonthlyTotalDTO> getMonthlyEfficiency(LocalDate startDate, LocalDate endDate, Long productId, Phase phase) {
         // Establecer fechas por defecto si no se proporcionan (último año)
@@ -153,5 +159,18 @@ public class AnalyticsServiceImpl implements AnalyticsService{
                             .build();
                 })
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Normaliza las fechas para generar claves de caché consistentes.
+     * Si las fechas son null, usa el rango por defecto (último año).
+     * Esto asegura que múltiples llamadas sin parámetros usen la misma clave de caché.
+     */
+    public static String normalizeCacheKey(LocalDate startDate, LocalDate endDate, Long filterId) {
+        if (startDate == null || endDate == null) {
+            // Usar "default" para el rango por defecto (último año)
+            return "default:" + (filterId != null ? filterId : "null");
+        }
+        return startDate.toString() + ":" + endDate.toString() + ":" + (filterId != null ? filterId : "null");
     }
 }
