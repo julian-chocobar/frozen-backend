@@ -111,9 +111,20 @@ public class AnalyticsServiceImpl implements AnalyticsService{
         OffsetDateTime startODT = startDate.atStartOfDay().atOffset(BA_OFFSET);
         OffsetDateTime endODT = endDate.atTime(LocalTime.MAX).atOffset(BA_OFFSET);
 
-        // Obtener datos mensuales con filtros
-        List<MonthlyTotalProjectionDTO> production = analyticsRepository.getMonthlyProduction(startODT, endODT, productId);
-        List<MonthlyTotalProjectionDTO> materials = analyticsRepository.getMonthlyMaterialsTotal(startODT, endODT, productId, phase);
+        List<MonthlyTotalProjectionDTO> production;
+        List<MonthlyTotalProjectionDTO> materials;
+
+        // Si hay filtro de fase, usar input/output de esa fase específica
+        if (phase != null) {
+            // Obtener output de la fase específica
+            production = analyticsRepository.getMonthlyProductionByPhase(startODT, endODT, productId, phase);
+            // Obtener input de la fase específica (materiales que entran a esa fase)
+            materials = analyticsRepository.getMonthlyInputByPhase(startODT, endODT, productId, phase);
+        } else {
+            // Sin filtro de fase: usar producción final de ENVASADO y materiales totales
+            production = analyticsRepository.getMonthlyProduction(startODT, endODT, productId);
+            materials = analyticsRepository.getMonthlyMaterialsTotal(startODT, endODT, productId, null);
+        }
         
         var materialsByMonth = materials.stream()
                 .collect(java.util.stream.Collectors.toMap(
@@ -123,6 +134,7 @@ public class AnalyticsServiceImpl implements AnalyticsService{
 
         // Calcular eficiencia neta por mes
         // Eficiencia = (Producción Final / Materiales Totales) × 100
+        // Cuando hay filtro de fase: Eficiencia = (Output de la fase / Input de la fase) × 100
         // La producción ya es el resultado después de todas las pérdidas
         return production.stream()
                 .map(prod -> {

@@ -144,5 +144,45 @@ public interface AnalyticsRepository extends Repository<ProductionPhase, Long> {
             @Param("productId") Long productId,
             @Param("phase") com.enigcode.frozen_backend.product_phases.model.Phase phase
     );
+
+    @Query("""
+    SELECT
+        YEAR(pp.endDate) AS year,
+        MONTH(pp.endDate) AS month,
+        SUM(pp.output) AS total
+    FROM ProductionPhase pp
+    WHERE pp.phase = :phase
+      AND pp.status = 'COMPLETADA'
+      AND pp.endDate BETWEEN :start AND :end
+      AND (:productId IS NULL OR pp.batch.productionOrder.product.id = :productId)
+    GROUP BY YEAR(pp.endDate), MONTH(pp.endDate)
+    ORDER BY YEAR(pp.endDate), MONTH(pp.endDate)
+    """)
+    List<MonthlyTotalProjectionDTO> getMonthlyProductionByPhase(
+            @Param("start") OffsetDateTime start,
+            @Param("end") OffsetDateTime end,
+            @Param("productId") Long productId,
+            @Param("phase") com.enigcode.frozen_backend.product_phases.model.Phase phase
+    );
+
+    @Query("""
+    SELECT
+        YEAR(pp.endDate) AS year,
+        MONTH(pp.endDate) AS month,
+        SUM(pp.input) AS total
+    FROM ProductionPhase pp
+    WHERE pp.phase = :phase
+      AND pp.status = 'COMPLETADA'
+      AND pp.endDate BETWEEN :start AND :end
+      AND (:productId IS NULL OR pp.batch.productionOrder.product.id = :productId)
+    GROUP BY YEAR(pp.endDate), MONTH(pp.endDate)
+    ORDER BY YEAR(pp.endDate), MONTH(pp.endDate)
+    """)
+    List<MonthlyTotalProjectionDTO> getMonthlyInputByPhase(
+            @Param("start") OffsetDateTime start,
+            @Param("end") OffsetDateTime end,
+            @Param("productId") Long productId,
+            @Param("phase") com.enigcode.frozen_backend.product_phases.model.Phase phase
+    );
     
 }
