@@ -1,6 +1,7 @@
 package com.enigcode.frozen_backend.common.security;
 
 import com.enigcode.frozen_backend.common.SecurityProperties;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -9,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class LoginAttemptService {
+
+    private static final long CACHE_CLEANUP_INTERVAL_MS = 30 * 60 * 1000L; // 30 minutos
 
     private final SecurityProperties securityProperties;
     private final Map<String, LoginAttempt> attemptsCache = new ConcurrentHashMap<>();
@@ -64,6 +67,36 @@ public class LoginAttemptService {
             return securityProperties.getMaxLoginAttempts();
         }
         return attempt.getRemainingAttempts();
+    }
+
+    /**
+     * Limpieza periódica del cache de intentos de login expirados.
+     * Previene el crecimiento indefinido del cache en memoria.
+     */
+    @Scheduled(fixedRate = CACHE_CLEANUP_INTERVAL_MS)
+    public void cleanupExpiredAttempts() {
+        if (attemptsCache.isEmpty()) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        int initialSize = attemptsCache.size();
+        
+        attemptsCache.entrySet().removeIf(entry -> {
+            LoginAttempt attempt = entry.getValue();
+            // Remover intentos expirados (bloqueos que ya pasaron)
+            if (attempt.isBlocked() && attempt.getBlockedUntil() != null 
+                && attempt.getBlockedUntil().isBefore(now)) {
+                return true;
+            }
+            return false;
+        });
+
+        int removed = initialSize - attemptsCache.size();
+        if (removed > 0) {
+            // Usar System.out.println para evitar dependencia de logger
+            System.out.println("Limpieza de cache de intentos de login: " + removed + " entradas expiradas removidas, " + attemptsCache.size() + " restantes");
+        }
     }
 
     private static class LoginAttempt {
