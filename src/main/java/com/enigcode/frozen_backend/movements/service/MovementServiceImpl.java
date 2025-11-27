@@ -25,6 +25,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -69,7 +71,7 @@ public class MovementServiceImpl implements MovementService {
                 // Crear movimiento en estado PENDIENTE
                 Movement movement = Movement.builder()
                                 .type(movementCreateDTO.getType())
-                                .stock(movementCreateDTO.getStock())
+                                .stock(roundToTwoDecimals(movementCreateDTO.getStock()))
                                 .reason(movementCreateDTO.getReason())
                                 .location(movementCreateDTO.getLocation())
                                 .createdByUserId(currentUser.orElse(null).getId())
@@ -127,7 +129,7 @@ public class MovementServiceImpl implements MovementService {
 
                         Movement movement = Movement.builder()
                                         .type(type)
-                                        .stock(dto.getStock())
+                                        .stock(roundToTwoDecimals(dto.getStock()))
                                         .status(MovementStatus.COMPLETADO)
                                         .reason("El stock se fue :" + type)
                                         .realizationDate(OffsetDateTime.now(ZoneOffset.UTC))
@@ -161,7 +163,7 @@ public class MovementServiceImpl implements MovementService {
 
                         Movement movement = Movement.builder()
                                         .type(MovementType.EGRESO)
-                                        .stock(dto.getStock())
+                                        .stock(roundToTwoDecimals(dto.getStock()))
                                         .status(MovementStatus.COMPLETADO)
                                         .reason("El stock salio de reserva ")
                                         .realizationDate(OffsetDateTime.now(ZoneOffset.UTC))
@@ -339,7 +341,7 @@ public class MovementServiceImpl implements MovementService {
                         Optional<User> currentUser = Optional.ofNullable(userService.getCurrentUser());
                         return Movement.builder()
                                         .type(dto.getType())
-                                        .stock(dto.getStock())
+                                        .stock(roundToTwoDecimals(dto.getStock()))
                                         .reason(dto.getReason())
                                         .location(dto.getLocation())
                                         .createdByUserId(currentUser.orElse(null).getId())
@@ -349,7 +351,17 @@ public class MovementServiceImpl implements MovementService {
                                         .build();
                 }).toList();
 
-                movementRepository.saveAll(movements);
+                List<Movement> savedMovements = movementRepository.saveAll(movements);
+
+                // Crear notificaciones para operarios de almacén para cada movimiento
+                savedMovements.forEach(savedMovement -> {
+                        notificationService.createPendingMovementNotification(
+                                        savedMovement.getId(),
+                                        savedMovement.getMaterial().getName(),
+                                        savedMovement.getType().toString());
+                        log.info("Movimiento {} creado en estado PENDIENTE para material: {}",
+                                        savedMovement.getId(), savedMovement.getMaterial().getName());
+                });
         }
 
         /**
@@ -378,6 +390,18 @@ public class MovementServiceImpl implements MovementService {
 
                 // Usar tolerancia muy pequeña (0.0001) para comparaciones de punto flotante
                 return reservedStock >= (requiredStock - 0.0001);
+        }
+
+        /**
+         * Redondea un número decimal a 2 decimales usando HALF_UP
+         */
+        private Double roundToTwoDecimals(Double value) {
+                if (value == null) {
+                        return null;
+                }
+                BigDecimal bd = BigDecimal.valueOf(value);
+                bd = bd.setScale(2, RoundingMode.HALF_UP);
+                return bd.doubleValue();
         }
 
 }

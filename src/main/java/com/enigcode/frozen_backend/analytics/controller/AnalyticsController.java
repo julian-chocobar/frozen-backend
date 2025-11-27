@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,6 +28,7 @@ public class AnalyticsController {
                         +
                         "puede filtrar por fechas y producto")
         @GetMapping("/monthly-production")
+        @PreAuthorize("hasRole('GERENTE_GENERAL')")
         public ResponseEntity<List<MonthlyTotalDTO>> getMonthlyProduction(
                         @RequestParam(required = false) LocalDate startDate,
                         @RequestParam(required = false) LocalDate endDate,
@@ -39,6 +41,7 @@ public class AnalyticsController {
                         +
                         "y se puede filtrar por fechas y producto")
         @GetMapping("/monthly-material-consumption")
+        @PreAuthorize("hasRole('GERENTE_GENERAL')")
         public ResponseEntity<List<MonthlyTotalDTO>> getMonthlyMaterialConsumption(
                         @RequestParam(required = false) LocalDate startDate,
                         @RequestParam(required = false) LocalDate endDate,
@@ -52,6 +55,7 @@ public class AnalyticsController {
                         +
                         " y se puede filtrar por fechas y fase")
         @GetMapping("/monthly-waste")
+        @PreAuthorize("hasRole('GERENTE_GENERAL')")
         public ResponseEntity<List<MonthlyTotalDTO>> getMonthlyWaste(
                         @RequestParam(required = false) LocalDate startDate,
                         @RequestParam(required = false) LocalDate endDate,
@@ -64,6 +68,7 @@ public class AnalyticsController {
 
         @Operation(summary = "Ver resumen del ultimo mes", description = "Devuelve diferentes datos relacionados al ultimo mes")
         @GetMapping("/dashboard/monthly")
+        @PreAuthorize("hasRole('GERENTE_GENERAL')")
         public ResponseEntity<DashboardStatsDTO> getMonthlyDashboard() {
                 DashboardStatsDTO dto = analyticsService.getDashboardStats();
                 return new ResponseEntity<>(dto, HttpStatus.OK);

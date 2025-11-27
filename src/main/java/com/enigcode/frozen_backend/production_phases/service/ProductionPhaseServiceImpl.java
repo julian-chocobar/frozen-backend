@@ -44,18 +44,29 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
         ProductionPhase updatedProductionPhase = productionPhaseMapper.partialUpdate(dto, productionPhase);
         updatedProductionPhase.setStatus(ProductionPhaseStatus.BAJO_REVISION);
 
-        ProductionPhase previousPhase =
-                productionPhaseRepository.findPreviousPhase(
-                        productionPhase.getBatch(),
-                        productionPhase.getPhaseOrder());
+        // Validar que en MOLIENDA (primera fase) el input no puede ser menor que el
+        // output
+        if (updatedProductionPhase.getPhase().equals(Phase.MOLIENDA)) {
+            if (updatedProductionPhase.getInput() != null && updatedProductionPhase.getOutput() != null
+                    && updatedProductionPhase.getInput() < updatedProductionPhase.getOutput()) {
+                throw new BadRequestException(
+                        "En la fase MOLIENDA (primera fase), el input no puede ser menor que el output");
+            }
+        }
+
+        ProductionPhase previousPhase = productionPhaseRepository.findPreviousPhase(
+                productionPhase.getBatch(),
+                productionPhase.getPhaseOrder());
 
         double movementWaste = 0.0;
-        if(previousPhase != null){
-            double expectedInput = (previousPhase.getOutput() * previousPhase.getStandardInput()) / previousPhase.getStandardOutput();
+        if (previousPhase != null) {
+            double expectedInput = (previousPhase.getOutput() * previousPhase.getStandardInput())
+                    / previousPhase.getStandardOutput();
             movementWaste = expectedInput - updatedProductionPhase.getInput();
         }
 
-        if(movementWaste < 0) movementWaste = 0.0;
+        if (movementWaste < 0)
+            movementWaste = 0.0;
         updatedProductionPhase.setMovementWaste(movementWaste);
 
         ProductionPhase savedProductionPhase = productionPhaseRepository.save(updatedProductionPhase);
