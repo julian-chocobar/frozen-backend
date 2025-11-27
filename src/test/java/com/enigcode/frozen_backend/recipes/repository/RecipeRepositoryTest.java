@@ -10,7 +10,7 @@ import com.enigcode.frozen_backend.product_phases.repository.ProductPhaseReposit
 import com.enigcode.frozen_backend.products.model.Product;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
 import com.enigcode.frozen_backend.recipes.model.Recipe;
-import com.enigcode.frozen_backend.recipes.repository.RecipeRepository;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;

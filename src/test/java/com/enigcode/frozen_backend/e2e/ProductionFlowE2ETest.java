@@ -191,7 +191,230 @@ class ProductionFlowE2ETest {
     }
 
     // =====================================================================
-    // TEST 2: Rechazo de Orden por Stock Insuficiente
+    // TEST 2: Flujo de Creación de Múltiples Órdenes con Reserva de Stock
+    // =====================================================================
+    
+    @Test
+    @DisplayName("E2E: Multiple order creation with cumulative stock reservation")
+    void completeProductionFlow_multipleOrdersWithStockReservation() {
+        // ===== DATOS PREPARADOS EN SQL FIXTURES =====
+        // Product ID 2000: Cerveza IPA E2E Test (500L, 8 fases ready)
+        // Materials: 1000-1005 (Malta, Lúpulo, Levadura, Agua, Botella, Etiqueta) - STOCK ALTO
+        // Packaging ID 5000: Pack 1L E2E
+        
+        Long productId = 2000L;
+        Long packagingId = 5000L;
+        
+        // Capturar stock inicial
+        Material malta = materialRepository.findById(1000L).orElseThrow();
+        Double maltaStockInicial = malta.getStock();
+        Double maltaReservedInicial = malta.getReservedStock();
+        
+        Material lupulo = materialRepository.findById(1001L).orElseThrow();
+        Double lupuloStockInicial = lupulo.getStock();
+        
+        // ===== PASO 1: Crear PRIMERA orden de producción =====
+        ProductionOrderCreateDTO orderDTO1 = ProductionOrderCreateDTO.builder()
+            .productId(productId)
+            .packagingId(packagingId)
+            .quantity(500.0)  // 1x multiplicador
+            .plannedDate(OffsetDateTime.now().plusDays(5))
+            .build();
+        
+        ProductionOrderResponseDTO orderResponse1 = productionOrderService.createProductionOrder(orderDTO1);
+        Long orderId1 = orderResponse1.getId();
+        
+        // Validar PRIMERA orden creada
+        ProductionOrder order1 = productionOrderRepository.findById(orderId1).orElseThrow();
+        assertThat(order1.getStatus()).isEqualTo(OrderStatus.PENDIENTE);
+        assertThat(order1.getBatch()).isNotNull();
+        assertThat(order1.getBatch().getStatus()).isEqualTo(BatchStatus.PENDIENTE);
+        
+        // Validar reserva de stock tras PRIMERA orden
+        malta = materialRepository.findById(1000L).orElseThrow();
+        assertThat(malta.getReservedStock()).isEqualTo(100.0);  // 100kg malta reservada
+        assertThat(malta.getStock()).isEqualTo(maltaStockInicial - 100.0);  // Stock disponible decrementado
+        
+        lupulo = materialRepository.findById(1001L).orElseThrow();
+        assertThat(lupulo.getReservedStock()).isEqualTo(3.0);  // 3kg lúpulo reservado
+        assertThat(lupulo.getStock()).isEqualTo(lupuloStockInicial - 3.0);
+        
+        // ===== PASO 2: Crear SEGUNDA orden de producción (doble cantidad) =====
+        ProductionOrderCreateDTO orderDTO2 = ProductionOrderCreateDTO.builder()
+            .productId(productId)
+            .packagingId(packagingId)
+            .quantity(1000.0)  // 2x multiplicador
+            .plannedDate(OffsetDateTime.now().plusDays(10))
+            .build();
+        
+        ProductionOrderResponseDTO orderResponse2 = productionOrderService.createProductionOrder(orderDTO2);
+        Long orderId2 = orderResponse2.getId();
+        
+        // Validar SEGUNDA orden creada
+        ProductionOrder order2 = productionOrderRepository.findById(orderId2).orElseThrow();
+        assertThat(order2.getStatus()).isEqualTo(OrderStatus.PENDIENTE);
+        assertThat(order2.getBatch()).isNotNull();
+        
+        // Validar reserva acumulada de stock
+        malta = materialRepository.findById(1000L).orElseThrow();
+        assertThat(malta.getReservedStock()).isEqualTo(300.0);  // 100kg (orden1) + 200kg (orden2)
+        assertThat(malta.getStock()).isEqualTo(maltaStockInicial - 300.0);  // Stock disponible decrementado
+        
+        lupulo = materialRepository.findById(1001L).orElseThrow();
+        assertThat(lupulo.getReservedStock()).isEqualTo(9.0);  // 3kg (orden1) + 6kg (orden2)
+        assertThat(lupulo.getStock()).isEqualTo(lupuloStockInicial - 9.0);
+        
+        // ===== PASO 3: Crear TERCERA orden para validar acumulación =====
+        ProductionOrderCreateDTO orderDTO3 = ProductionOrderCreateDTO.builder()
+            .productId(productId)
+            .packagingId(packagingId)
+            .quantity(500.0)  // 1x multiplicador
+            .plannedDate(OffsetDateTime.now().plusDays(15))
+            .build();
+        
+        ProductionOrderResponseDTO orderResponse3 = productionOrderService.createProductionOrder(orderDTO3);
+        Long orderId3 = orderResponse3.getId();
+        
+        // Validar TERCERA orden creada
+        ProductionOrder order3 = productionOrderRepository.findById(orderId3).orElseThrow();
+        assertThat(order3.getStatus()).isEqualTo(OrderStatus.PENDIENTE);
+        
+        // Validar reserva acumulada final
+        malta = materialRepository.findById(1000L).orElseThrow();
+        assertThat(malta.getReservedStock()).isEqualTo(400.0);  // 100 + 200 + 100
+        assertThat(malta.getStock()).isEqualTo(maltaStockInicial - 400.0);
+        
+        lupulo = materialRepository.findById(1001L).orElseThrow();
+        assertThat(lupulo.getReservedStock()).isEqualTo(12.0);  // 3 + 6 + 3
+        assertThat(lupulo.getStock()).isEqualTo(lupuloStockInicial - 12.0);
+        
+        // ===== VALIDACIONES FINALES =====
+        // Validar movimientos generados
+        List<Movement> reserveMovements = movementRepository.findAll().stream()
+            .filter(m -> m.getType() == MovementType.RESERVA)
+            .toList();
+        assertThat(reserveMovements).hasSizeGreaterThanOrEqualTo(12);  // 4 materiales x 3 órdenes
+        
+        // Validar que las 3 órdenes siguen PENDIENTES
+        order1 = productionOrderRepository.findById(orderId1).orElseThrow();
+        order2 = productionOrderRepository.findById(orderId2).orElseThrow();
+        order3 = productionOrderRepository.findById(orderId3).orElseThrow();
+        
+        assertThat(order1.getStatus()).isEqualTo(OrderStatus.PENDIENTE);
+        assertThat(order2.getStatus()).isEqualTo(OrderStatus.PENDIENTE);
+        assertThat(order3.getStatus()).isEqualTo(OrderStatus.PENDIENTE);
+        
+        // Este test E2E valida:
+        // - Creación de múltiples órdenes con reserva automática de materiales
+        // - Acumulación correcta de stock reservado
+        // - Generación correcta de movimientos de tipo RESERVA
+        // - Stock disponible se reduce correctamente con cada nueva orden
+    }
+
+    // =====================================================================
+    // TEST 3: Competencia por Stock Limitado entre Múltiples Órdenes
+    // =====================================================================
+    
+    @Test
+    @DisplayName("E2E: Concurrent orders competing for limited stock - first wins, second fails")
+    void multipleOrders_stockCompetition() {
+        // ===== ESCENARIO =====
+        // Material con stock limitado: 100kg malta disponible
+        // Orden 1 necesita 80kg → DEBE PASAR (queda 20kg disponible)
+        // Orden 2 necesita 40kg → DEBE FALLAR (solo hay 20kg disponibles)
+        
+        // ===== PREPARACIÓN: Crear producto y material con stock limitado =====
+        Long productId = 2100L;  // Producto del fixture con receta que usa malta
+        Long packagingId = 5100L;
+        
+        // Validar stock inicial limitado
+        Material maltaBaja = materialRepository.findById(1100L).orElseThrow();
+        assertThat(maltaBaja.getName()).isEqualTo("Malta Baja Stock E2E");
+        assertThat(maltaBaja.getStock()).isEqualTo(10.0);  // Solo 10kg disponibles inicialmente
+        assertThat(maltaBaja.getReservedStock()).isEqualTo(0.0);
+        
+        // ===== PASO 1: Aumentar stock a 100kg para el escenario =====
+        // Simular entrada de material para tener exactamente 100kg
+        maltaBaja.setStock(100.0);
+        materialRepository.save(maltaBaja);
+        
+        // Verificar stock inicial
+        maltaBaja = materialRepository.findById(1100L).orElseThrow();
+        assertThat(maltaBaja.getStock()).isEqualTo(100.0);
+        assertThat(maltaBaja.getReservedStock()).isEqualTo(0.0);
+        
+        // ===== PASO 2: Crear ORDEN 1 que necesita 80kg (0.8 unidades × 100kg/unidad) =====
+        ProductionOrderCreateDTO orderDTO1 = ProductionOrderCreateDTO.builder()
+            .productId(productId)
+            .packagingId(packagingId)
+            .quantity(80.0)  // 0.8x multiplicador → 80kg de malta
+            .plannedDate(OffsetDateTime.now().plusDays(5))
+            .build();
+        
+        ProductionOrderResponseDTO orderResponse1 = productionOrderService.createProductionOrder(orderDTO1);
+        Long orderId1 = orderResponse1.getId();
+        
+        // Validar ORDEN 1 creada exitosamente
+        ProductionOrder order1 = productionOrderRepository.findById(orderId1).orElseThrow();
+        assertThat(order1.getStatus()).isEqualTo(OrderStatus.PENDIENTE);
+        assertThat(order1.getBatch()).isNotNull();
+        
+        // Validar que se reservaron 80kg de malta
+        maltaBaja = materialRepository.findById(1100L).orElseThrow();
+        assertThat(maltaBaja.getReservedStock()).isEqualTo(80.0);  // 80kg reservados
+        assertThat(maltaBaja.getStock()).isEqualTo(20.0);  // Quedan solo 20kg disponibles
+        
+        // ===== PASO 3: Intentar crear ORDEN 2 que necesita 40kg (DEBE FALLAR) =====
+        ProductionOrderCreateDTO orderDTO2 = ProductionOrderCreateDTO.builder()
+            .productId(productId)
+            .packagingId(packagingId)
+            .quantity(40.0)  // 0.4x multiplicador → 40kg de malta (pero solo hay 20kg!)
+            .plannedDate(OffsetDateTime.now().plusDays(10))
+            .build();
+        
+        // Validar que lanza excepción por stock insuficiente
+        assertThatThrownBy(() -> productionOrderService.createProductionOrder(orderDTO2))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Stock");  // Mensaje de error debe mencionar "Stock"
+        
+        // ===== VALIDACIONES FINALES =====
+        
+        // 1. Stock de malta NO debe haber cambiado tras el fallo de ORDEN 2
+        maltaBaja = materialRepository.findById(1100L).orElseThrow();
+        assertThat(maltaBaja.getReservedStock()).isEqualTo(80.0);  // Solo reserva de ORDEN 1
+        assertThat(maltaBaja.getStock()).isEqualTo(20.0);  // Sin cambios tras el fallo
+        
+        // 2. Solo debe existir 1 orden para este producto (ORDEN 1)
+        List<ProductionOrder> ordersForProduct = productionOrderRepository.findAll().stream()
+            .filter(o -> o.getProduct().getId().equals(productId))
+            .toList();
+        assertThat(ordersForProduct).hasSize(1);  // Solo ORDEN 1 existe
+        assertThat(ordersForProduct.get(0).getId()).isEqualTo(orderId1);
+        
+        // 3. ORDEN 1 sigue activa y con su batch
+        order1 = productionOrderRepository.findById(orderId1).orElseThrow();
+        assertThat(order1.getStatus()).isEqualTo(OrderStatus.PENDIENTE);
+        assertThat(order1.getBatch()).isNotNull();
+        assertThat(order1.getBatch().getStatus()).isEqualTo(BatchStatus.PENDIENTE);
+        
+        // 4. Validar movimientos: solo debe haber 1 movimiento RESERVA para malta
+        List<Movement> maltaReserveMovements = movementRepository.findAll().stream()
+            .filter(m -> m.getType() == MovementType.RESERVA)
+            .filter(m -> m.getMaterial().getId().equals(1100L))
+            .toList();
+        assertThat(maltaReserveMovements).hasSize(1);  // Solo 1 reserva (ORDEN 1)
+        assertThat(maltaReserveMovements.get(0).getStock()).isEqualTo(80.0);
+        
+        // Este test E2E valida:
+        // - Competencia por stock limitado entre órdenes concurrentes
+        // - Primera orden reserva el stock exitosamente
+        // - Segunda orden se rechaza por stock insuficiente
+        // - Stock no se modifica tras fallo (rollback correcto)
+        // - Solo se crea la orden que pudo reservar el stock
+    }
+
+    // =====================================================================
+    // TEST 4: Rechazo de Orden por Stock Insuficiente (caso original)
     // =====================================================================
     
     @Test

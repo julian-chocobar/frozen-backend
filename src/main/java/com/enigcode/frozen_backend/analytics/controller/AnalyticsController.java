@@ -74,4 +74,19 @@ public class AnalyticsController {
                 return new ResponseEntity<>(dto, HttpStatus.OK);
         }
 
+        @Operation(summary = "Ver eficiencia neta por mes", description = "Devuelve la eficiencia neta de producción (%) por mes del último año (por default). "
+                        + "Se puede filtrar por fechas, producto y fase. "
+                        + "Sin filtro de fase: Eficiencia = (Producción Final ENVASADO / Materiales Totales) × 100. "
+                        + "Con filtro de fase: Eficiencia = (Output de la fase / Input de la fase) × 100. "
+                        + "Representa el porcentaje de material que se convierte en producto útil.")
+        @GetMapping("/monthly-efficiency")
+        public ResponseEntity<List<MonthlyTotalDTO>> getMonthlyEfficiency(
+                        @RequestParam(required = false) LocalDate startDate,
+                        @RequestParam(required = false) LocalDate endDate,
+                        @RequestParam(required = false) Long productId,
+                        @RequestParam(required = false) Phase phase) {
+                List<MonthlyTotalDTO> dtoList = analyticsService.getMonthlyEfficiency(startDate, endDate, productId, phase);
+                return new ResponseEntity<>(dtoList, HttpStatus.OK);
+        }
+
 }

@@ -25,6 +25,9 @@ import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderCreateDT
 import com.enigcode.frozen_backend.production_orders.Service.ProductionOrderService;
 import com.enigcode.frozen_backend.production_orders.DTO.ProductionOrderResponseDTO;
 import com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository;
+import com.enigcode.frozen_backend.users.model.User;
+import com.enigcode.frozen_backend.users.model.Role;
+import com.enigcode.frozen_backend.users.repository.UserRepository;
 
 import java.time.OffsetDateTime;
 
@@ -56,6 +59,8 @@ class ProductionMaterialIntegrationTest {
     private ProductionOrderService productionOrderService;
     @Autowired
     private ProductionMaterialRepository productionMaterialRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     @WithMockUser
@@ -91,8 +96,21 @@ class ProductionMaterialIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "user")
     void createProductionOrder_generatesProductionMaterials_andEndpointsReturnData() throws Exception {
+    // 0. Crear usuario mock en BD para evitar UsernameNotFoundException
+    OffsetDateTime now = OffsetDateTime.now();
+    userRepository.saveAndFlush(User.builder()
+        .username("user")
+        .password("password")
+        .name("Test User")
+        .roles(java.util.Set.of(Role.ADMIN))
+        .enabled(true)
+        .accountNonExpired(true)
+        .accountNonLocked(true)
+        .credentialsNonExpired(true)
+        .build());
+    
     // 1. Crear producto base
     ProductCreateDTO pc = ProductCreateDTO.builder()
         .name("Cerveza Rubia Test")
@@ -113,11 +131,13 @@ class ProductionMaterialIntegrationTest {
     product.getPhases().forEach(phase -> {
         phase.setIsReady(Boolean.TRUE);
         phase.setEstimatedHours(2.0); // evitar NPE en cálculo de fechas (DateUtil)
+        phase.setInput(100.0); // evitar NPE en cálculo de batch phases
+        phase.setOutput(95.0); // evitar NPE en cálculo de batch phases
+        phase.setOutputUnit(UnitMeasurement.KG);
     });
     product.markAsReady();
 
     // 2. Crear materiales necesarios (packaging, etiquetado y uno de receta)
-    OffsetDateTime now = OffsetDateTime.now();
     Material packagingMat = materialRepository.saveAndFlush(Material.builder()
         .code("PKG-TST")
         .name("Botella")

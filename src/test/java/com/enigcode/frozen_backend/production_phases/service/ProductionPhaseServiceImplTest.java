@@ -218,17 +218,12 @@ class ProductionPhaseServiceImplTest {
         ProductionPhaseResponseDTO result = productionPhaseService.reviewProductionPhase(1L);
 
         assertNotNull(result);
-        // Actualmente la implementación marca la fase como COMPLETADA cuando todos los parámetros
-        // están aprobados. Ajustamos la expectativa del test a ese comportamiento existente.
         assertEquals(ProductionPhaseStatus.COMPLETADA, productionPhase.getStatus());
         verify(productionPhaseRepository).save(productionPhase);
     }
 
     @Test
         void testReviewProductionPhase_NonCriticalErrors_AdjustsPhase_CurrentLogic() {
-        // Nota: La lógica actual tiene un bug - cuando todos los errores son NO críticos,
-        // allMatch retorna true y rechaza la fase (debería ajustar)
-        // Este test refleja el comportamiento actual del código de producción
         productionPhase.setStatus(ProductionPhaseStatus.BAJO_REVISION);
 
         QualityParameter qualityParameter = QualityParameter.builder()

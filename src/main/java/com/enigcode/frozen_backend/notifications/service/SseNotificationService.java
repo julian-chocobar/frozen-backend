@@ -26,6 +26,8 @@ public class SseNotificationService {
     private static final Long SSE_TIMEOUT = 30 * 60 * 1000L; // 30 minutos
     private static final int MAX_CONNECTIONS_PER_USER = 2;
     private static final long HEARTBEAT_INTERVAL_MS = 30_000L; // 30s
+    private static final long CACHE_CLEANUP_INTERVAL_MS = 10 * 60 * 1000L; // 10 minutos
+    private static final long DEAD_CONNECTION_CLEANUP_INTERVAL_MS = 2 * 60 * 1000L; // 2 minutos
 
     // Map para almacenar conexiones SSE por usuario
     private final Map<Long, Set<SseEmitter>> userConnections = new ConcurrentHashMap<>();
@@ -257,8 +259,23 @@ public class SseNotificationService {
             if (connections.isEmpty()) {
                 userConnections.remove(userId);
                 log.debug("Todas las conexiones SSE removidas para usuario: {}", userId);
+                // Limpiar cache si no hay conexiones activas
+                cleanupCacheForUser(userId);
             }
         }
+    }
+
+    /**
+     * Limpia las entradas del cache para un userId específico si no tiene conexiones activas
+     */
+    private void cleanupCacheForUser(Long userId) {
+        usernameToUserIdCache.entrySet().removeIf(entry -> {
+            if (entry.getValue().equals(userId)) {
+                log.debug("Limpiando entrada de cache para usuario: {} (userId: {})", entry.getKey(), userId);
+                return true;
+            }
+            return false;
+        });
     }
 
     /**
@@ -358,5 +375,67 @@ public class SseNotificationService {
                 errorMessage.contains("Connection aborted") ||
                 errorMessage.contains("Cliente desconectado") ||
                 errorMessage.contains("Stream closed");
+    }
+
+    /**
+     * Limpieza periódica del cache de usuarios que no tienen conexiones activas.
+     * Previene el crecimiento indefinido del cache en memoria.
+     */
+    @Scheduled(fixedRate = CACHE_CLEANUP_INTERVAL_MS)
+    public void cleanupStaleCacheEntries() {
+        if (usernameToUserIdCache.isEmpty()) {
+            return;
+        }
+
+        int initialSize = usernameToUserIdCache.size();
+        usernameToUserIdCache.entrySet().removeIf(entry -> {
+            Long userId = entry.getValue();
+            Set<SseEmitter> connections = userConnections.get(userId);
+            if (connections == null || connections.isEmpty()) {
+                log.debug("Limpiando entrada de cache stale para usuario: {} (userId: {})", 
+                        entry.getKey(), userId);
+                return true;
+            }
+            return false;
+        });
+
+        int removed = initialSize - usernameToUserIdCache.size();
+        if (removed > 0) {
+            log.info("Limpieza de cache SSE: {} entradas removidas, {} restantes", 
+                    removed, usernameToUserIdCache.size());
+        }
+    }
+
+    /**
+     * Limpieza periódica de conexiones muertas que no fueron removidas correctamente
+     * por los callbacks. Esto previene memory leaks en caso de errores silenciosos.
+     * Limpia sets vacíos y usuarios sin conexiones activas.
+     */
+    @Scheduled(fixedRate = DEAD_CONNECTION_CLEANUP_INTERVAL_MS)
+    public void cleanupDeadConnections() {
+        if (userConnections.isEmpty()) {
+            return;
+        }
+
+        var userIdsToRemove = new java.util.ArrayList<Long>();
+
+        // Identificar usuarios sin conexiones o con sets vacíos
+        userConnections.forEach((userId, connections) -> {
+            if (connections == null || connections.isEmpty()) {
+                userIdsToRemove.add(userId);
+            }
+        });
+
+        // Remover usuarios sin conexiones y limpiar su cache
+        int usersRemoved = 0;
+        for (Long userId : userIdsToRemove) {
+            userConnections.remove(userId);
+            cleanupCacheForUser(userId);
+            usersRemoved++;
+        }
+
+        if (usersRemoved > 0) {
+            log.info("Limpieza de conexiones SSE muertas: {} usuarios sin conexiones removidos", usersRemoved);
+        }
     }
 }

@@ -18,6 +18,9 @@ import com.enigcode.frozen_backend.production_materials.repository.ProductionMat
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhaseStatus;
 import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
+import com.enigcode.frozen_backend.users.model.User;
+import com.enigcode.frozen_backend.users.model.Role;
+import com.enigcode.frozen_backend.users.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +68,9 @@ class BatchIntegrationTest {
 
     @Autowired
     private MovementRepository movementRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     // --- Tests originales ---
 
@@ -242,6 +248,18 @@ class BatchIntegrationTest {
     @Test
     @WithMockUser(roles = "GERENTE_DE_PLANTA")
     void cancelBatch_fullFlow_suspendsPhasesAndReturnsMaterials() throws Exception {
+        // Crear usuario mock en BD
+        userRepository.saveAndFlush(User.builder()
+            .username("gerenteplanta")
+            .password("password")
+            .name("Gerente Planta Test")
+            .roles(java.util.Set.of(Role.GERENTE_DE_PLANTA))
+            .enabled(true)
+            .accountNonExpired(true)
+            .accountNonLocked(true)
+            .credentialsNonExpired(true)
+            .build());
+        
         // Given: Batch con fases y materiales
         Material maltaMaterial = Material.builder()
                 .name("Malta Pilsen")
