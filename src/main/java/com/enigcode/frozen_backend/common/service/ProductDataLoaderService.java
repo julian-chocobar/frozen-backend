@@ -233,15 +233,9 @@ public class ProductDataLoaderService {
                 updateData.setOutput(1035.0);
                 updateData.setOutputUnit(UnitMeasurement.LT);
                 break;
-            case "DESALCOHOLIZACION":
-                updateData.setEstimatedHours(48.0);
-                updateData.setInput(1035.0);
-                updateData.setOutput(1025.0);
-                updateData.setOutputUnit(UnitMeasurement.LT);
-                break;
             case "MADURACION":
                 updateData.setEstimatedHours(120.0);
-                updateData.setInput(1025.0);
+                updateData.setInput(1035.0);
                 updateData.setOutput(1015.0);
                 updateData.setOutputUnit(UnitMeasurement.LT);
                 break;
@@ -251,9 +245,15 @@ public class ProductDataLoaderService {
                 updateData.setOutput(1010.0);
                 updateData.setOutputUnit(UnitMeasurement.LT);
                 break;
+            case "DESALCOHOLIZACION":
+                updateData.setEstimatedHours(48.0);
+                updateData.setInput(1010.0);
+                updateData.setOutput(1005.0);
+                updateData.setOutputUnit(UnitMeasurement.LT);
+                break;
             case "ENVASADO":
                 updateData.setEstimatedHours(8.0);
-                updateData.setInput(1010.0);
+                updateData.setInput(1005.0);
                 updateData.setOutput(1000.0);
                 updateData.setOutputUnit(UnitMeasurement.LT);
                 break;
