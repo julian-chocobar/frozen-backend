@@ -118,39 +118,39 @@ public class AnalyticsServiceImpl implements AnalyticsService{
         OffsetDateTime endODT = endDate.atTime(LocalTime.MAX).atOffset(BA_OFFSET);
 
         List<MonthlyTotalProjectionDTO> production;
-        List<MonthlyTotalProjectionDTO> materials;
+        List<MonthlyTotalProjectionDTO> standardOrMaterials;
 
-        // Si hay filtro de fase, usar input/output de esa fase específica
+        // Si hay filtro de fase, usar rendimiento vs estándar
         if (phase != null) {
-            // Obtener output de la fase específica
+            // Obtener output real de la fase específica
             production = analyticsRepository.getMonthlyProductionByPhase(startODT, endODT, productId, phase);
-            // Obtener input de la fase específica (materiales que entran a esa fase)
-            materials = analyticsRepository.getMonthlyInputByPhase(startODT, endODT, productId, phase);
+            // Obtener standardOutput de la fase específica (ya escalado según cantidad del lote)
+            standardOrMaterials = analyticsRepository.getMonthlyStandardOutputByPhase(startODT, endODT, productId, phase);
         } else {
-            // Sin filtro de fase: usar producción final de ENVASADO y materiales totales
+            // Sin filtro de fase: usar eficiencia global (Producción Final / Materiales Totales)
             production = analyticsRepository.getMonthlyProduction(startODT, endODT, productId);
-            materials = analyticsRepository.getMonthlyMaterialsTotal(startODT, endODT, productId, null);
+            standardOrMaterials = analyticsRepository.getMonthlyMaterialsTotal(startODT, endODT, productId, null);
         }
         
-        var materialsByMonth = materials.stream()
+        var standardOrMaterialsByMonth = standardOrMaterials.stream()
                 .collect(java.util.stream.Collectors.toMap(
                         m -> m.getYear() + "-" + m.getMonth(),
                         MonthlyTotalProjectionDTO::getTotal
                 ));
 
-        // Calcular eficiencia neta por mes
-        // Eficiencia = (Producción Final / Materiales Totales) × 100
-        // Cuando hay filtro de fase: Eficiencia = (Output de la fase / Input de la fase) × 100
-        // La producción ya es el resultado después de todas las pérdidas
+        // Calcular eficiencia/rendimiento por mes
+        // Sin filtro de fase: Eficiencia = (Producción Final / Materiales Totales) × 100
+        // Con filtro de fase: Rendimiento = (Output Real / Output Estándar) × 100
+        // El standardOutput ya está escalado proporcionalmente según la cantidad del lote
         return production.stream()
                 .map(prod -> {
                     String key = prod.getYear() + "-" + prod.getMonth();
-                    Double materialsUsed = materialsByMonth.getOrDefault(key, 0.0);
+                    Double standardOrMaterialsValue = standardOrMaterialsByMonth.getOrDefault(key, 0.0);
                     
-                    // Calcular eficiencia
+                    // Calcular eficiencia/rendimiento
                     Double efficiency = 0.0;
-                    if (materialsUsed > 0) {
-                        efficiency = (prod.getTotal() / materialsUsed) * 100.0;
+                    if (standardOrMaterialsValue > 0) {
+                        efficiency = (prod.getTotal() / standardOrMaterialsValue) * 100.0;
                     }
                     
                     return MonthlyTotalDTO.builder()

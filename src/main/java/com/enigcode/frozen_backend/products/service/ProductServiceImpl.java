@@ -4,6 +4,7 @@ import com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadReque
 import com.enigcode.frozen_backend.packagings.repository.PackagingRepository;
 import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
+import com.enigcode.frozen_backend.product_phases.service.PhaseOrderService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class ProductServiceImpl implements ProductService {
     final ProductRepository productRepository;
     final PackagingRepository packagingRepository;
     final ProductMapper productMapper;
+    final PhaseOrderService phaseOrderService;
 
     /**
      * Creacion de producto no listo para produccion donde se asignan fases vacias
@@ -56,8 +58,8 @@ public class ProductServiceImpl implements ProductService {
                 .unitMeasurement(productCreateDTO.getUnitMeasurement())
                 .build();
 
-        // Se le asigna una ProductPhase incompleto a cada producto
-        List<ProductPhase> phases = product.getApplicablePhases()
+        // Se le asigna una ProductPhase incompleto a cada producto usando PhaseOrderService
+        List<ProductPhase> phases = phaseOrderService.getOrderedPhases(product.getIsAlcoholic())
                 .stream()
                 .map(phase -> ProductPhase.builder()
                         .product(product)

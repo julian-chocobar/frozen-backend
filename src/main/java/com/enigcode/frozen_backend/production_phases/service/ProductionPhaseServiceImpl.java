@@ -11,6 +11,8 @@ import com.enigcode.frozen_backend.production_phases.mapper.ProductionPhaseMappe
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhase;
 import com.enigcode.frozen_backend.production_phases.model.ProductionPhaseStatus;
 import com.enigcode.frozen_backend.production_phases.repository.ProductionPhaseRepository;
+import com.enigcode.frozen_backend.production_materials.model.ProductionMaterial;
+import com.enigcode.frozen_backend.production_materials.repository.ProductionMaterialRepository;
 import com.enigcode.frozen_backend.production_phases_qualities.model.ProductionPhaseQuality;
 import com.enigcode.frozen_backend.production_phases_qualities.repository.ProductionPhaseQualityRepository;
 import jakarta.transaction.Transactional;
@@ -29,6 +31,7 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
     private final ProductionPhaseQualityRepository productionPhaseQualityRepository;
     private final com.enigcode.frozen_backend.production_phases_qualities.service.ProductionPhaseQualityService productionPhaseQualityService;
     private final NotificationService notificationService;
+    private final ProductionMaterialRepository productionMaterialRepository;
 
     @Override
     @Transactional
@@ -68,6 +71,9 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
         if (movementWaste < 0)
             movementWaste = 0.0;
         updatedProductionPhase.setMovementWaste(movementWaste);
+        
+        // Validar que el output no sea mayor que input + ingredientes
+        validateOutputNotGreaterThanInputPlusIngredients(updatedProductionPhase);
 
         ProductionPhase savedProductionPhase = productionPhaseRepository.save(updatedProductionPhase);
 
@@ -170,6 +176,40 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
             batchService.completeBatch(productionPhase.getBatch());
         } else {
             batchService.startNextPhase(productionPhase.getBatch());
+        }
+    }
+    
+    /**
+     * Valida que el output de una fase no sea mayor que el input + total de ingredientes.
+     * El output puede ser menor o igual debido a posibles mermas.
+     * 
+     * @param productionPhase Fase a validar
+     */
+    private void validateOutputNotGreaterThanInputPlusIngredients(ProductionPhase productionPhase) {
+        // Si output es null o 0, no validar (aún no está definido)
+        if (productionPhase.getOutput() == null || productionPhase.getOutput() == 0.0) {
+            return;
+        }
+        
+        // Obtener el input (puede ser null o 0 para la primera fase)
+        Double input = productionPhase.getInput() != null ? productionPhase.getInput() : 0.0;
+        
+        // Calcular el total de ingredientes de esta fase
+        List<ProductionMaterial> materials = productionMaterialRepository.findAllByProductionPhaseId(productionPhase.getId());
+        Double totalIngredients = materials.stream()
+                .map(ProductionMaterial::getQuantity)
+                .filter(qty -> qty != null && qty > 0)
+                .reduce(0.0, Double::sum);
+        
+        // Calcular el máximo posible: input + ingredientes
+        Double maxPossible = input + totalIngredients;
+        
+        // Validar que output <= input + ingredientes
+        if (productionPhase.getOutput() > maxPossible) {
+            throw new BadRequestException(
+                String.format("El output de la fase %s (%.2f) no puede ser mayor que el input (%.2f) más los ingredientes (%.2f) = %.2f. " +
+                        "El output puede ser menor o igual debido a posibles mermas.",
+                    productionPhase.getPhase(), productionPhase.getOutput(), input, totalIngredients, maxPossible));
         }
     }
 }

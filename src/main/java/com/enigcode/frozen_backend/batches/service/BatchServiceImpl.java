@@ -112,6 +112,9 @@ public class BatchServiceImpl implements BatchService {
 
         batchPhases.forEach(phase -> phase.setBatch(batch));
 
+        // Validar que el standardOutput de cada fase coincida con el standardInput de la siguiente
+        validateProductionPhasesChain(batchPhases);
+
         Batch savedBatch = batchRepository.saveAndFlush(batch);
         savedBatch.setCode(generateCode(savedBatch));
         return savedBatch;
@@ -407,6 +410,43 @@ public class BatchServiceImpl implements BatchService {
         java.math.BigDecimal result = requested.divide(packaging, 0, java.math.RoundingMode.FLOOR);
 
         return result.intValue();
+    }
+
+    /**
+     * Valida que el standardOutput de cada fase coincida con el standardInput de la siguiente fase.
+     * Lanza BadRequestException si hay inconsistencias.
+     * 
+     * @param phases Lista de ProductionPhases ordenadas por phaseOrder
+     */
+    private void validateProductionPhasesChain(List<ProductionPhase> phases) {
+        for (int i = 0; i < phases.size() - 1; i++) {
+            ProductionPhase currentPhase = phases.get(i);
+            ProductionPhase nextPhase = phases.get(i + 1);
+            
+            if (currentPhase.getStandardOutput() == null || nextPhase.getStandardInput() == null) {
+                continue; // No validar si faltan valores
+            }
+            
+            // Validar que el standardOutput coincida con el standardInput de la siguiente fase
+            if (!currentPhase.getStandardOutput().equals(nextPhase.getStandardInput())) {
+                throw new BadRequestException(
+                    String.format("El standardOutput de la fase %s (%.2f %s) no coincide con el standardInput de la siguiente fase %s (%.2f %s). " +
+                            "El standardOutput debe ser igual al standardInput de la siguiente fase.",
+                        currentPhase.getPhase(), currentPhase.getStandardOutput(), 
+                        currentPhase.getOutputUnit() != null ? currentPhase.getOutputUnit() : "N/A",
+                        nextPhase.getPhase(), nextPhase.getStandardInput(),
+                        nextPhase.getOutputUnit() != null ? nextPhase.getOutputUnit() : "N/A"));
+            }
+            
+            // Validar también que las unidades coincidan
+            if (currentPhase.getOutputUnit() != null && nextPhase.getOutputUnit() != null &&
+                !currentPhase.getOutputUnit().equals(nextPhase.getOutputUnit())) {
+                throw new BadRequestException(
+                    String.format("La unidad de medida del standardOutput de la fase %s (%s) no coincide con la unidad del standardInput de la siguiente fase %s (%s).",
+                        currentPhase.getPhase(), currentPhase.getOutputUnit(),
+                        nextPhase.getPhase(), nextPhase.getOutputUnit()));
+            }
+        }
     }
 
     /**

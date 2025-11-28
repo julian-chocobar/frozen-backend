@@ -9,6 +9,9 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -71,6 +74,78 @@ public class ProductionPhase {
 
     @Column(name = "end_date")
     private OffsetDateTime endDate;
+
+    /**
+     * Obtiene la siguiente fase del batch en el orden correcto
+     * 
+     * @return Optional con la siguiente ProductionPhase, o empty si no hay siguiente fase
+     */
+    public Optional<ProductionPhase> getNextPhase() {
+        if (this.batch == null || this.batch.getPhases() == null) {
+            return Optional.empty();
+        }
+        
+        List<ProductionPhase> phases = this.batch.getPhases().stream()
+                .sorted(Comparator.comparing(ProductionPhase::getPhaseOrder, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+        
+        int currentIndex = phases.indexOf(this);
+        if (currentIndex >= 0 && currentIndex < phases.size() - 1) {
+            return Optional.of(phases.get(currentIndex + 1));
+        }
+        return Optional.empty();
+    }
+    
+    /**
+     * Obtiene la fase anterior del batch en el orden correcto
+     * 
+     * @return Optional con la ProductionPhase anterior, o empty si no hay fase anterior
+     */
+    public Optional<ProductionPhase> getPreviousPhase() {
+        if (this.batch == null || this.batch.getPhases() == null) {
+            return Optional.empty();
+        }
+        
+        List<ProductionPhase> phases = this.batch.getPhases().stream()
+                .sorted(Comparator.comparing(ProductionPhase::getPhaseOrder, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+        
+        int currentIndex = phases.indexOf(this);
+        if (currentIndex > 0) {
+            return Optional.of(phases.get(currentIndex - 1));
+        }
+        return Optional.empty();
+    }
+    
+    /**
+     * Valida que el standardOutput de esta fase coincida con el standardInput de la siguiente fase.
+     * Lanza BadRequestException si no coinciden.
+     */
+    public void validateStandardOutputMatchesNextPhaseStandardInput() {
+        if (this.standardOutput == null || this.outputUnit == null) {
+            return; // No validar si no está completo
+        }
+        
+        Optional<ProductionPhase> nextPhaseOpt = getNextPhase();
+        if (nextPhaseOpt.isPresent()) {
+            ProductionPhase nextPhase = nextPhaseOpt.get();
+            if (nextPhase.getStandardInput() != null && !this.standardOutput.equals(nextPhase.getStandardInput())) {
+                throw new com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException(
+                    String.format("El standardOutput de la fase %s (%.2f %s) no coincide con el standardInput de la siguiente fase %s (%.2f %s). " +
+                            "El standardOutput debe ser igual al standardInput de la siguiente fase.",
+                        this.phase, this.standardOutput, this.outputUnit,
+                        nextPhase.getPhase(), nextPhase.getStandardInput(), 
+                        nextPhase.getOutputUnit() != null ? nextPhase.getOutputUnit() : "N/A"));
+            }
+            // Validar también que las unidades coincidan
+            if (nextPhase.getOutputUnit() != null && !this.outputUnit.equals(nextPhase.getOutputUnit())) {
+                throw new com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException(
+                    String.format("La unidad de medida del standardOutput de la fase %s (%s) no coincide con la unidad del standardInput de la siguiente fase %s (%s).",
+                        this.phase, this.outputUnit,
+                        nextPhase.getPhase(), nextPhase.getOutputUnit()));
+            }
+        }
+    }
 
     // LÓGICA DE INICIALIZACIÓN:
     @PrePersist

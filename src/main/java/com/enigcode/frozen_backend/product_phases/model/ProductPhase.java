@@ -9,9 +9,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Entity
 @Table(name = "product_phases")
@@ -86,6 +88,80 @@ public class ProductPhase {
                 && this.getOutput() != null
                 && this.getOutputUnit() != null
                 && this.getEstimatedHours() != null;
+    }
+
+    /**
+     * Obtiene la siguiente fase del producto en el orden correcto
+     * 
+     * @return Optional con la siguiente ProductPhase, o empty si no hay siguiente fase
+     */
+    public Optional<ProductPhase> getNextPhase() {
+        if (this.product == null || this.product.getPhases() == null) {
+            return Optional.empty();
+        }
+        
+        List<ProductPhase> phases = this.product.getPhases().stream()
+                .sorted(Comparator.comparing(ProductPhase::getPhaseOrder, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+        
+        int currentIndex = phases.indexOf(this);
+        if (currentIndex >= 0 && currentIndex < phases.size() - 1) {
+            return Optional.of(phases.get(currentIndex + 1));
+        }
+        return Optional.empty();
+    }
+    
+    /**
+     * Obtiene la fase anterior del producto en el orden correcto
+     * 
+     * @return Optional con la ProductPhase anterior, o empty si no hay fase anterior
+     */
+    public Optional<ProductPhase> getPreviousPhase() {
+        if (this.product == null || this.product.getPhases() == null) {
+            return Optional.empty();
+        }
+        
+        List<ProductPhase> phases = this.product.getPhases().stream()
+                .sorted(Comparator.comparing(ProductPhase::getPhaseOrder, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+        
+        int currentIndex = phases.indexOf(this);
+        if (currentIndex > 0) {
+            return Optional.of(phases.get(currentIndex - 1));
+        }
+        return Optional.empty();
+    }
+    
+    /**
+     * Valida que el output de esta fase coincida con el input de la siguiente fase.
+     * Lanza BadRequestException si no coinciden.
+     * 
+     * @throws jakarta.persistence.PersistenceException si hay problemas de acceso a datos
+     */
+    public void validateOutputMatchesNextPhaseInput() {
+        if (this.output == null || this.outputUnit == null) {
+            return; // No validar si no está completo
+        }
+        
+        Optional<ProductPhase> nextPhaseOpt = getNextPhase();
+        if (nextPhaseOpt.isPresent()) {
+            ProductPhase nextPhase = nextPhaseOpt.get();
+            if (nextPhase.getInput() != null && !this.output.equals(nextPhase.getInput())) {
+                throw new com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException(
+                    String.format("El output de la fase %s (%.2f %s) no coincide con el input de la siguiente fase %s (%.2f %s). " +
+                            "El output debe ser igual al input de la siguiente fase.",
+                        this.phase, this.output, this.outputUnit,
+                        nextPhase.getPhase(), nextPhase.getInput(), 
+                        nextPhase.getOutputUnit() != null ? nextPhase.getOutputUnit() : "N/A"));
+            }
+            // Validar también que las unidades coincidan
+            if (nextPhase.getOutputUnit() != null && !this.outputUnit.equals(nextPhase.getOutputUnit())) {
+                throw new com.enigcode.frozen_backend.common.exceptions_configs.exceptions.BadRequestException(
+                    String.format("La unidad de medida del output de la fase %s (%s) no coincide con la unidad del input de la siguiente fase %s (%s).",
+                        this.phase, this.outputUnit,
+                        nextPhase.getPhase(), nextPhase.getOutputUnit()));
+            }
+        }
     }
 
     // LÓGICA DE INICIALIZACIÓN:

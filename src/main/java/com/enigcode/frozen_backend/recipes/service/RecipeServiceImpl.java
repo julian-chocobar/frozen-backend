@@ -61,6 +61,9 @@ public class RecipeServiceImpl implements RecipeService {
         recipe.setMaterial(material);
 
         Recipe savedRecipe = recipeRepository.saveAndFlush(recipe);
+        
+        // Validar que el output de la fase no sea mayor que input + ingredientes
+        validateProductPhaseOutput(productPhase);
 
         return recipeMapper.toResponseDTO(savedRecipe);
     }
@@ -90,6 +93,9 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         Recipe savedRecipe = recipeRepository.save(originalRecipe);
+        
+        // Validar que el output de la fase no sea mayor que input + ingredientes
+        validateProductPhaseOutput(savedRecipe.getProductPhase());
 
         return recipeMapper.toResponseDTO(savedRecipe);
     }
@@ -200,5 +206,39 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public List<Recipe> getRecipeByProduct(Long id) {
         return recipeRepository.findByProductPhase_ProductId(id);
+    }
+    
+    /**
+     * Valida que el output de una fase no sea mayor que el input + total de ingredientes.
+     * El output puede ser menor o igual debido a posibles mermas.
+     * 
+     * @param productPhase Fase a validar
+     */
+    private void validateProductPhaseOutput(ProductPhase productPhase) {
+        // Si output es null o 0, no validar (aún no está definido)
+        if (productPhase.getOutput() == null || productPhase.getOutput() == 0.0) {
+            return;
+        }
+        
+        // Obtener el input (puede ser null o 0 para la primera fase)
+        Double input = productPhase.getInput() != null ? productPhase.getInput() : 0.0;
+        
+        // Calcular el total de ingredientes de esta fase
+        List<Recipe> recipes = recipeRepository.findByProductPhase(productPhase);
+        Double totalIngredients = recipes.stream()
+                .map(Recipe::getQuantity)
+                .filter(qty -> qty != null && qty > 0)
+                .reduce(0.0, Double::sum);
+        
+        // Calcular el máximo posible: input + ingredientes
+        Double maxPossible = input + totalIngredients;
+        
+        // Validar que output <= input + ingredientes
+        if (productPhase.getOutput() > maxPossible) {
+            throw new BadRequestException(
+                String.format("El output de la fase %s (%.2f) no puede ser mayor que el input (%.2f) más los ingredientes (%.2f) = %.2f. " +
+                        "El output puede ser menor o igual debido a posibles mermas.",
+                    productPhase.getPhase(), productPhase.getOutput(), input, totalIngredients, maxPossible));
+        }
     }
 }

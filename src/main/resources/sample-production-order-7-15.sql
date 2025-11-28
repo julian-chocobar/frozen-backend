@@ -37,6 +37,9 @@ DECLARE
     -- Variables para materiales
     recipe_material_id BIGINT;
     recipe_quantity NUMERIC;
+    
+    -- Variables para totales de ingredientes
+    total_ingredients NUMERIC;
 BEGIN
     -- Obtener IDs de usuarios
     SELECT id INTO supervisor_prod_id FROM users WHERE username = 'supervisorproduccion';
@@ -92,14 +95,26 @@ BEGIN
     FROM production_orders po, products p
     WHERE po.id = order1_id AND p.id = product1_id;
     
-    efficiency_factor := 1.0; -- Sin desperdicio
+    -- SIN DESPERDICIO: eficiencia 100%
+    efficiency_factor := 1.0;
     
-    -- Production Phase 1.1: MOLIENDA
+    -- Production Phase 1.1: MOLIENDA (primera fase: input = 0.0)
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
     FROM product_phases WHERE id_product = product1_id AND phase = 'MOLIENDA';
     
-    current_input := standard_input * multiplier;
-    current_output := current_input * (standard_output / standard_input) * efficiency_factor;
+    -- Calcular total de ingredientes para MOLIENDA
+    SELECT COALESCE(SUM(r.quantity), 0.0) INTO total_ingredients
+    FROM recipes r
+    INNER JOIN product_phases pp ON r.id_product_phase = pp.id
+    WHERE pp.id_product = product1_id AND pp.phase = 'MOLIENDA';
+    
+    -- Input siempre es 0.0 para MOLIENDA (primera fase)
+    current_input := 0.0;
+    -- Output debe ser <= input (0.0) + ingredientes, sin desperdicio (100% eficiencia)
+    current_output := LEAST(
+        standard_output * multiplier * efficiency_factor,
+        total_ingredients * multiplier * efficiency_factor
+    );
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'MOLIENDA' ORDER BY id LIMIT 1;
     
@@ -107,12 +122,12 @@ BEGIN
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'MOLIENDA', phase_order_val, 'COMPLETADA',
-        ROUND(current_input * 1000.0) / 1000.0,
-        ROUND(current_output * 1000.0) / 1000.0,
-        standard_input * multiplier,
-        standard_output * multiplier,
+        ROUND(current_input * 100.0) / 100.0,
+        ROUND(current_output * 100.0) / 100.0,
+        ROUND(standard_input * multiplier * 100.0) / 100.0,
+        ROUND(standard_output * multiplier * 100.0) / 100.0,
         output_unit_val,
-        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        ROUND((standard_output * multiplier - current_output) * 100.0) / 100.0,
         '2025-07-15 09:00:00'::timestamptz,
         '2025-07-15 11:00:00'::timestamptz
     ) RETURNING id INTO phase1_1_id;
@@ -129,7 +144,7 @@ BEGIN
             nextval('production_materials_seq'),
             recipe_material_id,
             phase1_1_id,
-            ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
+            ROUND(recipe_quantity * multiplier * 100.0) / 100.0,
             '2025-07-15 09:00:00'::timestamptz
         );
     END LOOP;
@@ -143,13 +158,23 @@ BEGIN
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
     VALUES (nextval('production_phases_qualities_seq'), phase1_1_id, quality_param_id, '4.5 %', true, true, 1, '2025-07-15 09:00:00'::timestamptz);
     
-    -- Production Phase 1.2: MACERACION
+    -- Production Phase 1.2: MACERACION (input = output de MOLIENDA)
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
     FROM product_phases WHERE id_product = product1_id AND phase = 'MACERACION';
     
-    -- MACERACION inicia cadena de litros (no usar output de MOLIENDA que está en KG)
-    current_input := standard_input * multiplier;
-    current_output := standard_output * multiplier * efficiency_factor;
+    -- Calcular total de ingredientes para MACERACION
+    SELECT COALESCE(SUM(r.quantity), 0.0) INTO total_ingredients
+    FROM recipes r
+    INNER JOIN product_phases pp ON r.id_product_phase = pp.id
+    WHERE pp.id_product = product1_id AND pp.phase = 'MACERACION';
+    
+    -- Input es el output de la fase anterior (MOLIENDA)
+    current_input := current_output;
+    -- Output debe ser <= input + ingredientes, sin desperdicio (100% eficiencia)
+    current_output := LEAST(
+        current_input * (standard_output / standard_input) * efficiency_factor,
+        (current_input + total_ingredients * multiplier) * efficiency_factor
+    );
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'MACERACION' ORDER BY id LIMIT 1;
     
@@ -157,12 +182,12 @@ BEGIN
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'MACERACION', phase_order_val, 'COMPLETADA',
-        ROUND(current_input * 1000.0) / 1000.0,
-        ROUND(current_output * 1000.0) / 1000.0,
-        standard_input * multiplier,
-        standard_output * multiplier,
+        ROUND(current_input * 100.0) / 100.0,
+        ROUND(current_output * 100.0) / 100.0,
+        ROUND(standard_input * multiplier * 100.0) / 100.0,
+        ROUND(standard_output * multiplier * 100.0) / 100.0,
         output_unit_val,
-        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 100.0) / 100.0,
         '2025-07-15 11:00:00'::timestamptz,
         '2025-07-15 16:00:00'::timestamptz
     ) RETURNING id INTO phase1_2_id;
@@ -179,7 +204,7 @@ BEGIN
             nextval('production_materials_seq'),
             recipe_material_id,
             phase1_2_id,
-            ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
+            ROUND(recipe_quantity * multiplier * 100.0) / 100.0,
             '2025-07-15 11:00:00'::timestamptz
         );
     END LOOP;
@@ -193,12 +218,23 @@ BEGIN
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
     VALUES (nextval('production_phases_qualities_seq'), phase1_2_id, quality_param_id, '5.4 pH', true, true, 1, '2025-07-15 11:00:00'::timestamptz);
     
-    -- Production Phase 1.3: FILTRACION
+    -- Production Phase 1.3: FILTRACION (input = output de MACERACION)
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
     FROM product_phases WHERE id_product = product1_id AND phase = 'FILTRACION';
     
+    -- Calcular total de ingredientes para FILTRACION
+    SELECT COALESCE(SUM(r.quantity), 0.0) INTO total_ingredients
+    FROM recipes r
+    INNER JOIN product_phases pp ON r.id_product_phase = pp.id
+    WHERE pp.id_product = product1_id AND pp.phase = 'FILTRACION';
+    
+    -- Input es el output de la fase anterior (MACERACION)
     current_input := current_output;
-    current_output := current_input * (standard_output / standard_input) * efficiency_factor;
+    -- Output debe ser <= input + ingredientes, sin desperdicio (100% eficiencia)
+    current_output := LEAST(
+        current_input * (standard_output / standard_input) * efficiency_factor,
+        (current_input + total_ingredients * multiplier) * efficiency_factor
+    );
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'FILTRACION' ORDER BY id LIMIT 1;
     
@@ -206,12 +242,12 @@ BEGIN
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'FILTRACION', phase_order_val, 'COMPLETADA',
-        ROUND(current_input * 1000.0) / 1000.0,
-        ROUND(current_output * 1000.0) / 1000.0,
-        standard_input * multiplier,
-        standard_output * multiplier,
+        ROUND(current_input * 100.0) / 100.0,
+        ROUND(current_output * 100.0) / 100.0,
+        ROUND(standard_input * multiplier * 100.0) / 100.0,
+        ROUND(standard_output * multiplier * 100.0) / 100.0,
         output_unit_val,
-        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 100.0) / 100.0,
         '2025-07-15 16:00:00'::timestamptz,
         '2025-07-15 18:00:00'::timestamptz
     ) RETURNING id INTO phase1_3_id;
@@ -228,7 +264,7 @@ BEGIN
             nextval('production_materials_seq'),
             recipe_material_id,
             phase1_3_id,
-            ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
+            ROUND(recipe_quantity * multiplier * 100.0) / 100.0,
             '2025-07-15 16:00:00'::timestamptz
         );
     END LOOP;
@@ -242,12 +278,23 @@ BEGIN
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
     VALUES (nextval('production_phases_qualities_seq'), phase1_3_id, quality_param_id, '78 °C', true, true, 1, '2025-07-15 16:00:00'::timestamptz);
     
-    -- Production Phase 1.4: COCCION
+    -- Production Phase 1.4: COCCION (input = output de FILTRACION)
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
     FROM product_phases WHERE id_product = product1_id AND phase = 'COCCION';
     
+    -- Calcular total de ingredientes para COCCION
+    SELECT COALESCE(SUM(r.quantity), 0.0) INTO total_ingredients
+    FROM recipes r
+    INNER JOIN product_phases pp ON r.id_product_phase = pp.id
+    WHERE pp.id_product = product1_id AND pp.phase = 'COCCION';
+    
+    -- Input es el output de la fase anterior (FILTRACION)
     current_input := current_output;
-    current_output := current_input * (standard_output / standard_input) * efficiency_factor;
+    -- Output debe ser <= input + ingredientes, sin desperdicio (100% eficiencia)
+    current_output := LEAST(
+        current_input * (standard_output / standard_input) * efficiency_factor,
+        (current_input + total_ingredients * multiplier) * efficiency_factor
+    );
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'COCCION' ORDER BY id LIMIT 1;
     
@@ -255,12 +302,12 @@ BEGIN
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'COCCION', phase_order_val, 'COMPLETADA',
-        ROUND(current_input * 1000.0) / 1000.0,
-        ROUND(current_output * 1000.0) / 1000.0,
-        standard_input * multiplier,
-        standard_output * multiplier,
+        ROUND(current_input * 100.0) / 100.0,
+        ROUND(current_output * 100.0) / 100.0,
+        ROUND(standard_input * multiplier * 100.0) / 100.0,
+        ROUND(standard_output * multiplier * 100.0) / 100.0,
         output_unit_val,
-        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 100.0) / 100.0,
         '2025-07-15 18:00:00'::timestamptz,
         '2025-07-15 20:30:00'::timestamptz
     ) RETURNING id INTO phase1_4_id;
@@ -277,7 +324,7 @@ BEGIN
             nextval('production_materials_seq'),
             recipe_material_id,
             phase1_4_id,
-            ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
+            ROUND(recipe_quantity * multiplier * 100.0) / 100.0,
             '2025-07-15 18:00:00'::timestamptz
         );
     END LOOP;
@@ -291,12 +338,23 @@ BEGIN
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
     VALUES (nextval('production_phases_qualities_seq'), phase1_4_id, quality_param_id, '10 min', true, true, 1, '2025-07-15 18:00:00'::timestamptz);
     
-    -- Production Phase 1.5: FERMENTACION
+    -- Production Phase 1.5: FERMENTACION (input = output de COCCION)
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
     FROM product_phases WHERE id_product = product1_id AND phase = 'FERMENTACION';
     
+    -- Calcular total de ingredientes para FERMENTACION
+    SELECT COALESCE(SUM(r.quantity), 0.0) INTO total_ingredients
+    FROM recipes r
+    INNER JOIN product_phases pp ON r.id_product_phase = pp.id
+    WHERE pp.id_product = product1_id AND pp.phase = 'FERMENTACION';
+    
+    -- Input es el output de la fase anterior (COCCION)
     current_input := current_output;
-    current_output := current_input * (standard_output / standard_input) * efficiency_factor;
+    -- Output debe ser <= input + ingredientes, sin desperdicio (100% eficiencia)
+    current_output := LEAST(
+        current_input * (standard_output / standard_input) * efficiency_factor,
+        (current_input + total_ingredients * multiplier) * efficiency_factor
+    );
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'FERMENTACION' ORDER BY id LIMIT 1;
     
@@ -304,12 +362,12 @@ BEGIN
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'FERMENTACION', phase_order_val, 'COMPLETADA',
-        ROUND(current_input * 1000.0) / 1000.0,
-        ROUND(current_output * 1000.0) / 1000.0,
-        standard_input * multiplier,
-        standard_output * multiplier,
+        ROUND(current_input * 100.0) / 100.0,
+        ROUND(current_output * 100.0) / 100.0,
+        ROUND(standard_input * multiplier * 100.0) / 100.0,
+        ROUND(standard_output * multiplier * 100.0) / 100.0,
         output_unit_val,
-        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 100.0) / 100.0,
         '2025-07-15 20:30:00'::timestamptz,
         '2025-07-22 20:30:00'::timestamptz
     ) RETURNING id INTO phase1_5_id;
@@ -326,7 +384,7 @@ BEGIN
             nextval('production_materials_seq'),
             recipe_material_id,
             phase1_5_id,
-            ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
+            ROUND(recipe_quantity * multiplier * 100.0) / 100.0,
             '2025-07-15 20:30:00'::timestamptz
         );
     END LOOP;
@@ -340,12 +398,23 @@ BEGIN
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
     VALUES (nextval('production_phases_qualities_seq'), phase1_5_id, quality_param_id, '1.010 SG', true, true, 1, '2025-07-15 20:30:00'::timestamptz);
     
-    -- Production Phase 1.6: MADURACION
+    -- Production Phase 1.6: MADURACION (input = output de FERMENTACION)
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
     FROM product_phases WHERE id_product = product1_id AND phase = 'MADURACION';
     
+    -- Calcular total de ingredientes para MADURACION
+    SELECT COALESCE(SUM(r.quantity), 0.0) INTO total_ingredients
+    FROM recipes r
+    INNER JOIN product_phases pp ON r.id_product_phase = pp.id
+    WHERE pp.id_product = product1_id AND pp.phase = 'MADURACION';
+    
+    -- Input es el output de la fase anterior (FERMENTACION)
     current_input := current_output;
-    current_output := current_input * (standard_output / standard_input) * efficiency_factor;
+    -- Output debe ser <= input + ingredientes, sin desperdicio (100% eficiencia)
+    current_output := LEAST(
+        current_input * (standard_output / standard_input) * efficiency_factor,
+        (current_input + total_ingredients * multiplier) * efficiency_factor
+    );
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'MADURACION' ORDER BY id LIMIT 1;
     
@@ -353,12 +422,12 @@ BEGIN
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'MADURACION', phase_order_val, 'COMPLETADA',
-        ROUND(current_input * 1000.0) / 1000.0,
-        ROUND(current_output * 1000.0) / 1000.0,
-        standard_input * multiplier,
-        standard_output * multiplier,
+        ROUND(current_input * 100.0) / 100.0,
+        ROUND(current_output * 100.0) / 100.0,
+        ROUND(standard_input * multiplier * 100.0) / 100.0,
+        ROUND(standard_output * multiplier * 100.0) / 100.0,
         output_unit_val,
-        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 100.0) / 100.0,
         '2025-07-22 20:30:00'::timestamptz,
         '2025-08-01 20:30:00'::timestamptz
     ) RETURNING id INTO phase1_6_id;
@@ -375,7 +444,7 @@ BEGIN
             nextval('production_materials_seq'),
             recipe_material_id,
             phase1_6_id,
-            ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
+            ROUND(recipe_quantity * multiplier * 100.0) / 100.0,
             '2025-07-22 20:30:00'::timestamptz
         );
     END LOOP;
@@ -389,12 +458,23 @@ BEGIN
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
     VALUES (nextval('production_phases_qualities_seq'), phase1_6_id, quality_param_id, '5 EBC', true, true, 1, '2025-07-22 20:30:00'::timestamptz);
     
-    -- Production Phase 1.7: GASIFICACION
+    -- Production Phase 1.7: GASIFICACION (input = output de MADURACION)
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
     FROM product_phases WHERE id_product = product1_id AND phase = 'GASIFICACION';
     
+    -- Calcular total de ingredientes para GASIFICACION
+    SELECT COALESCE(SUM(r.quantity), 0.0) INTO total_ingredients
+    FROM recipes r
+    INNER JOIN product_phases pp ON r.id_product_phase = pp.id
+    WHERE pp.id_product = product1_id AND pp.phase = 'GASIFICACION';
+    
+    -- Input es el output de la fase anterior (MADURACION)
     current_input := current_output;
-    current_output := current_input * (standard_output / standard_input) * efficiency_factor;
+    -- Output debe ser <= input + ingredientes, sin desperdicio (100% eficiencia)
+    current_output := LEAST(
+        current_input * (standard_output / standard_input) * efficiency_factor,
+        (current_input + total_ingredients * multiplier) * efficiency_factor
+    );
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'GASIFICACION' ORDER BY id LIMIT 1;
     
@@ -402,12 +482,12 @@ BEGIN
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'GASIFICACION', phase_order_val, 'COMPLETADA',
-        ROUND(current_input * 1000.0) / 1000.0,
-        ROUND(current_output * 1000.0) / 1000.0,
-        standard_input * multiplier,
-        standard_output * multiplier,
+        ROUND(current_input * 100.0) / 100.0,
+        ROUND(current_output * 100.0) / 100.0,
+        ROUND(standard_input * multiplier * 100.0) / 100.0,
+        ROUND(standard_output * multiplier * 100.0) / 100.0,
         output_unit_val,
-        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 100.0) / 100.0,
         '2025-08-01 20:30:00'::timestamptz,
         '2025-08-01 23:30:00'::timestamptz
     ) RETURNING id INTO phase1_7_id;
@@ -424,7 +504,7 @@ BEGIN
             nextval('production_materials_seq'),
             recipe_material_id,
             phase1_7_id,
-            ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
+            ROUND(recipe_quantity * multiplier * 100.0) / 100.0,
             '2025-08-01 20:30:00'::timestamptz
         );
     END LOOP;
@@ -438,12 +518,23 @@ BEGIN
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
     VALUES (nextval('production_phases_qualities_seq'), phase1_7_id, quality_param_id, '18 psi', true, true, 1, '2025-08-01 20:30:00'::timestamptz);
     
-    -- Production Phase 1.8: ENVASADO
+    -- Production Phase 1.8: ENVASADO (input = output de GASIFICACION)
     SELECT input, output, phase_order, output_unit INTO standard_input, standard_output, phase_order_val, output_unit_val
     FROM product_phases WHERE id_product = product1_id AND phase = 'ENVASADO';
     
+    -- Calcular total de ingredientes para ENVASADO
+    SELECT COALESCE(SUM(r.quantity), 0.0) INTO total_ingredients
+    FROM recipes r
+    INNER JOIN product_phases pp ON r.id_product_phase = pp.id
+    WHERE pp.id_product = product1_id AND pp.phase = 'ENVASADO';
+    
+    -- Input es el output de la fase anterior (GASIFICACION)
     current_input := current_output;
-    current_output := current_input * (standard_output / standard_input) * efficiency_factor;
+    -- Output debe ser <= input + ingredientes, sin desperdicio (100% eficiencia)
+    current_output := LEAST(
+        current_input * (standard_output / standard_input) * efficiency_factor,
+        (current_input + total_ingredients * multiplier) * efficiency_factor
+    );
     
     SELECT id INTO sector_id FROM sectors WHERE is_active = true AND phase = 'ENVASADO' ORDER BY id LIMIT 1;
     
@@ -451,12 +542,12 @@ BEGIN
     VALUES (
         nextval('production_phases_seq'),
         batch1_id, sector_id, 'ENVASADO', phase_order_val, 'COMPLETADA',
-        ROUND(current_input * 1000.0) / 1000.0,
-        ROUND(current_output * 1000.0) / 1000.0,
-        standard_input * multiplier,
-        standard_output * multiplier,
+        ROUND(current_input * 100.0) / 100.0,
+        ROUND(current_output * 100.0) / 100.0,
+        ROUND(standard_input * multiplier * 100.0) / 100.0,
+        ROUND(standard_output * multiplier * 100.0) / 100.0,
         output_unit_val,
-        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 1000.0) / 1000.0,
+        ROUND((standard_output * multiplier * (current_input / (standard_input * multiplier)) - current_output) * 100.0) / 100.0,
         '2025-08-01 23:30:00'::timestamptz,
         '2025-08-13 02:00:00'::timestamptz
     ) RETURNING id INTO phase1_8_id;
@@ -473,19 +564,19 @@ BEGIN
             nextval('production_materials_seq'),
             recipe_material_id,
             phase1_8_id,
-            ROUND(recipe_quantity * multiplier * 1000000.0) / 1000000.0,
-            '2025-08-02 00:30:00'::timestamptz
+            ROUND(recipe_quantity * multiplier * 100.0) / 100.0,
+            '2025-08-01 23:30:00'::timestamptz
         );
     END LOOP;
     
     -- Quality parameters para ENVASADO
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'ENVASADO' AND name = 'Sellado';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase1_8_id, quality_param_id, 'OK', true, true, 1, '2025-08-02 00:30:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase1_8_id, quality_param_id, 'OK', true, true, 1, '2025-08-01 23:30:00'::timestamptz);
     
     SELECT id INTO quality_param_id FROM quality_parameters WHERE is_active = true AND phase = 'ENVASADO' AND name = 'Etiquetado';
     INSERT INTO production_phases_qualities (id, id_production_phase, id_quality_parameter, value, is_approved, is_active, version, realization_date)
-    VALUES (nextval('production_phases_qualities_seq'), phase1_8_id, quality_param_id, 'OK', true, true, 1, '2025-08-02 00:30:00'::timestamptz);
+    VALUES (nextval('production_phases_qualities_seq'), phase1_8_id, quality_param_id, 'OK', true, true, 1, '2025-08-01 23:30:00'::timestamptz);
     
     RAISE NOTICE 'Orden de producción 1 (Julio) cargada exitosamente';
     
@@ -497,4 +588,3 @@ BEGIN
     PERFORM setval('production_materials_seq', COALESCE((SELECT MAX(id) FROM production_materials), 1), true);
     
 END $$;
-

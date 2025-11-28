@@ -184,5 +184,46 @@ public interface AnalyticsRepository extends Repository<ProductionPhase, Long> {
             @Param("productId") Long productId,
             @Param("phase") com.enigcode.frozen_backend.product_phases.model.Phase phase
     );
+
+    @Query("""
+    SELECT
+        YEAR(pp.endDate) AS year,
+        MONTH(pp.endDate) AS month,
+        SUM(pm.quantity) AS total
+    FROM ProductionMaterial pm
+    JOIN pm.productionPhase pp
+    WHERE pp.phase = :phase
+      AND pp.status IN ('COMPLETADA', 'RECHAZADA')
+      AND pp.endDate BETWEEN :start AND :end
+      AND (:productId IS NULL OR pp.batch.productionOrder.product.id = :productId)
+    GROUP BY YEAR(pp.endDate), MONTH(pp.endDate)
+    ORDER BY YEAR(pp.endDate), MONTH(pp.endDate)
+    """)
+    List<MonthlyTotalProjectionDTO> getMonthlyMaterialsByPhase(
+            @Param("start") OffsetDateTime start,
+            @Param("end") OffsetDateTime end,
+            @Param("productId") Long productId,
+            @Param("phase") com.enigcode.frozen_backend.product_phases.model.Phase phase
+    );
+
+    @Query("""
+    SELECT
+        YEAR(pp.endDate) AS year,
+        MONTH(pp.endDate) AS month,
+        SUM(pp.standardOutput) AS total
+    FROM ProductionPhase pp
+    WHERE pp.phase = :phase
+      AND pp.status = 'COMPLETADA'
+      AND pp.endDate BETWEEN :start AND :end
+      AND (:productId IS NULL OR pp.batch.productionOrder.product.id = :productId)
+    GROUP BY YEAR(pp.endDate), MONTH(pp.endDate)
+    ORDER BY YEAR(pp.endDate), MONTH(pp.endDate)
+    """)
+    List<MonthlyTotalProjectionDTO> getMonthlyStandardOutputByPhase(
+            @Param("start") OffsetDateTime start,
+            @Param("end") OffsetDateTime end,
+            @Param("productId") Long productId,
+            @Param("phase") com.enigcode.frozen_backend.product_phases.model.Phase phase
+    );
     
 }

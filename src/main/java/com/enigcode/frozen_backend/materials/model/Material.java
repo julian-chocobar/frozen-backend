@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -79,15 +81,21 @@ public class Material {
     }
 
     public void reduceStock(Double stock) {
-        this.stock -= stock;
+        this.stock = BigDecimal.valueOf(this.stock - stock)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 
     public void increaseStock(Double stock) {
-        this.stock += stock;
+        this.stock = BigDecimal.valueOf(this.stock + stock)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 
     public void reserveStock(Double stock) {
-        this.reservedStock += stock;
+        this.reservedStock = BigDecimal.valueOf(this.reservedStock + stock)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
         reduceStock(stock);
     }
 
@@ -97,6 +105,8 @@ public class Material {
     }
 
     public void reduceReservedStock(Double stock) {
-        this.reservedStock -= stock;
+        this.reservedStock = BigDecimal.valueOf(this.reservedStock - stock)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 }

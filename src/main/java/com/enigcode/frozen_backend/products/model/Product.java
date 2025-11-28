@@ -68,18 +68,22 @@ public class Product {
 
     public List<Phase> getApplicablePhases() {
         List<Phase> phases = new ArrayList<>(List.of(
-                Phase.MOLIENDA,
-                Phase.MACERACION,
-                Phase.FILTRACION,
-                Phase.COCCION,
-                Phase.FERMENTACION,
-                Phase.MADURACION,
-                Phase.GASIFICACION,
-                Phase.ENVASADO));
+                Phase.MOLIENDA,      // 1
+                Phase.MACERACION,    // 2
+                Phase.FILTRACION,    // 3
+                Phase.COCCION,       // 4
+                Phase.FERMENTACION,  // 5
+                Phase.MADURACION,    // 6
+                Phase.GASIFICACION   // 7
+        ));
 
         if (!this.isAlcoholic) {
-            phases.add(7, Phase.DESALCOHOLIZACION);
+            // Agregar DESALCOHOLIZACION antes de ENVASADO
+            phases.add(Phase.DESALCOHOLIZACION); // 8
         }
+        
+        phases.add(Phase.ENVASADO); // 8 (alcohólico) o 9 (no alcohólico)
+        
         return phases;
     }
 

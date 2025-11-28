@@ -10,6 +10,7 @@ import com.enigcode.frozen_backend.product_phases.model.Phase;
 import com.enigcode.frozen_backend.product_phases.model.ProductPhase;
 import com.enigcode.frozen_backend.product_phases.repository.ProductPhaseRepository;
 import com.enigcode.frozen_backend.products.repository.ProductRepository;
+import com.enigcode.frozen_backend.recipes.model.Recipe;
 import com.enigcode.frozen_backend.recipes.repository.RecipeRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -31,6 +32,7 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
 
     /**
      * Funcion que modifica parcialmente un product phase
+     * Ajusta automáticamente el input de la siguiente fase si se actualiza el output
      * 
      * @param id
      * @param productPhaseUpdateDTO
@@ -42,10 +44,180 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
         ProductPhase productPhase = productPhaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ProductPhase no encontrado con ID: " + id));
 
+        // Validación: Si se intenta editar output, debe haber al menos un ingrediente (recipe)
+        // Nota: El input se establece automáticamente, no se puede editar manualmente
+        if (productPhaseUpdateDTO.getOutput() != null) {
+            List<Recipe> recipes = recipeRepository.findByProductPhase(productPhase);
+            if (recipes == null || recipes.isEmpty()) {
+                throw new BadRequestException(
+                    String.format("No se puede editar el output de la fase %s sin al menos un ingrediente (recipe) cargado. " +
+                            "Por favor, agregue al menos un ingrediente antes de definir el valor de output.",
+                        productPhase.getPhase()));
+            }
+        }
+
+        // Advertencia: Si se intenta enviar input, se ignorará ya que se establece automáticamente
+        if (productPhaseUpdateDTO.getInput() != null) {
+            // El input se establece automáticamente:
+            // - MOLIENDA: siempre 0.0
+            // - Otras fases: del output de la fase anterior
+            // Se ignora el valor enviado en el DTO
+        }
+
+        // Guardar el output anterior para comparar
+        Double previousOutput = productPhase.getOutput();
+        com.enigcode.frozen_backend.materials.model.UnitMeasurement previousOutputUnit = productPhase.getOutputUnit();
+
         productPhaseMapper.partialUpdate(productPhaseUpdateDTO, productPhase);
+        
+        // Asegurar que los valores 0.0 se establezcan explícitamente (MapStruct podría ignorarlos)
+        if (productPhaseUpdateDTO.getOutput() != null) {
+            productPhase.setOutput(productPhaseUpdateDTO.getOutput());
+        }
+        if (productPhaseUpdateDTO.getEstimatedHours() != null) {
+            productPhase.setEstimatedHours(productPhaseUpdateDTO.getEstimatedHours());
+        }
+        if (productPhaseUpdateDTO.getOutputUnit() != null) {
+            productPhase.setOutputUnit(productPhaseUpdateDTO.getOutputUnit());
+        }
+        
+        // Establecer input automáticamente (ignorar cualquier valor enviado en el DTO)
+        if (productPhase.getPhase() == Phase.MOLIENDA) {
+            // MOLIENDA siempre tiene input = 0.0 (primera fase)
+            productPhase.setInput(0.0);
+        } else {
+            // Para otras fases, obtener el input del output de la fase anterior
+            // Recargar las fases desde la BD para asegurar que tenemos los valores más recientes
+            List<ProductPhase> phases = productPhaseRepository
+                    .findByProductIdOrderByPhaseOrderAsc(productPhase.getProduct().getId());
+            
+            // Encontrar la fase actual en la lista recargada
+            ProductPhase currentPhaseReloaded = phases.stream()
+                    .filter(p -> p.getId().equals(productPhase.getId()))
+                    .findFirst()
+                    .orElse(productPhase);
+            
+            // Encontrar la fase anterior
+            int currentIndex = phases.indexOf(currentPhaseReloaded);
+            if (currentIndex > 0) {
+                ProductPhase previousPhase = phases.get(currentIndex - 1);
+                if (previousPhase.getOutput() != null) {
+                    productPhase.setInput(previousPhase.getOutput());
+                    // Si la fase actual no tiene unidad de medida, usar la de la fase anterior
+                    if (productPhase.getOutputUnit() == null && previousPhase.getOutputUnit() != null) {
+                        productPhase.setOutputUnit(previousPhase.getOutputUnit());
+                    }
+                } else {
+                    // Si la fase anterior no tiene output, el input queda en null (se establecerá cuando se actualice la fase anterior)
+                    productPhase.setInput(null);
+                }
+            } else {
+                // No hay fase anterior (no debería pasar, pero por seguridad)
+                productPhase.setInput(null);
+            }
+        }
+        
+        // Si se actualizó el output, ajustar el input de la siguiente fase
+        if (productPhaseUpdateDTO.getOutput() != null && 
+            (previousOutput == null || !previousOutput.equals(productPhase.getOutput()) ||
+             previousOutputUnit != productPhase.getOutputUnit())) {
+            
+            adjustNextPhaseInput(productPhase);
+        }
+        
+        // Recargar la fase actual desde la base de datos para asegurar que tenemos
+        // la versión actualizada con las relaciones del producto (incluyendo la siguiente fase actualizada)
+        // Esto es necesario después de ajustar el input de la siguiente fase
+        ProductPhase productPhaseForValidation = productPhaseRepository.findById(productPhase.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("ProductPhase no encontrado con ID: " + productPhase.getId()));
+        
+        // Validar que el output coincida con el input de la siguiente fase
+        try {
+            productPhaseForValidation.validateOutputMatchesNextPhaseInput();
+        } catch (BadRequestException e) {
+            // Si la validación falla, lanzar la excepción
+            throw e;
+        }
+        
+        // Validar que el output no sea mayor que input + ingredientes 
+        validateOutputNotGreaterThanInputPlusIngredients(productPhase);
+        
 
         ProductPhase savedProductPhase = productPhaseRepository.save(productPhase);
         return productPhaseMapper.toResponseDto(savedProductPhase);
+    }
+    
+    /**
+     * Valida que el output de una fase no sea mayor que el input + total de ingredientes.
+     * El output puede ser menor o igual debido a posibles mermas.
+     * 
+     * @param productPhase Fase a validar
+     */
+    private void validateOutputNotGreaterThanInputPlusIngredients(ProductPhase productPhase) {
+        // Si output es null o 0, no validar (aún no está definido)
+        if (productPhase.getOutput() == null || productPhase.getOutput() == 0.0) {
+            return;
+        }
+        
+        // Obtener el input (puede ser null o 0 para la primera fase)
+        Double input = productPhase.getInput() != null ? productPhase.getInput() : 0.0;
+        
+        // Calcular el total de ingredientes de esta fase
+        List<Recipe> recipes = recipeRepository.findByProductPhase(productPhase);
+        Double totalIngredients = recipes.stream()
+                .map(Recipe::getQuantity)
+                .filter(qty -> qty != null && qty > 0)
+                .reduce(0.0, Double::sum);
+        
+        // Calcular el máximo posible: input + ingredientes
+        Double maxPossible = input + totalIngredients;
+        
+        // Validar que output <= input + ingredientes
+        if (productPhase.getOutput() > maxPossible) {
+            throw new BadRequestException(
+                String.format("El output de la fase %s (%.2f) no puede ser mayor que el input (%.2f) más los ingredientes (%.2f) = %.2f. " +
+                        "El output puede ser menor o igual debido a posibles mermas.",
+                    productPhase.getPhase(), productPhase.getOutput(), input, totalIngredients, maxPossible));
+        }
+    }
+    
+    /**
+     * Ajusta automáticamente el input de la siguiente fase para que coincida con el output de la fase actual.
+     * Siempre actualiza el input de la siguiente fase cuando se actualiza el output de la fase actual.
+     * 
+     * @param currentPhase Fase actual cuyo output se actualizó
+     */
+    private void adjustNextPhaseInput(ProductPhase currentPhase) {
+        if (currentPhase.getOutput() == null || currentPhase.getOutputUnit() == null) {
+            return;
+        }
+        
+        // Recargar las fases del producto para asegurar que tenemos la última versión
+        List<ProductPhase> phases = productPhaseRepository
+                .findByProductIdOrderByPhaseOrderAsc(currentPhase.getProduct().getId());
+        
+        // Encontrar la fase actual en la lista recargada
+        ProductPhase currentPhaseReloaded = phases.stream()
+                .filter(p -> p.getId().equals(currentPhase.getId()))
+                .findFirst()
+                .orElse(currentPhase);
+        
+        // Encontrar la siguiente fase
+        int currentIndex = phases.indexOf(currentPhaseReloaded);
+        if (currentIndex >= 0 && currentIndex < phases.size() - 1) {
+            ProductPhase nextPhase = phases.get(currentIndex + 1);
+            
+            // Siempre actualizar el input de la siguiente fase para que coincida con el output actual
+            nextPhase.setInput(currentPhase.getOutput());
+            
+            // Si la siguiente fase no tiene unidad de medida definida, usar la de la fase actual
+            if (nextPhase.getOutputUnit() == null) {
+                nextPhase.setOutputUnit(currentPhase.getOutputUnit());
+            }
+            
+            // Guardar la siguiente fase con el input actualizado
+            productPhaseRepository.save(nextPhase);
+        }
     }
 
     /**
