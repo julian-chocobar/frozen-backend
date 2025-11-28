@@ -1,7 +1,10 @@
 package com.enigcode.frozen_backend.notifications.service;
 
+import com.enigcode.frozen_backend.users.model.User;
+import com.enigcode.frozen_backend.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -33,18 +36,40 @@ public class SseNotificationService {
     private final Map<Long, Set<SseEmitter>> userConnections = new ConcurrentHashMap<>();
     // Cache en memoria username -> userId para evitar queries desde SSE
     private final Map<String, Long> usernameToUserIdCache = new ConcurrentHashMap<>();
+    
+    @Lazy
+    private final UserService userService;
 
     /**
-     * Crea una nueva conexión SSE para un usuario por username (SIN consulta DB)
-     * Usa el cache en memoria para evitar connection leaks
+     * Crea una nueva conexión SSE para un usuario por username
+     * Si el usuario no está en cache, lo busca en la BD y lo registra en cache
+     * para evitar errores 500 cuando el cache se limpia pero la sesión sigue activa
      */
     public SseEmitter createConnectionByUsername(String username) {
-        // Buscar userId en cache (sin consultas DB)
+        // Buscar userId en cache primero (sin consultas DB)
         Long userId = usernameToUserIdCache.get(username);
+        
         if (userId == null) {
-            log.error("Usuario {} no encontrado en cache. Debe hacer login primero.", username);
-            throw new RuntimeException("Usuario no encontrado en cache: " + username);
+            // Cache miss: el usuario no está en cache (puede ser por limpieza del cache)
+            // pero la sesión sigue activa. Buscar en BD y registrar en cache.
+            log.warn("Usuario {} no encontrado en cache SSE. Buscando en BD para repoblar cache.", username);
+            try {
+                User user = userService.getCurrentUser();
+                if (user != null && user.getUsername().equals(username)) {
+                    userId = user.getId();
+                    // Registrar en cache para futuras conexiones
+                    registerUserInCache(username, userId);
+                    log.info("Usuario {} repoblado en cache SSE con ID {}", username, userId);
+                } else {
+                    log.error("Usuario {} no encontrado o no coincide con usuario autenticado.", username);
+                    throw new RuntimeException("Usuario no encontrado: " + username);
+                }
+            } catch (Exception e) {
+                log.error("Error al buscar usuario {} en BD para repoblar cache SSE: {}", username, e.getMessage());
+                throw new RuntimeException("Usuario no encontrado: " + username, e);
+            }
         }
+        
         return createConnection(userId);
     }
 
