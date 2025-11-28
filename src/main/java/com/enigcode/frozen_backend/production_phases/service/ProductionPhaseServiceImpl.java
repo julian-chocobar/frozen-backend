@@ -47,13 +47,29 @@ public class ProductionPhaseServiceImpl implements ProductionPhaseService {
         ProductionPhase updatedProductionPhase = productionPhaseMapper.partialUpdate(dto, productionPhase);
         updatedProductionPhase.setStatus(ProductionPhaseStatus.BAJO_REVISION);
 
-        // Validar que en MOLIENDA (primera fase) el input no puede ser menor que el
-        // output
+        // Validar que en MOLIENDA (primera fase) el input + materiales utilizados no puede ser menor que el output
         if (updatedProductionPhase.getPhase().equals(Phase.MOLIENDA)) {
-            if (updatedProductionPhase.getInput() != null && updatedProductionPhase.getOutput() != null
-                    && updatedProductionPhase.getInput() < updatedProductionPhase.getOutput()) {
-                throw new BadRequestException(
-                        "En la fase MOLIENDA (primera fase), el input no puede ser menor que el output");
+            if (updatedProductionPhase.getInput() != null && updatedProductionPhase.getOutput() != null) {
+                // Obtener el input (debe ser 0.0 para MOLIENDA)
+                Double input = updatedProductionPhase.getInput() != null ? updatedProductionPhase.getInput() : 0.0;
+                
+                // Calcular el total de materiales utilizados en esta fase
+                List<ProductionMaterial> materials = productionMaterialRepository.findAllByProductionPhaseId(updatedProductionPhase.getId());
+                Double totalMaterials = materials.stream()
+                        .map(ProductionMaterial::getQuantity)
+                        .filter(qty -> qty != null && qty > 0)
+                        .reduce(0.0, Double::sum);
+                
+                // Calcular el máximo posible: input + materiales
+                Double maxPossible = input + totalMaterials;
+                
+                // Validar que output <= input + materiales
+                if (updatedProductionPhase.getOutput() > maxPossible) {
+                    throw new BadRequestException(
+                        String.format("En la fase MOLIENDA (primera fase), el output (%.2f) no puede ser mayor que el input (%.2f) más los materiales utilizados (%.2f) = %.2f. " +
+                                "El output puede ser menor o igual debido a posibles mermas.",
+                            updatedProductionPhase.getOutput(), input, totalMaterials, maxPossible));
+                }
             }
         }
 
