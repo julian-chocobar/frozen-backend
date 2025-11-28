@@ -438,14 +438,6 @@ public class BatchServiceImpl implements BatchService {
                         nextPhase.getOutputUnit() != null ? nextPhase.getOutputUnit() : "N/A"));
             }
             
-            // Validar también que las unidades coincidan
-            if (currentPhase.getOutputUnit() != null && nextPhase.getOutputUnit() != null &&
-                !currentPhase.getOutputUnit().equals(nextPhase.getOutputUnit())) {
-                throw new BadRequestException(
-                    String.format("La unidad de medida del standardOutput de la fase %s (%s) no coincide con la unidad del standardInput de la siguiente fase %s (%s).",
-                        currentPhase.getPhase(), currentPhase.getOutputUnit(),
-                        nextPhase.getPhase(), nextPhase.getOutputUnit()));
-            }
         }
     }
 
