@@ -45,8 +45,9 @@ public class ProductPhaseServiceImpl implements ProductPhaseService {
                 .orElseThrow(() -> new ResourceNotFoundException("ProductPhase no encontrado con ID: " + id));
 
         // Validación: Si se intenta editar output, debe haber al menos un ingrediente (recipe)
+        // Excepción: ENVASADO no requiere ingredientes para establecer input/output
         // Nota: El input se establece automáticamente, no se puede editar manualmente
-        if (productPhaseUpdateDTO.getOutput() != null) {
+        if (productPhaseUpdateDTO.getOutput() != null && productPhase.getPhase() != Phase.ENVASADO) {
             List<Recipe> recipes = recipeRepository.findByProductPhase(productPhase);
             if (recipes == null || recipes.isEmpty()) {
                 throw new BadRequestException(
