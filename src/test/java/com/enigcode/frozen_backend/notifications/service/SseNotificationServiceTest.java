@@ -1,28 +1,15 @@
 package com.enigcode.frozen_backend.notifications.service;
 
-import com.enigcode.frozen_backend.users.model.User;
-import com.enigcode.frozen_backend.users.service.UserService;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.time.OffsetDateTime;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ExtendWith(MockitoExtension.class)
 class SseNotificationServiceTest {
 
-    @Mock
-    private UserService userService;
-
-    @InjectMocks
-    private SseNotificationService svc;
+    private final SseNotificationService svc = new SseNotificationService();
 
     @Test
     void registerAndCreateConnectionByUsername_and_counts() throws Exception {
@@ -73,24 +60,21 @@ class SseNotificationServiceTest {
     }
 
     @Test
-    void createConnectionByUsername_cacheMiss_repopulatesCache() throws Exception {
-        // Simular usuario no en cache pero autenticado
-        User user = User.builder()
-                .id(100L)
-                .username("userB")
-                .password("password")
-                .name("User B")
-                .creationDate(OffsetDateTime.now())
-                .build();
-
-        when(userService.getCurrentUser()).thenReturn(user);
-
+    void createConnectionByUsername_cacheMiss_throwsException() {
         // No registrar en cache primero - simula cache miss
-        SseEmitter emitter = svc.createConnectionByUsername("userB");
+        assertThatThrownBy(() -> svc.createConnectionByUsername("userB"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Usuario no encontrado en cache");
+    }
+
+    @Test
+    void createConnectionAndRegisterInCache_registersAndCreatesConnection() throws Exception {
+        // Usar el método que registra en cache y crea conexión
+        SseEmitter emitter = svc.createConnectionAndRegisterInCache("userB", 100L);
 
         assertThat(emitter).isNotNull();
         assertThat(svc.getActiveConnectionsCount(100L)).isEqualTo(1);
-        // Verificar que ahora está en cache
+        // Verificar que ahora está en cache y puede crear otra conexión
         SseEmitter emitter2 = svc.createConnectionByUsername("userB");
         assertThat(emitter2).isNotNull();
         assertThat(svc.getActiveConnectionsCount(100L)).isEqualTo(2);

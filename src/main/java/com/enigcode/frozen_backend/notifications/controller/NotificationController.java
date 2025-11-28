@@ -164,8 +164,29 @@ public class NotificationController {
         String clientIp = getClientIpAddress(request);
         log.info("Nueva conexión SSE solicitada por usuario: {} desde IP: {}", username, clientIp);
 
-        // Crear SseEmitter inmediatamente SIN transacciones DB
-        SseEmitter emitter = sseNotificationService.createConnectionByUsername(username);
+        SseEmitter emitter;
+        try {
+            // Intentar crear conexión usando cache primero (más rápido, sin DB)
+            emitter = sseNotificationService.createConnectionByUsername(username);
+        } catch (RuntimeException e) {
+            // Cache miss: el usuario no está en cache pero la sesión sigue activa
+            // Obtener userId desde BD y registrar en cache
+            log.warn("Cache miss para usuario {} en SSE. Repoblando cache desde BD.", username);
+            try {
+                User currentUser = userService.getCurrentUser();
+                if (currentUser != null && currentUser.getUsername().equals(username)) {
+                    // Crear conexión y registrar en cache simultáneamente
+                    emitter = sseNotificationService.createConnectionAndRegisterInCache(username, currentUser.getId());
+                    log.info("Conexión SSE creada y cache repoblado para usuario: {} (ID: {})", username, currentUser.getId());
+                } else {
+                    log.error("Usuario {} no encontrado o no coincide con usuario autenticado.", username);
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                }
+            } catch (Exception ex) {
+                log.error("Error al obtener usuario {} para repoblar cache SSE: {}", username, ex.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
 
         return ResponseEntity.ok()
                 .header("Cache-Control", "no-cache")

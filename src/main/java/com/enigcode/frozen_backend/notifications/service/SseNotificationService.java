@@ -1,10 +1,7 @@
 package com.enigcode.frozen_backend.notifications.service;
 
-import com.enigcode.frozen_backend.users.model.User;
-import com.enigcode.frozen_backend.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -36,40 +33,33 @@ public class SseNotificationService {
     private final Map<Long, Set<SseEmitter>> userConnections = new ConcurrentHashMap<>();
     // Cache en memoria username -> userId para evitar queries desde SSE
     private final Map<String, Long> usernameToUserIdCache = new ConcurrentHashMap<>();
-    
-    @Lazy
-    private final UserService userService;
 
     /**
      * Crea una nueva conexión SSE para un usuario por username
-     * Si el usuario no está en cache, lo busca en la BD y lo registra en cache
-     * para evitar errores 500 cuando el cache se limpia pero la sesión sigue activa
+     * Requiere que el usuario esté previamente registrado en cache.
+     * Si no está en cache, lanza RuntimeException - el controlador debe manejar esto
+     * obteniendo el userId y llamando a createConnection(userId) directamente.
      */
     public SseEmitter createConnectionByUsername(String username) {
-        // Buscar userId en cache primero (sin consultas DB)
+        // Buscar userId en cache (sin consultas DB)
         Long userId = usernameToUserIdCache.get(username);
-        
         if (userId == null) {
-            // Cache miss: el usuario no está en cache (puede ser por limpieza del cache)
-            // pero la sesión sigue activa. Buscar en BD y registrar en cache.
-            log.warn("Usuario {} no encontrado en cache SSE. Buscando en BD para repoblar cache.", username);
-            try {
-                User user = userService.getCurrentUser();
-                if (user != null && user.getUsername().equals(username)) {
-                    userId = user.getId();
-                    // Registrar en cache para futuras conexiones
-                    registerUserInCache(username, userId);
-                    log.info("Usuario {} repoblado en cache SSE con ID {}", username, userId);
-                } else {
-                    log.error("Usuario {} no encontrado o no coincide con usuario autenticado.", username);
-                    throw new RuntimeException("Usuario no encontrado: " + username);
-                }
-            } catch (Exception e) {
-                log.error("Error al buscar usuario {} en BD para repoblar cache SSE: {}", username, e.getMessage());
-                throw new RuntimeException("Usuario no encontrado: " + username, e);
-            }
+            log.warn("Usuario {} no encontrado en cache SSE. El controlador debe manejar el cache miss.", username);
+            throw new RuntimeException("Usuario no encontrado en cache: " + username + ". Debe hacer login primero o el cache fue limpiado.");
         }
-        
+        return createConnection(userId);
+    }
+    
+    /**
+     * Crea una conexión SSE y registra el usuario en cache si no está presente.
+     * Método de conveniencia para el controlador cuando hay cache miss.
+     */
+    public SseEmitter createConnectionAndRegisterInCache(String username, Long userId) {
+        // Registrar en cache si no está presente
+        if (!usernameToUserIdCache.containsKey(username)) {
+            registerUserInCache(username, userId);
+            log.info("Usuario {} registrado en cache SSE con ID {} (cache miss recuperado)", username, userId);
+        }
         return createConnection(userId);
     }
 
